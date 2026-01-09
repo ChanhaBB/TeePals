@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>TeePals needs your location to find golf rounds near you and set your home location.</string>
+    <key>CFBundleDisplayName</key>
+    <string>TeePals</string>
+</dict>
+</plist>
+
