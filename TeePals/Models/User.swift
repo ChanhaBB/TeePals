@@ -1,8 +1,7 @@
 import Foundation
-import FirebaseFirestore
 
 struct User: Codable, Identifiable {
-    @DocumentID var id: String?
+    var id: String?
     let displayName: String
     let createdAt: Date
     var lastActiveAt: Date
@@ -14,4 +13,3 @@ struct User: Codable, Identifiable {
         self.lastActiveAt = lastActiveAt
     }
 }
-

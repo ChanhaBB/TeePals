@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var container: AppContainer
     @State private var showLaunchScreen = true
     
     var body: some View {
@@ -13,7 +14,7 @@ struct RootView: View {
                 case .unauthenticated:
                     AuthView()
                 case .needsProfile:
-                    ProfileSetupView()
+                    Tier1OnboardingFlow(viewModel: container.makeTier1OnboardingViewModel())
                 case .authenticated:
                     MainTabView()
                 }
@@ -49,5 +50,5 @@ struct LoadingView: View {
 #Preview {
     RootView()
         .environmentObject(AuthService())
+        .environmentObject(AppContainer())
 }
-

@@ -275,5 +275,30 @@ A feature is complete only if:
 
 ---
 
+## Profile Gating (LOCKED)
+
+Tier 1 required immediately after Apple Sign-In:
+- nickname
+- primary city/location
+- birthDate (private doc)
+- gender (prefer_not allowed)
+
+Tier 2 required for ANY social or participation action:
+Tier 2 requires:
+- profile photo
+- skillLevel
+
+Tier 2 gates:
+- request/join rounds
+- create/edit/cancel rounds
+- invite users
+- accept/decline join requests
+- read/write round chat
+- follow/unfollow
+- like/comment
+- create posts/reviews and any other engagement actions
+
+Avg score and other golf stats are optional and must never gate actions.
+
 ## This document is the single source of truth.
 Cursor must follow it exactly.

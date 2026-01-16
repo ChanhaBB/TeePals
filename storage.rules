@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ============================================
+    // PROFILE PHOTOS
+    // Path: profilePhotos/{userId}/{filename}
+    // ============================================
+    
+    match /profilePhotos/{userId}/{allPaths=**} {
+      // Any authenticated user can view profile photos
+      allow read: if request.auth != null;
+      
+      // Only the owner can upload/delete their photos
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+                   && request.resource.contentType.matches('image/.*');  // Must be image
+    }
+    
+    // ============================================
+    // ROUND PHOTOS (future)
+    // Path: roundPhotos/{roundId}/{filename}
+    // ============================================
+    
+    match /roundPhotos/{roundId}/{allPaths=**} {
+      // Any authenticated user can view round photos
+      allow read: if request.auth != null;
+      
+      // Any authenticated user can upload (MVP - tighten later)
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024  // Max 10MB
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // ============================================
+    // POST PHOTOS
+    // Path: postPhotos/{userId}/{folder}/{filename}
+    // ============================================
+    
+    match /postPhotos/{userId}/{allPaths=**} {
+      // Any authenticated user can view post photos
+      allow read: if request.auth != null;
+
+      // Only the owner can upload/delete their post photos
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024  // Max 10MB
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ============================================
+    // CHAT PHOTOS
+    // Path: chatPhotos/{roundId}/{folder}/{filename}
+    // ============================================
+
+    match /chatPhotos/{roundId}/{allPaths=**} {
+      // Any authenticated user can view chat photos
+      allow read: if request.auth != null;
+
+      // Any authenticated user can upload (round membership checked in Firestore rules)
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

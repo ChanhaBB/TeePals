@@ -5,7 +5,8 @@ import SwiftUI
 struct PublicProfileCardView: View {
     let profile: PublicProfile
     var style: CardStyle = .full
-    
+    var onAvatarTap: (() -> Void)?
+
     enum CardStyle {
         case full       // All info, larger layout
         case compact    // Key info only, smaller layout
@@ -29,12 +30,12 @@ struct PublicProfileCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header: Avatar + Name + Location
             HStack(spacing: 12) {
-                avatarView(size: 56)
+                avatarView(size: 56, isTappable: true)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(profile.nickname)
                         .font(.headline)
-                    
+
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill")
                             .font(.caption2)
@@ -43,17 +44,8 @@ struct PublicProfileCardView: View {
                     }
                     .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
-                if let ageDecade = profile.ageDecade {
-                    Text(ageDecade.displayText)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(6)
-                }
             }
             
             // Bio
@@ -88,8 +80,8 @@ struct PublicProfileCardView: View {
                     .fontWeight(.medium)
                 
                 HStack(spacing: 8) {
-                    if let ageDecade = profile.ageDecade {
-                        Text(ageDecade.displayText)
+                    if let age = profile.age {
+                        Text("\(age)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -106,7 +98,7 @@ struct PublicProfileCardView: View {
             
             Spacer()
             
-            if let avgScore = profile.avgScore18 {
+            if let avgScore = profile.avgScore {
                 VStack(spacing: 2) {
                     Text("\(avgScore)")
                         .font(.headline)
@@ -134,23 +126,16 @@ struct PublicProfileCardView: View {
     }
     
     // MARK: - Avatar View
-    
-    private func avatarView(size: CGFloat) -> some View {
-        Group {
-            if let photoUrl = profile.photoUrl, let url = URL(string: photoUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        avatarPlaceholder
-                    case .empty:
-                        ProgressView()
-                    @unknown default:
-                        avatarPlaceholder
-                    }
+
+    private func avatarView(size: CGFloat, isTappable: Bool = false) -> some View {
+        let avatarContent = Group {
+            if let firstPhotoUrl = profile.photoUrls.first, let url = URL(string: firstPhotoUrl) {
+                CachedAsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    avatarPlaceholder
                 }
             } else {
                 avatarPlaceholder
@@ -158,6 +143,17 @@ struct PublicProfileCardView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+
+        return Group {
+            if isTappable, let onAvatarTap = onAvatarTap, !profile.photoUrls.isEmpty {
+                Button(action: onAvatarTap) {
+                    avatarContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                avatarContent
+            }
+        }
     }
     
     private var avatarPlaceholder: some View {
@@ -173,15 +169,15 @@ struct PublicProfileCardView: View {
     // MARK: - Golf Stats Row
     
     private var hasGolfStats: Bool {
-        profile.avgScore18 != nil ||
+        profile.avgScore != nil ||
         profile.skillLevel != nil ||
-        profile.experienceYears != nil ||
+        profile.experienceLevel != nil ||
         profile.playsPerMonth != nil
     }
     
     private var golfStatsRow: some View {
         HStack(spacing: 16) {
-            if let avgScore = profile.avgScore18 {
+            if let avgScore = profile.avgScore {
                 statItem(value: "\(avgScore)", label: "Avg Score")
             }
             
@@ -189,8 +185,8 @@ struct PublicProfileCardView: View {
                 statItem(value: skillLevel.displayText, label: "Skill")
             }
             
-            if let years = profile.experienceYears {
-                statItem(value: "\(years)", label: "Yrs Playing")
+            if let experience = profile.experienceLevel {
+                statItem(value: experience.displayText, label: "Experience")
             }
             
             if let plays = profile.playsPerMonth {
@@ -248,18 +244,17 @@ extension PublicProfile {
         PublicProfile(
             id: "preview-123",
             nickname: "Alex",
-            photoUrl: nil,
+            photoUrls: [],
             gender: .male,
             occupation: "Software Engineer",
             bio: "Weekend golfer trying to break 90. Love morning tee times!",
             primaryCityLabel: "San Jose, CA",
             primaryLocation: GeoLocation(latitude: 37.3382, longitude: -121.8863),
-            avgScore18: 94,
-            experienceYears: 5,
+            avgScore: 94,
+            experienceLevel: .fourToSix,
             playsPerMonth: 3,
             skillLevel: .intermediate,
-            ageDecade: .thirties
+            birthYear: 1992
         )
     }
 }
-

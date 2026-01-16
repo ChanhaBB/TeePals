@@ -1,266 +1,683 @@
 import SwiftUI
+import PhotosUI
 
+/// Profile tab view - displays user's profile with Instagram-inspired layout.
+/// Supports loading, empty, error states per UI_RULES.md.
 struct ProfileView: View {
     @StateObject private var viewModel: ProfileViewModel
     @EnvironmentObject private var authService: AuthService
-    
+    @EnvironmentObject private var container: AppContainer
+
     @State private var showingSignOutAlert = false
-    @State private var showingEditProfile = false
-    
+    @State private var showingFollowers = false
+    @State private var showingFollowing = false
+    @State private var showingBioEdit = false
+    @State private var showingAboutMeEdit = false
+    @State private var showingGolfEdit = false
+    @State private var isBioExpanded = false
+    @State private var showingPhotoViewer = false
+    @State private var showingPhotoActions = false
+
+    // Photo picker
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var photoEditViewModel: ProfileEditViewModel?
+
+    // ViewModels for edit sheets
+    @State private var bioEditViewModel: ProfileEditViewModel?
+    @State private var aboutMeEditViewModel: ProfileEditViewModel?
+    @State private var golfEditViewModel: ProfileEditViewModel?
+
     init(viewModel: ProfileViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
-    
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    if viewModel.isLoading && viewModel.publicProfile == nil {
-                        loadingState
-                    } else if let profile = viewModel.publicProfile {
-                        profileContent(profile: profile)
-                    } else {
-                        emptyState
-                    }
-                }
-                .padding()
+            ZStack {
+                AppColors.backgroundGrouped.ignoresSafeArea()
+                content
             }
-            .background(Color(.systemGroupedBackground))
             .navigationTitle("Profile")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button {
-                            showingEditProfile = true
-                        } label: {
-                            Label("Edit Profile", systemImage: "pencil")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) {
-                            showingSignOutAlert = true
-                        } label: {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
-            .refreshable {
-                await viewModel.refresh()
-            }
-            .task {
-                await viewModel.loadProfile()
-            }
+            .navigationBarTitleDisplayMode(.inline)
+            .refreshable { await viewModel.refresh() }
+            .task { await viewModel.loadProfile() }
             .alert("Sign Out", isPresented: $showingSignOutAlert) {
                 Button("Cancel", role: .cancel) { }
-                Button("Sign Out", role: .destructive) {
-                    authService.signOut()
-                }
+                Button("Sign Out", role: .destructive) { authService.signOut() }
             } message: {
                 Text("Are you sure you want to sign out?")
             }
-            .alert("Error", isPresented: showingError) {
-                Button("OK") {
-                    viewModel.errorMessage = nil
+            .sheet(isPresented: $showingFollowers) {
+                if let uid = viewModel.uid {
+                    FollowersListView(uid: uid, mode: .followers)
+                        .environmentObject(container)
                 }
-            } message: {
-                Text(viewModel.errorMessage ?? "An error occurred")
             }
-            .sheet(isPresented: $showingEditProfile) {
-                editProfileSheet
+            .sheet(isPresented: $showingFollowing) {
+                if let uid = viewModel.uid {
+                    FollowersListView(uid: uid, mode: .following)
+                        .environmentObject(container)
+                }
+            }
+            .sheet(isPresented: $showingBioEdit) {
+                if let bioVM = bioEditViewModel {
+                    BioEditSheet(viewModel: bioVM) {
+                        Task { await viewModel.refresh() }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAboutMeEdit) {
+                if let aboutVM = aboutMeEditViewModel {
+                    AboutMeEditSheet(viewModel: aboutVM) {
+                        Task { await viewModel.refresh() }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingGolfEdit) {
+                if let golfVM = golfEditViewModel {
+                    GolfEditSheet(viewModel: golfVM) {
+                        Task { await viewModel.refresh() }
+                    }
+                }
+            }
+            .onChange(of: showingBioEdit) { _, newValue in
+                if !newValue { bioEditViewModel = nil }
+            }
+            .onChange(of: showingAboutMeEdit) { _, newValue in
+                if !newValue { aboutMeEditViewModel = nil }
+            }
+            .onChange(of: showingGolfEdit) { _, newValue in
+                if !newValue { golfEditViewModel = nil }
+            }
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        await uploadPhoto(image)
+                    }
+                }
+            }
+            .confirmationDialog("Profile Photo", isPresented: $showingPhotoActions) {
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Text("Change Photo")
+                }
+                Button("Remove Photo", role: .destructive) {
+                    Task { await deletePhoto() }
+                }
+                Button("Cancel", role: .cancel) { }
+            }
+            .fullScreenCover(isPresented: $showingPhotoViewer) {
+                if let profile = viewModel.publicProfile, !profile.photoUrls.isEmpty {
+                    PhotoViewerView(photoUrls: profile.photoUrls, initialIndex: 0)
+                }
             }
         }
     }
-    
-    // MARK: - Profile Content
-    
-    private func profileContent(profile: PublicProfile) -> some View {
-        VStack(spacing: 20) {
-            // Profile Card
-            PublicProfileCardView(profile: profile, style: .full)
-            
-            // Social Stats
-            socialStatsCard
-            
-            // Actions
-            actionsSection
+
+    // MARK: - Content
+
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.isLoading {
+            loadingState
+        } else if let error = viewModel.errorMessage {
+            errorState(error)
+        } else if let profile = viewModel.publicProfile {
+            profileContent(profile: profile)
+        } else {
+            emptyState
         }
     }
-    
-    // MARK: - Social Stats Card
-    
-    private var socialStatsCard: some View {
-        HStack(spacing: 0) {
-            statItem(count: viewModel.followingCount, label: "Following")
-            
-            Divider()
-                .frame(height: 40)
-            
-            statItem(count: viewModel.followerCount, label: "Followers")
+
+    // MARK: - States
+
+    private var loadingState: some View {
+        ScrollView {
+            VStack(spacing: AppSpacing.lg) {
+                SkeletonCard(style: .profileCard)
+                AppCard(style: .elevated) {
+                    HStack(spacing: AppSpacing.xl) { statSkeleton; statSkeleton }
+                }
+            }
+            .padding(AppSpacing.contentPadding)
         }
-        .padding(.vertical, 16)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
-    
-    private func statItem(count: Int, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text("\(count)")
-                .font(.title2)
-                .fontWeight(.bold)
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+
+    private var statSkeleton: some View {
+        VStack(spacing: AppSpacing.xs) {
+            SkeletonShape(width: 40, height: 24)
+            SkeletonShape(width: 70, height: 14)
         }
         .frame(maxWidth: .infinity)
     }
-    
-    // MARK: - Actions Section
-    
-    private var actionsSection: some View {
-        VStack(spacing: 12) {
-            Button {
-                showingEditProfile = true
-            } label: {
-                HStack {
-                    Image(systemName: "pencil")
-                    Text("Edit Profile")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color(.systemBackground))
-                .foregroundColor(.primary)
-                .cornerRadius(12)
-            }
-            
-            Button(role: .destructive) {
-                showingSignOutAlert = true
-            } label: {
-                HStack {
-                    Image(systemName: "rectangle.portrait.and.arrow.right")
-                    Text("Sign Out")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color(.systemBackground))
-                .foregroundColor(.red)
-                .cornerRadius(12)
-            }
-        }
-    }
-    
-    // MARK: - Loading State
-    
-    private var loadingState: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.2)
-            Text("Loading profile...")
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 300)
-    }
-    
-    // MARK: - Empty State
-    
+
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "person.crop.circle.badge.questionmark")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
-            
-            Text("No Profile Yet")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("Set up your profile to connect with other golfers.")
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            Button {
-                showingEditProfile = true
-            } label: {
-                Text("Set Up Profile")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-            }
-            .padding(.top, 8)
+        ScrollView {
+            EmptyStateView.noProfile { /* No action needed */ }
+                .padding(.top, AppSpacing.xl)
         }
-        .padding()
-        .frame(maxWidth: .infinity, minHeight: 300)
     }
-    
-    // MARK: - Edit Profile Sheet
-    
-    private var editProfileSheet: some View {
-        // Placeholder - will connect to ProfileSetupView with edit mode
-        NavigationStack {
-            Text("Edit Profile")
-                .navigationTitle("Edit Profile")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showingEditProfile = false
+
+    private func errorState(_ message: String) -> some View {
+        ScrollView {
+            VStack {
+                Spacer(minLength: AppSpacing.xxl)
+                InlineErrorBanner(message, actionTitle: "Retry") {
+                    viewModel.errorMessage = nil
+                    Task { await viewModel.loadProfile() }
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: - Profile Content
+
+    private func profileContent(profile: PublicProfile) -> some View {
+        ScrollView {
+            VStack(spacing: AppSpacing.lg) {
+                unifiedHeader(profile: profile)
+                aboutMeCard(profile: profile)
+                golfCard(profile: profile)
+                myPostsButton
+                signOutSection
+            }
+            .padding(AppSpacing.contentPadding)
+        }
+    }
+
+    // MARK: - Unified Header (Instagram-style)
+
+    private func unifiedHeader(profile: PublicProfile) -> some View {
+        VStack(spacing: AppSpacing.md) {
+            // Photo with camera icon
+            ZStack(alignment: .bottomTrailing) {
+                // Tap to view fullscreen
+                if !profile.photoUrls.isEmpty {
+                    Button {
+                        showingPhotoViewer = true
+                    } label: {
+                        photoDisplay(profile: profile)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    photoDisplay(profile: profile)
+                }
+
+                // Camera icon overlay - change/delete if photo exists, add if not
+                if !profile.photoUrls.isEmpty {
+                    Button {
+                        showingPhotoActions = true
+                    } label: {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(6)
+                            .background(AppColors.primary)
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    }
+                    .offset(x: -2, y: -2)
+                } else {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(6)
+                            .background(AppColors.primary)
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    }
+                    .offset(x: -2, y: -2)
+                }
+            }
+
+            // Name
+            Text(profile.nickname)
+                .font(AppTypography.headlineLarge)
+                .foregroundColor(AppColors.textPrimary)
+
+            // Stats inline
+            HStack(spacing: 0) {
+                Button {
+                    showingFollowing = true
+                } label: {
+                    statItem(count: viewModel.followingCount, label: "Following")
+                }
+                .buttonStyle(.plain)
+
+                Divider()
+                    .frame(height: 40)
+                    .padding(.horizontal, AppSpacing.lg)
+
+                Button {
+                    showingFollowers = true
+                } label: {
+                    statItem(count: viewModel.followerCount, label: "Followers")
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.vertical, AppSpacing.sm)
+
+            // Bio (tappable to edit)
+            bioSection(profile: profile)
+        }
+        .padding(AppSpacing.lg)
+        .background(AppColors.surface)
+        .cornerRadius(AppRadii.card)
+    }
+
+    private func photoDisplay(profile: PublicProfile) -> some View {
+        Group {
+            if let photoUrl = profile.photoUrls.first, let url = URL(string: photoUrl) {
+                CachedAsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    photoPlaceholder
+                }
+            } else {
+                photoPlaceholder
+            }
+        }
+        .frame(width: 100, height: 100)
+        .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(AppColors.border, lineWidth: 1)
+        )
+    }
+
+    private var photoPlaceholder: some View {
+        Circle()
+            .fill(AppColors.primary.opacity(0.15))
+            .overlay(
+                Image(systemName: "person.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(AppColors.primary.opacity(0.6))
+            )
+    }
+
+    private func statItem(count: Int, label: String) -> some View {
+        VStack(spacing: AppSpacing.xs) {
+            Text("\(count)")
+                .font(AppTypography.headlineLarge)
+                .foregroundColor(AppColors.textPrimary)
+            Text(label)
+                .font(AppTypography.caption)
+                .foregroundColor(AppColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func bioSection(profile: PublicProfile) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            if let bio = profile.bio, !bio.isEmpty {
+                // Show bio
+                Button {
+                    bioEditViewModel = container.makeProfileEditViewModel()
+                    showingBioEdit = true
+                } label: {
+                    HStack {
+                        Text(bio)
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textPrimary)
+                            .lineLimit(isBioExpanded ? nil : 2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(AppColors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                // More/Less button
+                if bioNeedsExpansion(bio) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isBioExpanded.toggle()
+                        }
+                    } label: {
+                        Text(isBioExpanded ? "Show Less" : "Show More")
+                            .font(AppTypography.caption)
+                            .foregroundColor(AppColors.primary)
+                    }
+                }
+            } else {
+                // Empty state (tap to add)
+                Button {
+                    bioEditViewModel = container.makeProfileEditViewModel()
+                    showingBioEdit = true
+                } label: {
+                    HStack {
+                        Text("Add bio...")
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textTertiary)
+                            .italic()
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(AppColors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, AppSpacing.sm)
+    }
+
+    private func bioNeedsExpansion(_ text: String) -> Bool {
+        return text.count > 100
+    }
+
+    private func buildPersonalInfo(profile: PublicProfile) -> String? {
+        var parts: [String] = []
+        if let age = profile.age {
+            parts.append("\(age)")
+        }
+        if let gender = profile.gender {
+            parts.append(gender.displayText)
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    // MARK: - About Me Card
+
+    private func aboutMeCard(profile: PublicProfile) -> some View {
+        Button {
+            aboutMeEditViewModel = container.makeProfileEditViewModel()
+            showingAboutMeEdit = true
+        } label: {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                HStack {
+                    Text("About Me")
+                        .font(AppTypography.headlineMedium)
+                        .foregroundColor(AppColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.body)
+                        .foregroundColor(AppColors.textTertiary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    // Location
+                    if !profile.primaryCityLabel.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(AppColors.primary)
+                            Text(profile.primaryCityLabel)
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                    }
+
+                    // Age & Gender
+                    if let personalInfo = buildPersonalInfo(profile: profile), !personalInfo.isEmpty {
+                        Text(personalInfo)
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    // Instagram
+                    if let instagram = profile.instagramUsername, !instagram.isEmpty {
+                        instagramButton(username: instagram)
+                    }
+                }
+                .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppSpacing.md)
+            .background(AppColors.surface)
+            .cornerRadius(AppRadii.card)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func instagramButton(username: String) -> some View {
+        Button {
+            let urlString = username.hasPrefix("@") ? "https://instagram.com/\(String(username.dropFirst()))" : "https://instagram.com/\(username)"
+            if let url = URL(string: urlString) {
+                UIApplication.shared.open(url)
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text("IG")
+                    .font(AppTypography.labelSmall)
+                    .foregroundColor(AppColors.primary)
+                    .fontWeight(.semibold)
+                Text("@\(username.hasPrefix("@") ? String(username.dropFirst()) : username)")
+                    .font(AppTypography.bodyMedium)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+        }
+    }
+
+    // MARK: - Golf Card
+
+    private func golfCard(profile: PublicProfile) -> some View {
+        Button {
+            golfEditViewModel = container.makeProfileEditViewModel()
+            showingGolfEdit = true
+        } label: {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                HStack {
+                    Text("Golf")
+                        .font(AppTypography.headlineMedium)
+                        .foregroundColor(AppColors.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.body)
+                        .foregroundColor(AppColors.textTertiary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    // Skill Level (always show)
+                    HStack(spacing: 8) {
+                        Text("Skill Level:")
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textSecondary)
+                        Text(profile.skillLevel?.displayText ?? "Not set")
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(profile.skillLevel == nil ? AppColors.textTertiary : AppColors.textPrimary)
+                    }
+
+                    // Plays per Month (hide if empty)
+                    if let plays = profile.playsPerMonth {
+                        HStack(spacing: 8) {
+                            Text("Plays:")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textSecondary)
+                            Text("\(plays) times/month")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                    }
+
+                    // Avg Score (hide if empty)
+                    if let score = profile.avgScore {
+                        HStack(spacing: 8) {
+                            Text("Avg Score:")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textSecondary)
+                            Text("\(score)+")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textPrimary)
                         }
                     }
                 }
+                .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppSpacing.md)
+            .background(AppColors.surface)
+            .cornerRadius(AppRadii.card)
         }
+        .buttonStyle(.plain)
     }
-    
-    // MARK: - Error Binding
-    
-    private var showingError: Binding<Bool> {
-        Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { if !$0 { viewModel.errorMessage = nil } }
-        )
+
+    // MARK: - My Posts Button
+
+    private var myPostsButton: some View {
+        NavigationLink {
+            if let uid = viewModel.uid {
+                PostsListScreen(uid: uid)
+                    .environmentObject(container)
+            }
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("My Posts")
+                        .font(AppTypography.headlineMedium)
+                        .foregroundColor(AppColors.textPrimary)
+
+                    Text("Posts you've shared")
+                        .font(AppTypography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.body)
+                    .foregroundColor(AppColors.textTertiary)
+            }
+            .padding(AppSpacing.md)
+            .background(AppColors.surface)
+            .cornerRadius(AppRadii.card)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Sign Out
+
+    private var signOutSection: some View {
+        Button { showingSignOutAlert = true } label: {
+            HStack(spacing: AppSpacing.iconSpacing) {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 14))
+                Text("Sign Out")
+            }
+            .font(AppTypography.bodyMedium)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.sm)
+            .foregroundColor(AppColors.textSecondary)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Photo Actions
+
+    private func uploadPhoto(_ image: UIImage) async {
+        let vm = photoEditViewModel ?? container.makeProfileEditViewModel()
+        photoEditViewModel = vm
+
+        // Load profile if needed
+        await vm.loadProfile()
+
+        // Delete all existing photos (we only support single photo)
+        while !vm.photoUrls.isEmpty {
+            await vm.deletePhoto(at: 0)
+        }
+
+        // Upload new photo
+        await vm.uploadPhoto(image)
+
+        // Save profile
+        _ = await vm.saveProfile()
+
+        // Refresh view
+        await viewModel.refresh()
+
+        // Reset
+        selectedPhotoItem = nil
+        photoEditViewModel = nil
+    }
+
+    private func deletePhoto() async {
+        let vm = photoEditViewModel ?? container.makeProfileEditViewModel()
+        photoEditViewModel = vm
+
+        // Load profile
+        await vm.loadProfile()
+
+        // Delete all photos (we only support single photo)
+        while !vm.photoUrls.isEmpty {
+            await vm.deletePhoto(at: 0)
+        }
+
+        // Save profile
+        _ = await vm.saveProfile()
+
+        // Refresh view
+        await viewModel.refresh()
+
+        // Reset
+        photoEditViewModel = nil
     }
 }
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     ProfileView(
         viewModel: ProfileViewModel(
-            profileRepository: MockProfileRepository(),
-            socialRepository: MockSocialRepository(),
+            profileRepository: ProfilePreviewMocks.repository,
+            socialRepository: ProfilePreviewMocks.socialRepository,
             currentUid: { "preview-uid" }
         )
     )
     .environmentObject(AuthService())
+    .environmentObject(AppContainer())
 }
 
-// MARK: - Mock Repositories for Preview
+enum ProfilePreviewMocks {
+    static let repository: ProfileRepository = MockProfileRepo()
+    static let socialRepository: SocialRepository = MockSocialRepo()
 
-private class MockProfileRepository: ProfileRepository {
-    func fetchPublicProfile(uid: String) async throws -> PublicProfile? {
-        return .preview
+    private class MockProfileRepo: ProfileRepository {
+        func fetchPublicProfile(uid: String) async throws -> PublicProfile? {
+            PublicProfile(
+                id: uid, nickname: "GolfPro", gender: .male,
+                occupation: "Software Engineer", bio: "Love hitting the links!",
+                primaryCityLabel: "San Jose, CA",
+                primaryLocation: GeoLocation(latitude: 37.3382, longitude: -121.8863),
+                avgScore: 85, skillLevel: .intermediate, birthYear: 1992
+            )
+        }
+        func fetchPrivateProfile(uid: String) async throws -> PrivateProfile? { nil }
+        func upsertPublicProfile(_ profile: PublicProfile) async throws {}
+        func upsertPrivateProfile(_ profile: PrivateProfile) async throws {}
     }
-    
-    func fetchPrivateProfile(uid: String) async throws -> PrivateProfile? {
-        return nil
-    }
-    
-    func upsertPublicProfile(_ profile: PublicProfile) async throws {}
-    func upsertPrivateProfile(_ profile: PrivateProfile) async throws {}
-}
 
-private class MockSocialRepository: SocialRepository {
-    func follow(targetUid: String) async throws {}
-    func unfollow(targetUid: String) async throws {}
-    func isFollowing(targetUid: String) async throws -> Bool { false }
-    func isFollowedBy(targetUid: String) async throws -> Bool { false }
-    func isMutualFollow(targetUid: String) async throws -> Bool { false }
-    func getFollowing() async throws -> [String] { ["1", "2", "3"] }
-    func getFollowers() async throws -> [String] { ["1", "2"] }
-    func getFriends() async throws -> [String] { ["1"] }
+    private class MockSocialRepo: SocialRepository {
+        func follow(targetUid: String) async throws {}
+        func unfollow(targetUid: String) async throws {}
+        func isFollowing(targetUid: String) async throws -> Bool { false }
+        func isFollowedBy(targetUid: String) async throws -> Bool { false }
+        func isMutualFollow(targetUid: String) async throws -> Bool { false }
+        func getFollowing() async throws -> [String] { ["1", "2", "3"] }
+        func getFollowers() async throws -> [String] { ["1", "2"] }
+        func getFriends() async throws -> [String] { ["1"] }
+        func getFollowerCount(uid: String) async throws -> Int { 42 }
+        func getFollowingCount(uid: String) async throws -> Int { 18 }
+        func fetchMutualFollows(uid: String) async throws -> [FollowUser] { [] }
+        func areMutualFollows(uid1: String, uid2: String) async throws -> Bool { false }
+        func fetchFollowersWithProfiles(uid: String) async throws -> [FollowUser] { [] }
+        func fetchFollowingWithProfiles(uid: String) async throws -> [FollowUser] { [] }
+    }
 }
+#endif

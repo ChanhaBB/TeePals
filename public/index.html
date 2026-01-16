@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeePals - Golf, better together</title>
+
+    <meta name="description" content="TeePals is a golf social platform for forming real-life rounds. Connect with golfers, discover rounds near you, and play more golf.">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="TeePals">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="TeePals - Golf, better together">
+    <meta property="og:description" content="Connect with golfers and discover rounds near you.">
+    <meta property="og:image" content="https://teepals-cf67c.web.app/app-icon.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tagline {
+            font-size: 24px;
+            margin-bottom: 48px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .description {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 48px;
+            opacity: 0.85;
+        }
+
+        .app-store-badge img {
+            height: 60px;
+            transition: transform 0.2s;
+        }
+
+        .app-store-badge img:hover {
+            transform: translateY(-4px);
+        }
+
+        .footer {
+            margin-top: 64px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 36px;
+            }
+
+            .tagline {
+                font-size: 20px;
+            }
+
+            .description {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">⛳</div>
+        <h1>TeePals</h1>
+        <p class="tagline">Golf, better together.</p>
+
+        <div class="description">
+            <p>Connect with golfers, discover rounds near you,<br>and play more golf.</p>
+        </div>
+
+        <div class="app-store-badge">
+            <!-- TODO: Replace with actual App Store link when app is published -->
+            <a href="https://apps.apple.com" target="_blank">
+                <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store">
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>TeePals &copy; 2026</p>
+        </div>
+    </div>
+</body>
+</html>

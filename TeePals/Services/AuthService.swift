@@ -50,7 +50,8 @@ class AuthService: ObservableObject {
     
     private func checkProfileStatus(userId: String) async {
         do {
-            let doc = try await db.collection(FirestoreCollection.profiles).document(userId).getDocument()
+            // v2: Check profiles_public/{uid} as source of truth
+            let doc = try await db.collection(FirestoreCollection.profilesPublic).document(userId).getDocument()
             if doc.exists {
                 authState = .authenticated
             } else {

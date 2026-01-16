@@ -1,5 +1,7 @@
 import Foundation
 
+/// ViewModel for ProfileSetupView (Tier 1 setup, legacy).
+/// Note: ProfileEditView/ProfileEditViewModel is preferred for editing.
 @MainActor
 final class ProfileSetupViewModel: ObservableObject {
     
@@ -15,14 +17,14 @@ final class ProfileSetupViewModel: ObservableObject {
     
     // Public profile fields
     @Published var nickname = ""
-    @Published var photoUrl: String?
+    @Published var photoUrls: [String] = []
     @Published var gender: Gender?
     @Published var occupation = ""
     @Published var bio = ""
     @Published var primaryCityLabel = ""
     @Published var primaryLocation: GeoLocation?
-    @Published var avgScore18: Int?
-    @Published var experienceYears: Int?
+    @Published var avgScore: Int?
+    @Published var experienceLevel: ExperienceLevel?
     @Published var playsPerMonth: Int?
     @Published var skillLevel: SkillLevel?
     
@@ -31,19 +33,20 @@ final class ProfileSetupViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     
-    /// Computes age decade from birthDate for public profile
-    var ageDecade: AgeDecade? {
+    /// Extracts birth year from birthDate for public profile (age calculation)
+    var birthYear: Int? {
         guard let birthDate = birthDate else { return nil }
-        let age = calculateAge(from: birthDate)
-        return ageDecadeFromAge(age)
+        return Calendar.current.component(.year, from: birthDate)
     }
     
-    /// Validates that required fields are filled
+    /// Validates that Tier 1 required fields are filled.
+    /// Tier 1: nickname, primary location, birthDate, gender
     var canSave: Bool {
         !nickname.trimmingCharacters(in: .whitespaces).isEmpty &&
         !primaryCityLabel.isEmpty &&
         primaryLocation != nil &&
-        birthDate != nil
+        birthDate != nil &&
+        gender != nil
     }
     
     // MARK: - Init
@@ -66,21 +69,20 @@ final class ProfileSetupViewModel: ObservableObject {
         
         isLoading = true
         errorMessage = nil
-        
         defer { isLoading = false }
         
         do {
             // Load public profile
             if let publicProfile = try await profileRepository.fetchPublicProfile(uid: uid) {
                 nickname = publicProfile.nickname
-                photoUrl = publicProfile.photoUrl
+                photoUrls = publicProfile.photoUrls
                 gender = publicProfile.gender
                 occupation = publicProfile.occupation ?? ""
                 bio = publicProfile.bio ?? ""
                 primaryCityLabel = publicProfile.primaryCityLabel
                 primaryLocation = publicProfile.primaryLocation
-                avgScore18 = publicProfile.avgScore18
-                experienceYears = publicProfile.experienceYears
+                avgScore = publicProfile.avgScore
+                experienceLevel = publicProfile.experienceLevel
                 playsPerMonth = publicProfile.playsPerMonth
                 skillLevel = publicProfile.skillLevel
             }
@@ -90,8 +92,6 @@ final class ProfileSetupViewModel: ObservableObject {
                 birthDate = parseBirthDate(privateProfile.birthDate)
             }
         } catch {
-            // If profiles don't exist, that's okay for setup
-            // Only show error for actual failures
             if let repoError = error as? ProfileRepositoryError {
                 switch repoError {
                 case .notFound:
@@ -131,30 +131,27 @@ final class ProfileSetupViewModel: ObservableObject {
         
         isLoading = true
         errorMessage = nil
-        
         defer { isLoading = false }
         
         do {
-            // Build and save public profile
             let publicProfile = PublicProfile(
                 id: uid,
                 nickname: trimmedNickname,
-                photoUrl: photoUrl,
+                photoUrls: photoUrls,
                 gender: gender,
                 occupation: occupation.isEmpty ? nil : occupation,
                 bio: bio.isEmpty ? nil : bio,
                 primaryCityLabel: primaryCityLabel,
                 primaryLocation: location,
-                avgScore18: avgScore18,
-                experienceYears: experienceYears,
+                avgScore: avgScore,
+                experienceLevel: experienceLevel,
                 playsPerMonth: playsPerMonth,
                 skillLevel: skillLevel,
-                ageDecade: ageDecade
+                birthYear: birthYear
             )
             
             try await profileRepository.upsertPublicProfile(publicProfile)
             
-            // Build and save private profile
             let privateProfile = PrivateProfile(
                 id: uid,
                 birthDate: formatBirthDate(birthDate)
@@ -178,24 +175,6 @@ final class ProfileSetupViewModel: ObservableObject {
     
     // MARK: - Private Helpers
     
-    private func calculateAge(from date: Date) -> Int {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year], from: date, to: Date())
-        return components.year ?? 0
-    }
-    
-    private func ageDecadeFromAge(_ age: Int) -> AgeDecade {
-        switch age {
-        case ..<20: return .teens
-        case 20..<30: return .twenties
-        case 30..<40: return .thirties
-        case 40..<50: return .forties
-        case 50..<60: return .fifties
-        case 60..<70: return .sixties
-        default: return .seventiesPlus
-        }
-    }
-    
     private func formatBirthDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -208,4 +187,3 @@ final class ProfileSetupViewModel: ObservableObject {
         return formatter.date(from: string)
     }
 }
-

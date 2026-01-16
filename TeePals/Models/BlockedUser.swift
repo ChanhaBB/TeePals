@@ -1,8 +1,8 @@
 import Foundation
-import FirebaseFirestore
 
+/// Blocked user record.
 struct BlockedUser: Codable, Identifiable {
-    @DocumentID var id: String?
+    var id: String?
     let blockedAt: Date
     
     init(id: String? = nil, blockedAt: Date = Date()) {
@@ -11,28 +11,28 @@ struct BlockedUser: Codable, Identifiable {
     }
 }
 
+/// User report record.
 struct Report: Codable, Identifiable {
-    @DocumentID var id: String?
-    let reporterUserId: String
-    let reportedUserId: String
+    var id: String?
+    let reporterUid: String
+    let reportedUid: String
     let reason: String
     let context: String?
     let createdAt: Date
     
     init(
         id: String? = nil,
-        reporterUserId: String,
-        reportedUserId: String,
+        reporterUid: String,
+        reportedUid: String,
         reason: String,
         context: String? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
-        self.reporterUserId = reporterUserId
-        self.reportedUserId = reportedUserId
+        self.reporterUid = reporterUid
+        self.reportedUid = reportedUid
         self.reason = reason
         self.context = context
         self.createdAt = createdAt
     }
 }
-

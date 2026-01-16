@@ -4,7 +4,7 @@ struct PublicProfile: Codable, Identifiable {
     var id: String?
     
     let nickname: String
-    var photoUrl: String?
+    var photoUrls: [String]  // 0-5 photos; Tier 2 requires >= 1
     var gender: Gender?
     var occupation: String?
     var bio: String?
@@ -12,47 +12,78 @@ struct PublicProfile: Codable, Identifiable {
     let primaryCityLabel: String
     let primaryLocation: GeoLocation
     
-    var avgScore18: Int?
-    var experienceYears: Int?
+    var avgScore: Int?           // 60-120 in increments of 10
+    var experienceLevel: ExperienceLevel?
     var playsPerMonth: Int?
-    var skillLevel: SkillLevel?
-    var ageDecade: AgeDecade?
-    
+    var skillLevel: SkillLevel?  // Required for Tier 2
+    var birthYear: Int?          // Birth year for age calculation (keeps exact date private)
+    var ageDecade: AgeDecade?    // Deprecated: use birthYear instead
+
+    // Social media
+    var instagramUsername: String?
+
     let createdAt: Date
     var updatedAt: Date
     
     init(
         id: String? = nil,
         nickname: String,
-        photoUrl: String? = nil,
+        photoUrls: [String] = [],
         gender: Gender? = nil,
         occupation: String? = nil,
         bio: String? = nil,
         primaryCityLabel: String,
         primaryLocation: GeoLocation,
-        avgScore18: Int? = nil,
-        experienceYears: Int? = nil,
+        avgScore: Int? = nil,
+        experienceLevel: ExperienceLevel? = nil,
         playsPerMonth: Int? = nil,
         skillLevel: SkillLevel? = nil,
+        birthYear: Int? = nil,
         ageDecade: AgeDecade? = nil,
+        instagramUsername: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
         self.id = id
         self.nickname = nickname
-        self.photoUrl = photoUrl
+        self.photoUrls = photoUrls
         self.gender = gender
         self.occupation = occupation
         self.bio = bio
         self.primaryCityLabel = primaryCityLabel
         self.primaryLocation = primaryLocation
-        self.avgScore18 = avgScore18
-        self.experienceYears = experienceYears
+        self.avgScore = avgScore
+        self.experienceLevel = experienceLevel
         self.playsPerMonth = playsPerMonth
         self.skillLevel = skillLevel
+        self.birthYear = birthYear
         self.ageDecade = ageDecade
+        self.instagramUsername = instagramUsername
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+    
+    /// Whether this profile meets Tier 2 requirements (has at least 1 photo)
+    var isTier2Complete: Bool {
+        !photoUrls.isEmpty
+    }
+    
+    /// Calculated age from birth year (approximate, within 1 year)
+    var age: Int? {
+        guard let birthYear = birthYear else { return nil }
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return currentYear - birthYear
+    }
+    
+    /// Normalized city key for Firestore queries
+    /// e.g., "San Jose, CA" -> "san_jose_ca"
+    var primaryCityKey: String {
+        primaryCityLabel
+            .lowercased()
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+            .filter { $0.isLetter || $0.isNumber || $0 == "_" }
     }
 }
 
@@ -95,14 +126,52 @@ enum AgeDecade: String, Codable, CaseIterable {
 enum SkillLevel: String, Codable, CaseIterable {
     case beginner
     case intermediate
-    case advanced
+    case expert
     
     var displayText: String {
         rawValue.capitalized
     }
 }
 
-// MARK: - GeoLocation (Codable wrapper for coordinates)
+// MARK: - Experience Level
+
+enum ExperienceLevel: String, Codable, CaseIterable {
+    case lessThanOne = "less_than_1"
+    case oneToThree = "1_to_3"
+    case fourToSix = "4_to_6"
+    case sevenToTen = "7_to_10"
+    case moreThanTen = "more_than_10"
+    
+    var displayText: String {
+        switch self {
+        case .lessThanOne: return "< 1 year"
+        case .oneToThree: return "1-3 years"
+        case .fourToSix: return "4-6 years"
+        case .sevenToTen: return "7-10 years"
+        case .moreThanTen: return "> 10 years"
+        }
+    }
+}
+
+// MARK: - Avg Score Options
+
+enum AvgScoreOption: Int, CaseIterable, Identifiable {
+    case sixty = 60
+    case seventy = 70
+    case eighty = 80
+    case ninety = 90
+    case hundred = 100
+    case oneHundredTen = 110
+    case oneHundredTwenty = 120
+    
+    var id: Int { rawValue }
+    
+    var displayText: String {
+        "\(rawValue)+"
+    }
+}
+
+// MARK: - GeoLocation
 
 struct GeoLocation: Codable, Equatable {
     let latitude: Double
@@ -113,4 +182,3 @@ struct GeoLocation: Codable, Equatable {
         self.longitude = longitude
     }
 }
-

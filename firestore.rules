@@ -3,17 +3,371 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 2, 7);
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidTimestamp(field) {
+      return request.resource.data[field] is timestamp;
+    }
+
+    // Check if update only modifies count fields (for members leaving)
+    function isMemberUpdatingCountsOnly() {
+      let allowedFields = ['acceptedCount', 'requestCount', 'updatedAt'];
+      let changedFields = request.resource.data.diff(resource.data).affectedKeys();
+      return changedFields.hasOnly(allowedFields);
+    }
+
+    // ============================================
+    // USERS (basic auth record)
+    // ============================================
+    
+    match /users/{uid} {
+      // Any authenticated user can read basic user info
+      allow read: if isSignedIn();
+      
+      // Only owner can create/update their user doc
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ============================================
+    // PUBLIC PROFILES
+    // Readable by any authenticated user
+    // Writable only by owner
+    // ============================================
+    
+    match /profiles_public/{uid} {
+      // Any authenticated user can read public profiles
+      allow read: if isSignedIn();
+      
+      // Only owner can create/update their public profile
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['nickname', 'primaryCityLabel', 'primaryLocation'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() > 0
+        && request.resource.data.nickname.size() <= 50;
+      
+      allow update: if isOwner(uid)
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() > 0
+        && request.resource.data.nickname.size() <= 50;
+      
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ============================================
+    // PRIVATE PROFILES
+    // Only readable/writable by owner
+    // Contains sensitive data (birthDate)
+    // ============================================
+    
+    match /profiles_private/{uid} {
+      // Only owner can read their private profile
+      allow read: if isOwner(uid);
+      
+      // Only owner can create/update their private profile
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['birthDate'])
+        && request.resource.data.birthDate is string;
+      
+      allow update: if isOwner(uid);
+      
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ============================================
+    // SOCIAL GRAPH (follows)
+    // follows/{uid}/following/{targetUid}
+    // follows/{uid}/followers/{followerUid}
+    // ============================================
+
+    match /follows/{uid} {
+      // Parent doc doesn't need to exist, but block direct access
+      allow read, write: if false;
+
+      // FOLLOWING subcollection
+      // User can manage who they follow
+      match /following/{targetUid} {
+        // Any authenticated user can read following lists (for counts and social discovery)
+        allow read: if isSignedIn();
+
+        // Owner can add/remove from their following list
+        // Cannot follow yourself
+        allow create: if isOwner(uid) && uid != targetUid;
+        allow delete: if isOwner(uid);
+
+        // No updates needed (just create/delete)
+        allow update: if false;
+      }
+
+      // FOLLOWERS subcollection
+      // Written when someone follows you (via batch with their following write)
+      match /followers/{followerUid} {
+        // Any authenticated user can read followers lists (for counts and social discovery)
+        allow read: if isSignedIn();
+
+        // The follower writes to your followers list when they follow you
+        allow create: if isOwner(followerUid) && uid != followerUid;
+
+        // The follower deletes from your followers list when they unfollow you
+        allow delete: if isOwner(followerUid);
+
+        // No updates needed
+        allow update: if false;
+      }
+    }
+
+    // ============================================
+    // ROUNDS
+    // Complex visibility (public/friends/invite) - MVP: public only
+    // ============================================
+    
+    match /rounds/{roundId} {
+      // Any authenticated user can read public rounds
+      // TODO: Add friends/invite visibility checks later
+      allow read: if isSignedIn();
+      
+      // Authenticated users can create rounds (they become host)
+      allow create: if isSignedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.keys().hasAll(['hostUid', 'title', 'maxPlayers', 'status']);
+      
+      // Host can update their round
+      // Members can also update counts when leaving (only acceptedCount/requestCount decrements)
+      allow update: if isSignedIn()
+        && (resource.data.hostUid == request.auth.uid
+            || isMemberUpdatingCountsOnly());
+      
+      // No client-side deletes (use status = canceled)
+      allow delete: if false;
+      
+      // ROUND MEMBERS subcollection
+      match /members/{memberUid} {
+        // Members and host can read member list
+        allow read: if isSignedIn();
+        
+        // User can add themselves as a member (join request)
+        allow create: if isOwner(memberUid)
+          && request.resource.data.uid == memberUid;
+        
+        // User can update their own membership (leave, etc.)
+        // Host can update any membership (accept, decline, remove)
+        allow update: if isOwner(memberUid)
+          || get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
+        
+        // User can delete their own membership (leave)
+        // Host can remove members
+        allow delete: if isOwner(memberUid)
+          || get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
+      }
+      
+      // ROUND MESSAGES subcollection (Chat)
+      match /messages/{messageId} {
+        // Helper: Check if user is round host
+        function isRoundHost() {
+          return get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
+        }
+        
+        // Helper: Check if user is accepted member
+        function isAcceptedMember() {
+          return exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid))
+            && get(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid)).data.status == 'accepted';
+        }
+        
+        // Only host or accepted members can read messages
+        allow read: if isSignedIn() && (isRoundHost() || isAcceptedMember());
+        
+        // Only host or accepted members can send messages
+        // Message sender must be the authenticated user
+        allow create: if isSignedIn()
+          && (isRoundHost() || isAcceptedMember())
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 1000;
+        
+        // No editing or deleting messages (moderation via admin only)
+        allow update, delete: if false;
+      }
+
+      // CHAT METADATA subcollection (Phase 5)
+      // Per-user chat metadata for notification management
+      match /chatMetadata/{userId} {
+        // User can only read their own chat metadata
+        allow read: if isOwner(userId);
+
+        // User can update their own chat metadata (lastReadAt, isMuted)
+        // Must preserve uid field
+        allow write: if isOwner(userId)
+          && request.resource.data.uid == userId;
+      }
+    }
+
+    // ============================================
+    // POSTS (Phase 4 - Social Layer)
+    // ============================================
+    
+    match /posts/{postId} {
+      // Public posts readable by all authenticated users
+      // Friends-only posts checked at client level for MVP
+      allow read: if isSignedIn();
+
+      // Author can create posts
+      allow create: if isSignedIn()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.photoUrls is list
+        && request.resource.data.photoUrls.size() <= 4;
+
+      // Author can update their posts
+      // NOTE: commentCount/upvoteCount are updated by Cloud Functions (which bypass rules)
+      allow update: if isSignedIn()
+        && resource.data.authorUid == request.auth.uid;
+
+      // Author can delete their posts
+      allow delete: if isSignedIn()
+        && resource.data.authorUid == request.auth.uid;
+      
+      // UPVOTES subcollection
+      match /upvotes/{uid} {
+        // Anyone can read upvotes
+        allow read: if isSignedIn();
+        
+        // User can add/remove their own upvote
+        allow create, delete: if isSignedIn() && request.auth.uid == uid;
+        
+        // No updates needed
+        allow update: if false;
+      }
+      
+      // COMMENTS subcollection
+      match /comments/{commentId} {
+        // Anyone can read comments
+        allow read: if isSignedIn();
+        
+        // Authenticated users can create comments
+        allow create: if isSignedIn()
+          && request.resource.data.authorUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 1000;
+        
+        // Author can update their comment
+        allow update: if isSignedIn()
+          && resource.data.authorUid == request.auth.uid;
+        
+        // Author can delete their comment
+        allow delete: if isSignedIn()
+          && resource.data.authorUid == request.auth.uid;
+      }
+    }
+
+    // ============================================
+    // NOTIFICATIONS (Phase 5)
+    // User-scoped, owner-only access
+    // Only Cloud Functions can create notifications
+    // ============================================
+
+    match /notifications/{uid}/items/{notifId} {
+      // Only owner can read their notifications
+      allow read: if isOwner(uid);
+
+      // Only Cloud Functions can create notifications (prevents spam)
+      // For MVP testing without Cloud Functions, temporarily allow writes:
+      // TODO: Change to `allow create: if false;` once Cloud Functions are deployed
+      allow create: if false;  // Only Cloud Functions
+
+      // Owner can update (mark as read)
+      allow update: if isOwner(uid);
+
+      // Owner can delete notifications
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================
+    // BLOCKS
+    // blocks/{uid}/blocked/{blockedUid}
+    // ============================================
+    
+    match /blocks/{uid}/blocked/{blockedUid} {
+      // Only owner can read their block list
+      allow read: if isOwner(uid);
+      
+      // Only owner can block/unblock users
+      allow create: if isOwner(uid) && uid != blockedUid;
+      allow delete: if isOwner(uid);
+      
+      // No updates needed
+      allow update: if false;
+    }
+
+    // ============================================
+    // REPORTS
+    // Write-only for users, read-only for admins
+    // ============================================
+    
+    match /reports/{reportId} {
+      // Users cannot read reports
+      allow read: if false;
+      
+      // Authenticated users can submit reports
+      allow create: if isSignedIn()
+        && request.resource.data.reporterUid == request.auth.uid;
+      
+      // No updates or deletes from client
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // POST STATS (Phase 4.2)
+    // Aggregate statistics for posts
+    // Read-only for clients, Cloud Functions write
+    // ============================================
+
+    match /postStats/{postId} {
+      // Any authenticated user can read post stats
+      allow read: if isSignedIn();
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+
+    // ============================================
+    // USER STATS (Phase 4.2)
+    // User statistics for feed ranking
+    // Read-only for clients, Cloud Functions write
+    // ============================================
+
+    match /userStats/{userId} {
+      // Any authenticated user can read user stats
+      allow read: if isSignedIn();
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+
+    // ============================================
+    // COLLECTION GROUP QUERIES
+    // For querying across all "members" subcollections
+    // ============================================
+
+    match /{path=**}/members/{memberUid} {
+      // Allow users to query their own memberships across all rounds
+      // This enables Activity tab's "requested rounds" feature
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
   }
 }

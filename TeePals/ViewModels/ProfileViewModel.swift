@@ -10,8 +10,8 @@ final class ProfileViewModel: ObservableObject {
     private let currentUid: () -> String?
     
     // MARK: - Published State
-    
-    @Published var isLoading = false
+
+    @Published var isLoading = true // Start true to show skeleton on first load
     @Published var errorMessage: String?
     
     @Published var publicProfile: PublicProfile?
@@ -22,6 +22,10 @@ final class ProfileViewModel: ObservableObject {
     
     var hasProfile: Bool {
         publicProfile != nil
+    }
+    
+    var uid: String? {
+        currentUid()
     }
     
     // MARK: - Init
@@ -41,14 +45,17 @@ final class ProfileViewModel: ObservableObject {
     func loadProfile() async {
         guard let uid = currentUid() else {
             errorMessage = "Not signed in"
+            isLoading = false
             return
         }
-        
-        isLoading = true
+
+        // On subsequent loads with cache, hide loading immediately
+        let hasCache = publicProfile != nil
+        if hasCache {
+            isLoading = false
+        }
         errorMessage = nil
-        
-        defer { isLoading = false }
-        
+
         // Load profile and social counts concurrently
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
@@ -58,6 +65,9 @@ final class ProfileViewModel: ObservableObject {
                 await self.fetchSocialCounts()
             }
         }
+
+        // Always stop loading after data arrives
+        isLoading = false
     }
     
     private func fetchPublicProfile(uid: String) async {

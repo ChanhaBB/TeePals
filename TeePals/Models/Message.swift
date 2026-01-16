@@ -1,24 +1,24 @@
 import Foundation
-import FirebaseFirestore
 
+/// Chat message model for round chat.
 struct Message: Codable, Identifiable {
-    @DocumentID var id: String?
-    let senderUserId: String
+    var id: String?
+    let senderUid: String
     let text: String
     let createdAt: Date
     
-    // Joined from user data (not stored)
-    var senderDisplayName: String?
+    // Joined from public profile (not stored)
+    var senderNickname: String?
     
-    init(id: String? = nil, senderUserId: String, text: String, createdAt: Date = Date()) {
+    init(
+        id: String? = nil,
+        senderUid: String,
+        text: String,
+        createdAt: Date = Date()
+    ) {
         self.id = id
-        self.senderUserId = senderUserId
+        self.senderUid = senderUid
         self.text = text
         self.createdAt = createdAt
     }
-    
-    enum CodingKeys: String, CodingKey {
-        case id, senderUserId, text, createdAt
-    }
 }
-

@@ -38,5 +38,49 @@ protocol SocialRepository {
     /// Get the list of mutual follows (friends) for the current user.
     /// - Returns: Array of user UIDs who are mutual follows
     func getFriends() async throws -> [String]
+    
+    /// Get follower count for any user.
+    /// - Parameter uid: The user's UID
+    /// - Returns: Number of followers
+    func getFollowerCount(uid: String) async throws -> Int
+    
+    /// Get following count for any user.
+    /// - Parameter uid: The user's UID
+    /// - Returns: Number of users they follow
+    func getFollowingCount(uid: String) async throws -> Int
+    
+    // MARK: - Enhanced Social Queries (Phase 4)
+    
+    /// Fetch mutual follows (friends) with profile data.
+    /// - Parameter uid: User's UID
+    /// - Returns: Array of FollowUser with profile data
+    func fetchMutualFollows(uid: String) async throws -> [FollowUser]
+    
+    /// Check if two users are mutual follows.
+    func areMutualFollows(uid1: String, uid2: String) async throws -> Bool
+    
+    /// Fetch followers with profile data, friends sorted first.
+    func fetchFollowersWithProfiles(uid: String) async throws -> [FollowUser]
+    
+    /// Fetch following with profile data, friends sorted first.
+    func fetchFollowingWithProfiles(uid: String) async throws -> [FollowUser]
+}
+
+// MARK: - Follow User Model
+
+struct FollowUser: Identifiable, Equatable {
+    let uid: String
+    var nickname: String
+    var photoUrl: String?
+    var isMutualFollow: Bool
+    
+    var id: String { uid }
+    
+    init(uid: String, nickname: String = "", photoUrl: String? = nil, isMutualFollow: Bool = false) {
+        self.uid = uid
+        self.nickname = nickname
+        self.photoUrl = photoUrl
+        self.isMutualFollow = isMutualFollow
+    }
 }
 
