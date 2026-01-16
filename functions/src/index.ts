@@ -711,6 +711,62 @@ export const onRoundUpdate = functions.firestore
   });
 
 // ============================================
+// onRoundComplete: Feedback reminder notifications
+// Triggers when round status changes to "completed"
+// Creates feedback reminder for all accepted members
+// ============================================
+
+export const onRoundComplete = functions.firestore
+  .document("rounds/{roundId}")
+  .onUpdate(async (change, context) => {
+    const roundId = context.params.roundId as string;
+    const before = change.before.data();
+    const after = change.after.data();
+
+    // Only trigger when status changes to completed
+    if (before.status === "completed" || after.status !== "completed") {
+      return;
+    }
+
+    try {
+      const courseName = after.chosenCourse?.name || "a round";
+
+      // Get all accepted members (including host)
+      const membersSnapshot = await db
+        .collection("rounds")
+        .doc(roundId)
+        .collection("members")
+        .where("status", "==", "accepted")
+        .get();
+
+      console.log(`🎯 Round ${roundId} completed. Creating feedback notifications for ${membersSnapshot.size} members`);
+
+      // Create feedback notifications for all members in parallel
+      const promises = membersSnapshot.docs.map(async (memberDoc) => {
+        const memberData = memberDoc.data();
+        const memberUid = memberData.uid as string;
+
+        await createNotification(memberUid, {
+          type: "feedbackReminder",
+          targetId: roundId,
+          targetType: "round",
+          title: "Rate your playing partners",
+          body: `You played at ${courseName}. Share your experience!`,
+          metadata: {
+            courseName: courseName,
+          },
+        });
+      });
+
+      await Promise.all(promises);
+      console.log(`✅ Created feedback notifications for ${membersSnapshot.size} members in round ${roundId}`);
+    } catch (error) {
+      console.error(`❌ Error creating feedback notifications for round ${roundId}:`, error);
+      throw error;
+    }
+  });
+
+// ============================================
 // onFollowCreate: New follower notifications
 // ============================================
 

@@ -15,7 +15,8 @@ final class CreatePostViewModel: ObservableObject {
     private let currentUid: () -> String?
     
     // MARK: - State
-    
+
+    @Published var title: String = ""
     @Published var text: String = ""
     @Published var selectedPhotos: [PhotosPickerItem] = []
     @Published var photoImages: [UIImage] = []
@@ -34,10 +35,11 @@ final class CreatePostViewModel: ObservableObject {
     @Published var isLoadingRounds = false
     
     // MARK: - Constants
-    
+
     let maxPhotos = Post.maxPhotos
+    let maxTitleLength = Post.maxTitleLength
     let maxTextLength = Post.maxTextLength
-    
+
     // MARK: - Init
     
     init(
@@ -53,21 +55,30 @@ final class CreatePostViewModel: ObservableObject {
     }
     
     // MARK: - Computed
-    
+
     var canPost: Bool {
-        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        text.count <= maxTextLength &&
-        !isLoading
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return !trimmedTitle.isEmpty &&
+               !trimmedText.isEmpty &&
+               title.count <= maxTitleLength &&
+               text.count <= maxTextLength &&
+               !isLoading
     }
-    
+
     var remainingPhotos: Int {
         maxPhotos - photoImages.count
     }
-    
-    var characterCount: Int {
+
+    var titleCharacterCount: Int {
+        title.count
+    }
+
+    var textCharacterCount: Int {
         text.count
     }
-    
+
     var uid: String? { currentUid() }
     
     // MARK: - Photo Handling
@@ -179,28 +190,29 @@ final class CreatePostViewModel: ObservableObject {
     
     func createPost() async -> Post? {
         guard canPost, let uid = currentUid() else { return nil }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
         do {
             // Upload photos first
             let uploadedUrls = try await uploadPhotos()
-            
+
             // Create post
             let post = Post(
                 authorUid: uid,
+                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
                 text: text.trimmingCharacters(in: .whitespacesAndNewlines),
                 photoUrls: uploadedUrls,
                 linkedRoundId: linkedRound?.id,
                 visibility: visibility
             )
-            
+
             let createdPost = try await postsRepository.createPost(post)
-            
+
             isLoading = false
             return createdPost
-            
+
         } catch {
             errorMessage = error.localizedDescription
             isLoading = false
@@ -209,8 +221,9 @@ final class CreatePostViewModel: ObservableObject {
     }
     
     // MARK: - Reset
-    
+
     func reset() {
+        title = ""
         text = ""
         selectedPhotos = []
         photoImages = []

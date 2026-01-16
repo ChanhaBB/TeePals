@@ -59,6 +59,7 @@ enum NotificationType: String, Codable {
     case welcomeMessage
     case tier2Reminder
     case roundReminder
+    case feedbackReminder
 }
 
 /// Target type for navigation

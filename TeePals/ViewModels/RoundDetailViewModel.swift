@@ -376,5 +376,22 @@ final class RoundDetailViewModel: ObservableObject {
         } catch { errorMessage = error.localizedDescription }
         isActioning = false
     }
+
+    func markAsCompleted() async {
+        guard var currentRound = round else { return }
+
+        isActioning = true
+        errorMessage = nil
+        do {
+            // Mark round as completed
+            // Cloud Function will automatically create feedback notifications for all members
+            currentRound.status = .completed
+            try await roundsRepository.updateRound(currentRound)
+
+            successMessage = "Round marked as completed"
+            await refresh()
+        } catch { errorMessage = error.localizedDescription }
+        isActioning = false
+    }
 }
 

@@ -164,6 +164,29 @@ final class FirestoreProfileRepository: ProfileRepository {
         // Parse birthYear (new field for exact age calculation)
         let birthYear = data["birthYear"] as? Int
 
+        // Parse trust system fields
+        let trustTierRaw = data["trustTier"] as? String ?? "rookie"
+        let trustTier = TrustTier(rawValue: trustTierRaw) ?? .rookie
+        let tierEarnedAt = (data["tierEarnedAt"] as? Timestamp)?.dateValue()
+
+        // Parse badge fields
+        let hasOnTimeBadge = data["hasOnTimeBadge"] as? Bool ?? false
+        let hasCommunicatorBadge = data["hasCommunicatorBadge"] as? Bool ?? false
+        let hasRespectfulBadge = data["hasRespectfulBadge"] as? Bool ?? false
+        let hasTrustedRegularBadge = data["hasTrustedRegularBadge"] as? Bool ?? false
+        let hasWellMatchedBadge = data["hasWellMatchedBadge"] as? Bool ?? false
+        let hasRookieBadge = data["hasRookieBadge"] as? Bool ?? true
+
+        // Parse stats
+        let recentWouldPlayAgainPct = data["recentWouldPlayAgainPct"] as? Double ?? 0.0
+        let recentNoShowCount = data["recentNoShowCount"] as? Int ?? 0
+        let recentLateCount = data["recentLateCount"] as? Int ?? 0
+        let recentDisrespectCount = data["recentDisrespectCount"] as? Int ?? 0
+        let recentSkillMismatchCount = data["recentSkillMismatchCount"] as? Int ?? 0
+        let recentCommunicationFlags = data["recentCommunicationFlags"] as? Int ?? 0
+        let completedRoundsCount = data["completedRoundsCount"] as? Int ?? 0
+        let lifetimeWouldPlayAgainPct = data["lifetimeWouldPlayAgainPct"] as? Double ?? 0.0
+
         return PublicProfile(
             id: id,
             nickname: nickname,
@@ -180,6 +203,22 @@ final class FirestoreProfileRepository: ProfileRepository {
             birthYear: birthYear,
             ageDecade: ageDecade,
             instagramUsername: data["instagramUsername"] as? String,
+            trustTier: trustTier,
+            tierEarnedAt: tierEarnedAt,
+            hasOnTimeBadge: hasOnTimeBadge,
+            hasCommunicatorBadge: hasCommunicatorBadge,
+            hasRespectfulBadge: hasRespectfulBadge,
+            hasTrustedRegularBadge: hasTrustedRegularBadge,
+            hasWellMatchedBadge: hasWellMatchedBadge,
+            hasRookieBadge: hasRookieBadge,
+            recentWouldPlayAgainPct: recentWouldPlayAgainPct,
+            recentNoShowCount: recentNoShowCount,
+            recentLateCount: recentLateCount,
+            recentDisrespectCount: recentDisrespectCount,
+            recentSkillMismatchCount: recentSkillMismatchCount,
+            recentCommunicationFlags: recentCommunicationFlags,
+            completedRoundsCount: completedRoundsCount,
+            lifetimeWouldPlayAgainPct: lifetimeWouldPlayAgainPct,
             createdAt: createdAt,
             updatedAt: updatedAt
         )

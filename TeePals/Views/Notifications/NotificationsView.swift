@@ -10,6 +10,7 @@ struct NotificationsView: View {
     @State private var selectedRoundId: String?
     @State private var selectedPostId: String?
     @State private var selectedProfileUid: String?
+    @State private var selectedFeedbackRoundId: String?
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,11 @@ struct NotificationsView: View {
             }
             .sheet(item: $selectedProfileUid) { uid in
                 OtherUserProfileView(viewModel: container.makeOtherUserProfileViewModel(uid: uid))
+            }
+            .sheet(item: $selectedFeedbackRoundId) { roundId in
+                PostRoundFeedbackView(
+                    viewModel: container.makePostRoundFeedbackViewModel(roundId: roundId)
+                )
             }
         }
     }
@@ -207,6 +213,14 @@ struct NotificationsView: View {
             await viewModel.markAsRead(notification)
         }
 
+        // Handle feedback reminders specially - open feedback view
+        if notification.type == .feedbackReminder {
+            if let roundId = notification.targetId {
+                selectedFeedbackRoundId = roundId
+            }
+            return
+        }
+
         // Navigate based on notification type
         guard let targetId = notification.targetId else { return }
 
@@ -315,7 +329,7 @@ struct NotificationRowView: View {
             return "Social"
 
         // System category
-        case .welcomeMessage, .tier2Reminder, .roundReminder:
+        case .welcomeMessage, .tier2Reminder, .roundReminder, .feedbackReminder:
             return "System"
         }
     }

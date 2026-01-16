@@ -1,12 +1,15 @@
 import SwiftUI
 
 /// Fullscreen photo viewer with swipeable paging through multiple photos.
+/// Supports swipe-down to dismiss gesture.
 struct PhotoViewerView: View {
     let photoUrls: [String]
     let initialIndex: Int
     @Environment(\.dismiss) private var dismiss
 
     @State private var currentIndex: Int
+    @State private var dragOffset: CGFloat = 0
+    @State private var backgroundOpacity: Double = 1.0
 
     init(photoUrls: [String], initialIndex: Int = 0) {
         self.photoUrls = photoUrls
@@ -16,17 +19,48 @@ struct PhotoViewerView: View {
 
     var body: some View {
         ZStack {
-            // Black background
-            Color.black.ignoresSafeArea()
+            // Black background with dynamic opacity
+            Color.black
+                .opacity(backgroundOpacity)
+                .ignoresSafeArea()
 
             // Photo pager
             TabView(selection: $currentIndex) {
                 ForEach(photoUrls.indices, id: \.self) { index in
-                    PhotoPage(url: photoUrls[index])
-                        .tag(index)
+                    PhotoPage(
+                        url: photoUrls[index],
+                        dragOffset: dragOffset,
+                        onDismiss: { dismiss() }
+                    )
+                    .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .offset(y: dragOffset)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Only allow downward drag
+                        if value.translation.height > 0 {
+                            dragOffset = value.translation.height
+                            // Fade background as user drags down
+                            let progress = min(value.translation.height / 300, 1.0)
+                            backgroundOpacity = 1.0 - progress
+                        }
+                    }
+                    .onEnded { value in
+                        // Dismiss if dragged down enough (150pt threshold)
+                        if value.translation.height > 150 {
+                            dismiss()
+                        } else {
+                            // Bounce back
+                            withAnimation(.spring()) {
+                                dragOffset = 0
+                                backgroundOpacity = 1.0
+                            }
+                        }
+                    }
+            )
 
             // Overlay controls
             VStack {
@@ -71,6 +105,7 @@ struct PhotoViewerView: View {
                     .padding(.bottom, 30)
                 }
             }
+            .offset(y: dragOffset) // Move overlay with photo
         }
     }
 }
@@ -79,6 +114,9 @@ struct PhotoViewerView: View {
 
 private struct PhotoPage: View {
     let url: String
+    let dragOffset: CGFloat
+    let onDismiss: () -> Void
+
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
 

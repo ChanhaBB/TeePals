@@ -1,62 +1,75 @@
 import SwiftUI
 import PhotosUI
 
-/// View for creating a new post.
-/// Supports text, photos (up to 4), and optional round linking.
+/// View for creating a new post with full-screen modal UI.
+/// Supports title, text, photos (up to 4), and optional round linking.
 struct CreatePostView: View {
-    
+
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: CreatePostViewModel
-    @FocusState private var isTextFocused: Bool
-    
+    @FocusState private var titleFocused: Bool
+    @FocusState private var textFocused: Bool
+
     let onPostCreated: (Post) -> Void
-    
+
     init(viewModel: CreatePostViewModel, onPostCreated: @escaping (Post) -> Void) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onPostCreated = onPostCreated
     }
-    
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    // Text input
-                    textInputSection
-                    
-                    // Photo grid
-                    if !viewModel.photoImages.isEmpty {
-                        photoPreviewSection
-                    }
-                    
-                    // Action buttons
-                    actionButtonsSection
-                    
-                    // Linked round
-                    if let round = viewModel.linkedRound {
-                        linkedRoundSection(round)
-                    }
-                    
-                    // Visibility picker
-                    visibilitySection
-                    
-                    // Error
-                    if let error = viewModel.errorMessage {
-                        InlineErrorBanner(error)
+            VStack(spacing: 0) {
+                // Main content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Title input
+                        titleSection
+
+                        Divider()
+                            .padding(.horizontal, AppSpacing.contentPadding)
+
+                        // Text input
+                        textSection
+
+                        // Photo grid
+                        if !viewModel.photoImages.isEmpty {
+                            photoPreviewSection
+                        }
+
+                        // Linked round
+                        if let round = viewModel.linkedRound {
+                            linkedRoundSection(round)
+                                .padding(.horizontal, AppSpacing.contentPadding)
+                                .padding(.top, AppSpacing.md)
+                        }
+
+                        // Error
+                        if let error = viewModel.errorMessage {
+                            InlineErrorBanner(error)
+                                .padding(.horizontal, AppSpacing.contentPadding)
+                                .padding(.top, AppSpacing.md)
+                        }
+
+                        // Bottom padding for action bar
+                        Color.clear.frame(height: 60)
                     }
                 }
-                .padding(AppSpacing.contentPadding)
+                .scrollDismissesKeyboard(.interactively)
+                .background(AppColors.backgroundGrouped)
+
+                // Action buttons bar (stays above keyboard)
+                actionButtonsBar
             }
-            .scrollDismissesKeyboard(.interactively)
-            .background(AppColors.backgroundGrouped)
-            .navigationTitle("New Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Post") {
                         Task {
@@ -67,6 +80,8 @@ struct CreatePostView: View {
                         }
                     }
                     .font(AppTypography.labelLarge)
+                    .fontWeight(.semibold)
+                    .foregroundColor(viewModel.canPost ? AppColors.primary : AppColors.textTertiary)
                     .disabled(!viewModel.canPost)
                 }
             }
@@ -81,46 +96,139 @@ struct CreatePostView: View {
                     uploadingOverlay
                 }
             }
+            .onAppear {
+                titleFocused = true
+            }
         }
     }
-    
-    // MARK: - Text Input
-    
-    private var textInputSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            TextEditor(text: $viewModel.text)
-                .font(AppTypography.bodyMedium)
-                .frame(minHeight: 120)
-                .scrollContentBackground(.hidden)
-                .background(AppColors.surface)
-                .cornerRadius(AppSpacing.sm)
-                .focused($isTextFocused)
-                .overlay(alignment: .topLeading) {
-                    if viewModel.text.isEmpty {
-                        Text("What's on your mind?")
-                            .font(AppTypography.bodyMedium)
-                            .foregroundColor(AppColors.textTertiary)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 8)
-                            .allowsHitTesting(false)
-                    }
+
+    // MARK: - Action Buttons Bar
+
+    private var actionButtonsBar: some View {
+        let remainingPhotos = viewModel.remainingPhotos
+
+        return VStack(spacing: 0) {
+            Divider()
+
+            HStack(spacing: AppSpacing.lg) {
+                // Add photos
+                PhotosPicker(
+                    selection: $viewModel.selectedPhotos,
+                    maxSelectionCount: remainingPhotos,
+                    matching: .images
+                ) {
+                    Image(systemName: "photo")
+                        .font(.title3)
+                        .foregroundColor(remainingPhotos > 0 ? AppColors.primary : AppColors.textTertiary)
                 }
-            
+                .disabled(remainingPhotos <= 0)
+
+                // Link round
+                Button {
+                    viewModel.isShowingRoundPicker = true
+                    Task { await viewModel.loadRecentRounds() }
+                } label: {
+                    Image(systemName: "flag")
+                        .font(.title3)
+                        .foregroundColor(AppColors.primary)
+                }
+
+                Spacer()
+
+                // Visibility picker
+                Menu {
+                    ForEach(PostVisibility.allCases, id: \.self) { visibility in
+                        Button {
+                            viewModel.visibility = visibility
+                        } label: {
+                            HStack {
+                                Text(visibility.displayText)
+                                if viewModel.visibility == visibility {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: viewModel.visibility.icon)
+                        .font(.title3)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+            }
+            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.vertical, AppSpacing.sm)
+            .background(AppColors.surface)
+        }
+    }
+
+    // MARK: - Title Section
+
+    private var titleSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            TextField("Write a specific title", text: $viewModel.title)
+                .font(AppTypography.headlineMedium)
+                .focused($titleFocused)
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.sm)
+
+            // Character count
             HStack {
                 Spacer()
-                Text("\(viewModel.characterCount)/\(viewModel.maxTextLength)")
+                Text("\(viewModel.titleCharacterCount)/\(viewModel.maxTitleLength)")
                     .font(AppTypography.caption)
                     .foregroundColor(
-                        viewModel.characterCount > viewModel.maxTextLength
+                        viewModel.titleCharacterCount > viewModel.maxTitleLength
                         ? AppColors.error
                         : AppColors.textTertiary
                     )
             }
+            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.bottom, AppSpacing.sm)
         }
     }
-    
+
+    // MARK: - Text Section
+
+    private var textSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $viewModel.text)
+                    .font(AppTypography.bodyMedium)
+                    .scrollContentBackground(.hidden)
+                    .focused($textFocused)
+                    .frame(minHeight: 200)
+                    .padding(.horizontal, AppSpacing.contentPadding - 4)
+                    .padding(.top, AppSpacing.md)
+
+                if viewModel.text.isEmpty {
+                    Text("Start a conversation.\nKeep it classy. No personal information or trade secrets.")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textTertiary)
+                        .padding(.horizontal, AppSpacing.contentPadding)
+                        .padding(.top, AppSpacing.md + 8)
+                        .allowsHitTesting(false)
+                }
+            }
+
+            // Character count
+            HStack {
+                Spacer()
+                Text("\(viewModel.textCharacterCount)/\(viewModel.maxTextLength)")
+                    .font(AppTypography.caption)
+                    .foregroundColor(
+                        viewModel.textCharacterCount > viewModel.maxTextLength
+                        ? AppColors.error
+                        : AppColors.textTertiary
+                    )
+            }
+            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.bottom, AppSpacing.md)
+        }
+    }
+
     // MARK: - Photo Preview
-    
+
     private var photoPreviewSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: AppSpacing.sm) {
@@ -131,7 +239,7 @@ struct CreatePostView: View {
                             .scaledToFill()
                             .frame(width: 100, height: 100)
                             .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
-                        
+
                         Button {
                             viewModel.removePhoto(at: index)
                         } label: {
@@ -144,72 +252,32 @@ struct CreatePostView: View {
                     }
                 }
             }
+            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.vertical, AppSpacing.md)
         }
     }
-    
-    // MARK: - Action Buttons
-    
-    private var actionButtonsSection: some View {
-        let remaining = viewModel.remainingPhotos
-        return HStack(spacing: AppSpacing.md) {
-            // Add photos
-            PhotosPicker(
-                selection: $viewModel.selectedPhotos,
-                maxSelectionCount: remaining,
-                matching: .images
-            ) {
-                HStack(spacing: 4) {
-                    Image(systemName: "photo")
-                    Text("Photo")
-                }
-                .font(AppTypography.caption)
-                .foregroundColor(remaining > 0 ? AppColors.primary : AppColors.textTertiary)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xs)
-                .background(AppColors.surface)
-                .cornerRadius(AppSpacing.sm)
-            }
-            .disabled(remaining <= 0)
-            
-            // Link round
-            Button {
-                viewModel.isShowingRoundPicker = true
-                Task { await viewModel.loadRecentRounds() }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "flag")
-                    Text("Link Round")
-                }
-                .font(AppTypography.caption)
-                .foregroundColor(AppColors.primary)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xs)
-                .background(AppColors.surface)
-                .cornerRadius(AppSpacing.sm)
-            }
-            
-            Spacer()
-        }
-    }
-    
+
     // MARK: - Linked Round
-    
+
     private func linkedRoundSection(_ round: Round) -> some View {
         HStack {
+            Image(systemName: "flag.fill")
+                .foregroundColor(AppColors.primary)
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(round.displayCourseName)
                     .font(AppTypography.labelLarge)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let dateTime = round.displayDateTime {
                     Text(dateTime)
                         .font(AppTypography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             Button {
                 viewModel.removeLinkedRound()
             } label: {
@@ -221,29 +289,9 @@ struct CreatePostView: View {
         .background(AppColors.surface)
         .cornerRadius(AppSpacing.sm)
     }
-    
-    // MARK: - Visibility
-    
-    private var visibilitySection: some View {
-        HStack {
-            Image(systemName: viewModel.visibility.icon)
-                .foregroundColor(AppColors.textSecondary)
-            
-            Picker("Visibility", selection: $viewModel.visibility) {
-                ForEach(PostVisibility.allCases, id: \.self) { visibility in
-                    Text(visibility.displayText).tag(visibility)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(AppColors.textPrimary)
-        }
-        .padding(AppSpacing.sm)
-        .background(AppColors.surface)
-        .cornerRadius(AppSpacing.sm)
-    }
-    
+
     // MARK: - Round Picker Sheet
-    
+
     private var roundPickerSheet: some View {
         NavigationStack {
             Group {
@@ -254,7 +302,7 @@ struct CreatePostView: View {
                         Image(systemName: "flag.slash")
                             .font(.largeTitle)
                             .foregroundColor(AppColors.textTertiary)
-                        
+
                         Text("No rounds to link")
                             .font(AppTypography.bodyMedium)
                             .foregroundColor(AppColors.textSecondary)
@@ -269,7 +317,7 @@ struct CreatePostView: View {
                                 Text(round.displayCourseName)
                                     .font(AppTypography.labelLarge)
                                     .foregroundColor(AppColors.textPrimary)
-                                
+
                                 if let dateTime = round.displayDateTime {
                                     Text(dateTime)
                                         .font(AppTypography.caption)
@@ -292,19 +340,19 @@ struct CreatePostView: View {
         }
         .presentationDetents([.medium])
     }
-    
+
     // MARK: - Uploading Overlay
-    
+
     private var uploadingOverlay: some View {
         ZStack {
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: AppSpacing.md) {
                 ProgressView(value: viewModel.uploadProgress)
                     .progressViewStyle(.linear)
                     .frame(width: 200)
-                
+
                 Text("Uploading photos...")
                     .font(AppTypography.bodyMedium)
                     .foregroundColor(.white)
@@ -331,7 +379,7 @@ struct CreatePostView_Previews: PreviewProvider {
             onPostCreated: { _ in }
         )
     }
-    
+
     private class MockPostsRepo: PostsRepository {
         func createPost(_ post: Post) async throws -> Post { post }
         func fetchPost(id: String) async throws -> Post? { nil }
@@ -358,7 +406,7 @@ struct CreatePostView_Previews: PreviewProvider {
         func fetchUserStats(uid: String) async throws -> UserStats? { nil }
         func fetchUserStatsBatch(uids: [String]) async throws -> [String: UserStats] { [:] }
     }
-    
+
     private class MockRoundsRepo: RoundsRepository {
         func createRound(_ round: Round) async throws -> Round { round }
         func fetchRound(id: String) async throws -> Round? { nil }
@@ -378,7 +426,7 @@ struct CreatePostView_Previews: PreviewProvider {
         func acceptInvite(roundId: String) async throws {}
         func declineInvite(roundId: String) async throws {}
     }
-    
+
     private class MockStorage: StorageServiceProtocol {
         func uploadProfilePhoto(_ imageData: Data) async throws -> String { "" }
         func deleteProfilePhoto(url: String) async throws {}
@@ -388,4 +436,3 @@ struct CreatePostView_Previews: PreviewProvider {
     }
 }
 #endif
-

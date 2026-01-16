@@ -94,10 +94,10 @@ final class PostDetailViewModel: ObservableObject {
     }
     
     // MARK: - Load Comments
-    
+
     func loadComments() async {
         isLoadingComments = true
-        
+
         do {
             let fetchedComments = try await postsRepository.fetchComments(postId: postId)
             comments = fetchedComments
@@ -105,8 +105,30 @@ final class PostDetailViewModel: ObservableObject {
         } catch {
             print("Failed to load comments: \(error)")
         }
-        
+
         isLoadingComments = false
+    }
+
+    // MARK: - Refresh
+
+    func refresh() async {
+        // Reload post and comments silently (no loading state)
+        do {
+            post = try await postsRepository.fetchPost(id: postId)
+
+            // Reload linked round if present
+            if let roundId = post?.linkedRoundId {
+                linkedRound = try await roundsRepository.fetchRound(id: roundId)
+            }
+
+            // Reload comments
+            let fetchedComments = try await postsRepository.fetchComments(postId: postId)
+            comments = fetchedComments
+            commentTree = fetchedComments.buildCommentTree()
+
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
     
     // MARK: - Upvote

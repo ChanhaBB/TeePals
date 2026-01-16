@@ -51,19 +51,39 @@ service cloud.firestore {
     match /profiles_public/{uid} {
       // Any authenticated user can read public profiles
       allow read: if isSignedIn();
-      
+
       // Only owner can create/update their public profile
       allow create: if isOwner(uid)
         && request.resource.data.keys().hasAll(['nickname', 'primaryCityLabel', 'primaryLocation'])
         && request.resource.data.nickname is string
         && request.resource.data.nickname.size() > 0
         && request.resource.data.nickname.size() <= 50;
-      
+
+      // Owner can update profile, but cannot modify trust system fields
+      // Trust badges and stats are managed by Cloud Functions only
       allow update: if isOwner(uid)
         && request.resource.data.nickname is string
         && request.resource.data.nickname.size() > 0
-        && request.resource.data.nickname.size() <= 50;
-      
+        && request.resource.data.nickname.size() <= 50
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'hasOnTimeBadge',
+          'hasCommunicatorBadge',
+          'hasRespectfulBadge',
+          'hasTrustedRegularBadge',
+          'hasWellMatchedBadge',
+          'hasRookieBadge',
+          'trustTier',
+          'tierEarnedAt',
+          'completedRoundsCount',
+          'recentWouldPlayAgainPct',
+          'recentNoShowCount',
+          'recentLateCount',
+          'recentDisrespectCount',
+          'recentSkillMismatchCount',
+          'recentCommunicationFlags',
+          'lifetimeWouldPlayAgainPct'
+        ]);
+
       // No client-side deletes
       allow delete: if false;
     }
@@ -286,9 +306,8 @@ service cloud.firestore {
       allow read: if isOwner(uid);
 
       // Only Cloud Functions can create notifications (prevents spam)
-      // For MVP testing without Cloud Functions, temporarily allow writes:
-      // TODO: Change to `allow create: if false;` once Cloud Functions are deployed
-      allow create: if false;  // Only Cloud Functions
+      // Deployed: onRoundComplete, onRoundMemberWrite, onChatMessage, etc.
+      allow create: if false;
 
       // Owner can update (mark as read)
       allow update: if isOwner(uid);
@@ -357,6 +376,81 @@ service cloud.firestore {
 
       // Only Cloud Functions can write
       allow write: if false;
+    }
+
+    // ============================================
+    // POST-ROUND FEEDBACK & TRUST SYSTEM
+    // Feedback, endorsements, and incident reports
+    // ============================================
+
+    // ROUND FEEDBACK (within rounds collection)
+    match /rounds/{roundId}/feedback/{reviewerUid} {
+      // Any authenticated user can read feedback (aggregated by Cloud Functions)
+      allow read: if isSignedIn();
+
+      // Only round participants can submit feedback
+      // Can only submit after round is completed
+      // Cannot submit feedback twice
+      allow create: if isSignedIn()
+        && request.auth.uid == reviewerUid
+        && exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(reviewerUid))
+        && get(/databases/$(database)/documents/rounds/$(roundId)).data.status == 'completed'
+        && request.resource.data.roundSafetyOK is bool;
+
+      // No updates or deletes (feedback is immutable)
+      allow update, delete: if false;
+    }
+
+    // PLAYER ENDORSEMENTS (within rounds collection)
+    match /rounds/{roundId}/endorsements/{endorsementId} {
+      // Any authenticated user can read endorsements (for aggregation)
+      allow read: if isSignedIn();
+
+      // Only round participants can create endorsements
+      // Cannot endorse yourself
+      // Target must be a round participant
+      allow create: if isSignedIn()
+        && exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid))
+        && request.resource.data.targetUid != request.auth.uid
+        && exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.resource.data.targetUid))
+        && request.resource.data.wouldPlayAgain is bool;
+
+      // No updates or deletes (endorsements are immutable)
+      allow update, delete: if false;
+    }
+
+    // INCIDENT REPORTS (within rounds collection)
+    match /rounds/{roundId}/incidents/{incidentId} {
+      // Only admins can read incident reports (for moderation)
+      allow read: if false;  // TODO: Add admin check
+
+      // Only round participants can create incident reports
+      // Cannot report yourself
+      allow create: if isSignedIn()
+        && exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid))
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.issueTypes is list
+        && request.resource.data.issueTypes.size() > 0;
+
+      // No updates or deletes from clients
+      allow update, delete: if false;
+    }
+
+    // PENDING FEEDBACK (user-scoped)
+    match /pendingFeedback/{uid}/items/{roundId} {
+      // Only owner can read their pending feedback
+      allow read: if isOwner(uid);
+
+      // Allow owner to create for TESTING (change to "if false" in production)
+      // TODO: Set to "if false" once Cloud Functions are deployed
+      allow create: if isOwner(uid);
+
+      // Only Cloud Functions can update (mark reminder sent)
+      allow update: if false;
+
+      // Owner can delete (after submitting feedback)
+      // Cloud Functions can also delete (cleanup expired items)
+      allow delete: if isOwner(uid);
     }
 
     // ============================================

@@ -9,9 +9,11 @@ struct RoundDetailView: View {
     @State private var showingCancelAlert = false
     @State private var showingLeaveAlert = false
     @State private var showingCancelRequestAlert = false
+    @State private var showingMarkCompleteAlert = false
     @State private var showingEditRound = false
     @State private var showingChat = false
     @State private var showingInviteSheet = false
+    @State private var showingFeedback = false
     @State private var selectedProfileUid: String?
     
     init(viewModel: RoundDetailViewModel) {
@@ -106,6 +108,19 @@ struct RoundDetailView: View {
         } message: {
             Text("You can request to join again later.")
         }
+        .sheet(isPresented: $showingMarkCompleteAlert) {
+            MarkCompleteConfirmationView(
+                onConfirm: {
+                    showingMarkCompleteAlert = false
+                    Task { await viewModel.markAsCompleted() }
+                },
+                onCancel: {
+                    showingMarkCompleteAlert = false
+                }
+            )
+            .presentationDetents([.height(280)])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showingEditRound) {
             if let round = viewModel.round {
                 EditRoundView(
@@ -137,6 +152,11 @@ struct RoundDetailView: View {
                 viewModel: container.makeInviteUsersViewModel(roundId: viewModel.roundId)
             )
         }
+        .sheet(isPresented: $showingFeedback) {
+            PostRoundFeedbackView(
+                viewModel: container.makePostRoundFeedbackViewModel(roundId: viewModel.roundId)
+            )
+        }
     }
     
     // MARK: - Request Pending Banner
@@ -156,6 +176,34 @@ struct RoundDetailView: View {
         .padding(AppSpacing.md)
         .background(AppColors.primaryLight.opacity(0.3))
         .cornerRadius(AppSpacing.radiusMedium)
+    }
+
+    // MARK: - Feedback Banner
+
+    private var feedbackBanner: some View {
+        Button {
+            showingFeedback = true
+        } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(AppColors.success)
+
+                Text("This round is complete. Rate your playing partners")
+                    .font(AppTypography.bodyMedium)
+                    .foregroundColor(AppColors.textPrimary)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(AppColors.textTertiary)
+            }
+            .padding(AppSpacing.md)
+            .background(AppColors.success.opacity(0.1))
+            .cornerRadius(AppSpacing.radiusMedium)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Loading
@@ -196,6 +244,11 @@ struct RoundDetailView: View {
                     // Status banner for pending request
                     if viewModel.hasRequested {
                         requestPendingBanner
+                    }
+
+                    // Feedback banner for completed rounds
+                    if round.status == .completed && viewModel.isMember {
+                        feedbackBanner
                     }
 
                     RoundDetailPlayersSection(
@@ -260,8 +313,21 @@ struct RoundDetailView: View {
             }
             
             if viewModel.isHost {
-                SecondaryButton("Round Chat", icon: "bubble.left.and.bubble.right") {
-                    showingChat = true
+                if round.status == .completed {
+                    // Round completed - show chat only
+                    SecondaryButton("Round Chat", icon: "bubble.left.and.bubble.right") {
+                        showingChat = true
+                    }
+                } else {
+                    // Round active - show chat and mark complete option
+                    HStack(spacing: AppSpacing.md) {
+                        SecondaryButton("Round Chat", icon: "bubble.left.and.bubble.right") {
+                            showingChat = true
+                        }
+                        PrimaryButton("Mark Complete", icon: "checkmark.circle") {
+                            showingMarkCompleteAlert = true
+                        }
+                    }
                 }
             } else if viewModel.isMember {
                 HStack(spacing: AppSpacing.md) {
@@ -303,6 +369,68 @@ struct RoundDetailView: View {
             AppColors.backgroundPrimary
                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: -4)
         )
+    }
+}
+
+// MARK: - Mark Complete Confirmation View
+
+private struct MarkCompleteConfirmationView: View {
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Drag indicator area
+            Spacer()
+                .frame(height: 20)
+
+            // Content
+            VStack(spacing: AppSpacing.lg) {
+                // Title
+                Text("Ready to wrap up the round?")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.contentPadding)
+
+                // Description
+                Text("This will mark the round as complete.")
+                    .font(.system(size: 15))
+                    .foregroundColor(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.contentPadding)
+
+                // Buttons
+                VStack(spacing: 12) {
+                    // Primary action - Finish round
+                    Button(action: onConfirm) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                            Text("Finish round")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(AppColors.success)
+                        .cornerRadius(12)
+                    }
+
+                    // Secondary action - Do this later
+                    Button(action: onCancel) {
+                        Text("Do this later")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(AppColors.textSecondary)
+                            .frame(height: 44)
+                    }
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.top, AppSpacing.sm)
+            }
+
+            Spacer()
+        }
     }
 }
 

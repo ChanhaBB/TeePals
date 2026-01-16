@@ -10,40 +10,59 @@ struct PostCardView: View {
     let onUpvote: () -> Void
     let onAuthorTap: () -> Void
     let onRoundTap: (String) -> Void
-    
+
     var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                // Header: Author info
-                authorHeader
-                
-                // Text content
+        VStack(alignment: .leading, spacing: 0) {
+            // Header: Author info (has its own buttons)
+            authorHeader
+
+            // Content area (title + text + photos) - tappable to go to post detail
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                // Title
+                if let title = post.title, !title.isEmpty {
+                    Text(title)
+                        .font(AppTypography.headlineSmall)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppColors.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                // Text content (truncated)
                 if !post.text.isEmpty {
                     Text(post.text)
                         .font(AppTypography.bodyMedium)
                         .foregroundColor(AppColors.textPrimary)
-                        .lineLimit(5)
+                        .lineLimit(3)
                         .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                
-                // Photos
+
+                // Photos (in feed, these go to detail too - fullscreen only in detail view)
                 if post.hasPhotos {
-                    photoGrid
+                    photoGridNonInteractive
                 }
-                
-                // Linked round
-                if post.linkedRoundId != nil {
-                    linkedRoundPreview
-                }
-                
-                // Footer: Time, interactions
-                footer
             }
-            .padding(AppSpacing.lg)
-            .background(AppColors.surface)
-            .cornerRadius(AppSpacing.radiusLarge)
+            .padding(.top, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.md)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onTap()
+            }
+
+            // Linked round (has its own button)
+            if post.linkedRoundId != nil {
+                linkedRoundPreview
+                    .padding(.bottom, AppSpacing.md)
+            }
+
+            // Footer: Time, interactions (has its own buttons for upvote)
+            footer
         }
-        .buttonStyle(.plain)
+        .padding(AppSpacing.lg)
+        .background(AppColors.surface)
+        .cornerRadius(AppSpacing.radiusLarge)
     }
     
     // MARK: - Author Header
@@ -115,44 +134,44 @@ struct PostCardView: View {
             )
     }
     
-    // MARK: - Photo Grid
-    
-    private var photoGrid: some View {
+    // MARK: - Photo Grid (Non-Interactive for Feed)
+
+    private var photoGridNonInteractive: some View {
         let photos = post.photoUrls.prefix(4)
-        
+
         return Group {
             switch photos.count {
             case 1:
-                singlePhoto(photos[0])
+                singlePhotoNonInteractive(photos[0])
             case 2:
-                twoPhotos(Array(photos))
+                twoPhotosNonInteractive(Array(photos))
             case 3:
-                threePhotos(Array(photos))
+                threePhotosNonInteractive(Array(photos))
             default:
-                fourPhotos(Array(photos))
+                fourPhotosNonInteractive(Array(photos))
             }
         }
         .cornerRadius(AppSpacing.sm)
     }
     
-    private func singlePhoto(_ url: String) -> some View {
+    private func singlePhotoNonInteractive(_ url: String) -> some View {
         photoView(url: url)
             .frame(height: 200)
     }
-    
-    private func twoPhotos(_ urls: [String]) -> some View {
+
+    private func twoPhotosNonInteractive(_ urls: [String]) -> some View {
         HStack(spacing: 2) {
             photoView(url: urls[0])
             photoView(url: urls[1])
         }
         .frame(height: 160)
     }
-    
-    private func threePhotos(_ urls: [String]) -> some View {
+
+    private func threePhotosNonInteractive(_ urls: [String]) -> some View {
         HStack(spacing: 2) {
             photoView(url: urls[0])
                 .frame(width: UIScreen.main.bounds.width * 0.4)
-            
+
             VStack(spacing: 2) {
                 photoView(url: urls[1])
                 photoView(url: urls[2])
@@ -160,8 +179,8 @@ struct PostCardView: View {
         }
         .frame(height: 160)
     }
-    
-    private func fourPhotos(_ urls: [String]) -> some View {
+
+    private func fourPhotosNonInteractive(_ urls: [String]) -> some View {
         VStack(spacing: 2) {
             HStack(spacing: 2) {
                 photoView(url: urls[0])
@@ -174,7 +193,7 @@ struct PostCardView: View {
         }
         .frame(height: 200)
     }
-    
+
     private func photoView(url: String) -> some View {
         CachedAsyncImage(url: URL(string: url)) { image in
             image
@@ -237,36 +256,43 @@ struct PostCardView: View {
     // MARK: - Footer
     
     private var footer: some View {
-        HStack(spacing: AppSpacing.lg) {
-            // Upvote button
+        HStack(spacing: AppSpacing.md) {
+            // Like button
             Button(action: onUpvote) {
                 HStack(spacing: 4) {
-                    Image(systemName: post.hasUpvoted == true ? "arrow.up.circle.fill" : "arrow.up.circle")
+                    Image(systemName: post.hasUpvoted == true ? "heart.fill" : "heart")
                         .font(.body)
-                        .foregroundColor(post.hasUpvoted == true ? AppColors.primary : AppColors.textSecondary)
-                    
+                        .foregroundColor(post.hasUpvoted == true ? AppColors.error : AppColors.textSecondary)
+
                     if post.upvoteCount > 0 {
                         Text("\(post.upvoteCount)")
                             .font(AppTypography.caption)
-                            .foregroundColor(post.hasUpvoted == true ? AppColors.primary : AppColors.textSecondary)
+                            .foregroundColor(post.hasUpvoted == true ? AppColors.error : AppColors.textSecondary)
                     }
                 }
+                .padding(.vertical, AppSpacing.xs)
+                .padding(.horizontal, AppSpacing.xs)
             }
             .buttonStyle(.plain)
-            
-            // Comments
-            HStack(spacing: 4) {
-                Image(systemName: "bubble.left")
-                    .font(.body)
-                    .foregroundColor(AppColors.textSecondary)
-                
-                if post.commentCount > 0 {
-                    Text("\(post.commentCount)")
-                        .font(AppTypography.caption)
+
+            // Comments - tappable to go to post detail
+            Button(action: onTap) {
+                HStack(spacing: 4) {
+                    Image(systemName: "bubble.left")
+                        .font(.body)
                         .foregroundColor(AppColors.textSecondary)
+
+                    if post.commentCount > 0 {
+                        Text("\(post.commentCount)")
+                            .font(AppTypography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
                 }
+                .padding(.vertical, AppSpacing.xs)
+                .padding(.horizontal, AppSpacing.xs)
             }
-            
+            .buttonStyle(.plain)
+
             Spacer()
         }
     }

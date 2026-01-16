@@ -58,6 +58,10 @@ final class FirestorePostsRepository: PostsRepository {
             "updatedAt": FieldValue.serverTimestamp()
         ]
 
+        if let title = post.title, !title.isEmpty {
+            data["title"] = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
         if let linkedRoundId = post.linkedRoundId {
             data["linkedRoundId"] = linkedRoundId
         }
@@ -111,15 +115,19 @@ final class FirestorePostsRepository: PostsRepository {
         guard post.authorUid == uid else {
             throw PostsError.unauthorized
         }
-        
-        let data: [String: Any] = [
+
+        var data: [String: Any] = [
             "text": post.text.trimmingCharacters(in: .whitespacesAndNewlines),
             "photoUrls": post.photoUrls,
             "visibility": post.visibility.rawValue,
             "isEdited": true,
             "updatedAt": FieldValue.serverTimestamp()
         ]
-        
+
+        if let title = post.title, !title.isEmpty {
+            data["title"] = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
         try await db.collection(FirestoreCollection.posts)
             .document(postId)
             .updateData(data)
@@ -693,13 +701,14 @@ final class FirestorePostsRepository: PostsRepository {
               let visibility = PostVisibility(rawValue: visibilityRaw) else {
             throw PostsError.decodingFailed
         }
-        
+
         let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
-        
+
         return Post(
             id: id,
             authorUid: authorUid,
+            title: data["title"] as? String,
             text: text,
             photoUrls: data["photoUrls"] as? [String] ?? [],
             linkedRoundId: data["linkedRoundId"] as? String,

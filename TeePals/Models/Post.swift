@@ -8,6 +8,7 @@ struct Post: Codable, Identifiable, Equatable {
     
     var id: String?
     let authorUid: String
+    var title: String?
     var text: String
     var photoUrls: [String]
     var linkedRoundId: String?
@@ -35,8 +36,9 @@ struct Post: Codable, Identifiable, Equatable {
     var hasUpvoted: Bool?
     
     // MARK: - Constants
-    
+
     static let maxPhotos = 4
+    static let maxTitleLength = 100
     static let maxTextLength = 2000
     
     // MARK: - Init
@@ -44,6 +46,7 @@ struct Post: Codable, Identifiable, Equatable {
     init(
         id: String? = nil,
         authorUid: String,
+        title: String? = nil,
         text: String,
         photoUrls: [String] = [],
         linkedRoundId: String? = nil,
@@ -64,6 +67,7 @@ struct Post: Codable, Identifiable, Equatable {
     ) {
         self.id = id
         self.authorUid = authorUid
+        self.title = title
         self.text = text
         self.photoUrls = photoUrls
         self.linkedRoundId = linkedRoundId

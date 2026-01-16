@@ -24,7 +24,11 @@ final class AppContainer: ObservableObject {
     private(set) lazy var roundsRepository: RoundsRepository = {
         FirestoreRoundsRepository()
     }()
-    
+
+    private(set) lazy var trustRepository: TrustRepository = {
+        FirestoreTrustRepository()
+    }()
+
     // MARK: - Services (Singletons)
 
     private(set) lazy var authService: AuthService = {
@@ -312,5 +316,17 @@ final class AppContainer: ObservableObject {
             vm.startListening()
         }
         return vm
+    }
+
+    // MARK: - Post-Round Feedback
+
+    func makePostRoundFeedbackViewModel(roundId: String) -> PostRoundFeedbackViewModel {
+        PostRoundFeedbackViewModel(
+            roundId: roundId,
+            trustRepository: trustRepository,
+            roundsRepository: roundsRepository,
+            profileRepository: profileRepository,
+            currentUid: { [weak self] in self?.currentUid }
+        )
     }
 }

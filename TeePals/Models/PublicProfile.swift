@@ -22,6 +22,30 @@ struct PublicProfile: Codable, Identifiable {
     // Social media
     var instagramUsername: String?
 
+    // Trust System Fields
+    var trustTier: TrustTier
+    var tierEarnedAt: Date?
+
+    // Trust Badges
+    var hasOnTimeBadge: Bool
+    var hasCommunicatorBadge: Bool
+    var hasRespectfulBadge: Bool
+    var hasTrustedRegularBadge: Bool
+    var hasWellMatchedBadge: Bool
+    var hasRookieBadge: Bool
+
+    // Stats (last 5 rounds)
+    var recentWouldPlayAgainPct: Double
+    var recentNoShowCount: Int
+    var recentLateCount: Int
+    var recentDisrespectCount: Int
+    var recentSkillMismatchCount: Int
+    var recentCommunicationFlags: Int
+
+    // Lifetime
+    var completedRoundsCount: Int
+    var lifetimeWouldPlayAgainPct: Double
+
     let createdAt: Date
     var updatedAt: Date
     
@@ -41,6 +65,22 @@ struct PublicProfile: Codable, Identifiable {
         birthYear: Int? = nil,
         ageDecade: AgeDecade? = nil,
         instagramUsername: String? = nil,
+        trustTier: TrustTier = .rookie,
+        tierEarnedAt: Date? = nil,
+        hasOnTimeBadge: Bool = false,
+        hasCommunicatorBadge: Bool = false,
+        hasRespectfulBadge: Bool = false,
+        hasTrustedRegularBadge: Bool = false,
+        hasWellMatchedBadge: Bool = false,
+        hasRookieBadge: Bool = true,
+        recentWouldPlayAgainPct: Double = 0.0,
+        recentNoShowCount: Int = 0,
+        recentLateCount: Int = 0,
+        recentDisrespectCount: Int = 0,
+        recentSkillMismatchCount: Int = 0,
+        recentCommunicationFlags: Int = 0,
+        completedRoundsCount: Int = 0,
+        lifetimeWouldPlayAgainPct: Double = 0.0,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -59,6 +99,22 @@ struct PublicProfile: Codable, Identifiable {
         self.birthYear = birthYear
         self.ageDecade = ageDecade
         self.instagramUsername = instagramUsername
+        self.trustTier = trustTier
+        self.tierEarnedAt = tierEarnedAt
+        self.hasOnTimeBadge = hasOnTimeBadge
+        self.hasCommunicatorBadge = hasCommunicatorBadge
+        self.hasRespectfulBadge = hasRespectfulBadge
+        self.hasTrustedRegularBadge = hasTrustedRegularBadge
+        self.hasWellMatchedBadge = hasWellMatchedBadge
+        self.hasRookieBadge = hasRookieBadge
+        self.recentWouldPlayAgainPct = recentWouldPlayAgainPct
+        self.recentNoShowCount = recentNoShowCount
+        self.recentLateCount = recentLateCount
+        self.recentDisrespectCount = recentDisrespectCount
+        self.recentSkillMismatchCount = recentSkillMismatchCount
+        self.recentCommunicationFlags = recentCommunicationFlags
+        self.completedRoundsCount = completedRoundsCount
+        self.lifetimeWouldPlayAgainPct = lifetimeWouldPlayAgainPct
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -69,10 +125,14 @@ struct PublicProfile: Codable, Identifiable {
     }
     
     /// Calculated age from birth year (approximate, within 1 year)
+    /// Note: This is an approximation for other users' profiles
+    /// For own profile, use PrivateProfile.age which is accurate
+    /// Shows conservative (younger) age since we don't know exact birthday
     var age: Int? {
         guard let birthYear = birthYear else { return nil }
         let currentYear = Calendar.current.component(.year, from: Date())
-        return currentYear - birthYear
+        // Subtract 1 to be conservative since birthday may not have passed yet
+        return max(0, currentYear - birthYear - 1)
     }
     
     /// Normalized city key for Firestore queries
@@ -84,6 +144,32 @@ struct PublicProfile: Codable, Identifiable {
             .replacingOccurrences(of: " ", with: "_")
             .replacingOccurrences(of: "-", with: "_")
             .filter { $0.isLetter || $0.isNumber || $0 == "_" }
+    }
+
+    /// Trust tier badge display text
+    var trustTierBadge: String {
+        trustTier.displayName
+    }
+
+    /// All earned badges (excluding rookie)
+    var earnedBadges: [String] {
+        var badges: [String] = []
+        if hasTrustedRegularBadge { badges.append("⭐ Trusted Regular") }
+        if hasOnTimeBadge { badges.append("🕐 On-Time") }
+        if hasRespectfulBadge { badges.append("🤝 Respectful") }
+        if hasWellMatchedBadge { badges.append("📊 Well-Matched") }
+        if hasCommunicatorBadge { badges.append("💬 Clear Communicator") }
+        return badges
+    }
+
+    /// Top 2 badges for compact display
+    var topBadges: [String] {
+        Array(earnedBadges.prefix(2))
+    }
+
+    /// Whether to show "would play again" stat (requires 5+ rounds)
+    var shouldShowPlayAgainStat: Bool {
+        completedRoundsCount >= 5
     }
 }
 

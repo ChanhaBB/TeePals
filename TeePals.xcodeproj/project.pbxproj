@@ -40,6 +40,14 @@
 		965BCAE72F19A3B600063CD5 /* DeepLinkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE52F19A3B600063CD5 /* DeepLinkCoordinator.swift */; };
 		965BCAE92F19D5B300063CD5 /* FirestoreUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */; };
 		965BCAEB2F19D5ED00063CD5 /* UserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */; };
+		965BCAED2F19F7B100063CD5 /* RoundFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAEC2F19F7B100063CD5 /* RoundFeedback.swift */; };
+		965BCAEF2F19F7BD00063CD5 /* TrustRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAEE2F19F7BD00063CD5 /* TrustRepository.swift */; };
+		965BCAF12F19F7C900063CD5 /* FirestoreTrustRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAF02F19F7C900063CD5 /* FirestoreTrustRepository.swift */; };
+		965BCAF32F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAF22F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift */; };
+		965BCAF72F1A002000063CD5 /* PostRoundFeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAF52F1A002000063CD5 /* PostRoundFeedbackView.swift */; };
+		965BCAF82F1A002000063CD5 /* PendingFeedbackSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAF42F1A002000063CD5 /* PendingFeedbackSection.swift */; };
+		965BCAFA2F1A015200063CD5 /* TestDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAF92F1A015200063CD5 /* TestDataHelper.swift */; };
+		965BCAFD2F1A016300063CD5 /* TestDataSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAFB2F1A016300063CD5 /* TestDataSection.swift */; };
 		966A5FC42F0FF7050064F1A9 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 966A5FC32F0FF7050064F1A9 /* FirebaseAnalytics */; };
 		966A5FC62F10EE420064F1A9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */; };
 		966A605D2F11330F0064F1A9 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60312F11330F0064F1A9 /* AppContainer.swift */; };
@@ -205,6 +213,14 @@
 		965BCAE52F19A3B600063CD5 /* DeepLinkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkCoordinator.swift; sourceTree = "<group>"; };
 		965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreUserRepository.swift; sourceTree = "<group>"; };
 		965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRepository.swift; sourceTree = "<group>"; };
+		965BCAEC2F19F7B100063CD5 /* RoundFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundFeedback.swift; sourceTree = "<group>"; };
+		965BCAEE2F19F7BD00063CD5 /* TrustRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustRepository.swift; sourceTree = "<group>"; };
+		965BCAF02F19F7C900063CD5 /* FirestoreTrustRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreTrustRepository.swift; sourceTree = "<group>"; };
+		965BCAF22F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRoundFeedbackViewModel.swift; sourceTree = "<group>"; };
+		965BCAF42F1A002000063CD5 /* PendingFeedbackSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingFeedbackSection.swift; sourceTree = "<group>"; };
+		965BCAF52F1A002000063CD5 /* PostRoundFeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRoundFeedbackView.swift; sourceTree = "<group>"; };
+		965BCAF92F1A015200063CD5 /* TestDataHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDataHelper.swift; sourceTree = "<group>"; };
+		965BCAFB2F1A016300063CD5 /* TestDataSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDataSection.swift; sourceTree = "<group>"; };
 		966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		966A60312F11330F0064F1A9 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		966A60332F11330F0064F1A9 /* FirestoreProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreProfileRepository.swift; sourceTree = "<group>"; };
@@ -382,6 +398,7 @@
 		40000008 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAF92F1A015200063CD5 /* TestDataHelper.swift */,
 				966A61022F13E2230064F1A9 /* DistanceUtil.swift */,
 				966A61032F13E2230064F1A9 /* GeoHashUtil.swift */,
 				966A61042F13E2230064F1A9 /* GeoPrecisionPolicy.swift */,
@@ -414,6 +431,23 @@
 			path = Coordinators;
 			sourceTree = "<group>";
 		};
+		965BCAF62F1A002000063CD5 /* Feedback */ = {
+			isa = PBXGroup;
+			children = (
+				965BCAF42F1A002000063CD5 /* PendingFeedbackSection.swift */,
+				965BCAF52F1A002000063CD5 /* PostRoundFeedbackView.swift */,
+			);
+			path = Feedback;
+			sourceTree = "<group>";
+		};
+		965BCAFC2F1A016300063CD5 /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				965BCAFB2F1A016300063CD5 /* TestDataSection.swift */,
+			);
+			path = Testing;
+			sourceTree = "<group>";
+		};
 		966A60322F11330F0064F1A9 /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -425,6 +459,7 @@
 		966A60352F11330F0064F1A9 /* FirebaseRepositories */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAF02F19F7C900063CD5 /* FirestoreTrustRepository.swift */,
 				965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */,
 				965BCADD2F18644A00063CD5 /* FirestoreNotificationsRepository.swift */,
 				966A61452F1466C50064F1A9 /* FirestorePostsRepository.swift */,
@@ -443,6 +478,7 @@
 		966A603E2F11330F0064F1A9 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAEC2F19F7B100063CD5 /* RoundFeedback.swift */,
 				965BCAD92F18642C00063CD5 /* Notification.swift */,
 				9604DC442F15BADC00C7D73F /* FeedCursor.swift */,
 				9604DC452F15BADC00C7D73F /* FeedScore.swift */,
@@ -468,6 +504,7 @@
 		966A60412F11330F0064F1A9 /* Repositories */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAEE2F19F7BD00063CD5 /* TrustRepository.swift */,
 				965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */,
 				965BCADB2F18643900063CD5 /* NotificationsRepository.swift */,
 				966A61432F1466B70064F1A9 /* PostsRepository.swift */,
@@ -523,6 +560,7 @@
 		966A604B2F11330F0064F1A9 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAF22F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift */,
 				965BCADF2F18743000063CD5 /* NotificationsViewModel.swift */,
 				965BCACF2F183F4D00063CD5 /* InvitedRoundsViewModel.swift */,
 				965BCAD02F183F4D00063CD5 /* InviteUsersViewModel.swift */,
@@ -627,6 +665,8 @@
 		966A605C2F11330F0064F1A9 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAFC2F1A016300063CD5 /* Testing */,
+				965BCAF62F1A002000063CD5 /* Feedback */,
 				966A61592F1467170064F1A9 /* Social */,
 				966A61522F1466F80064F1A9 /* Feed */,
 				966A61332F1415950064F1A9 /* Chat */,
@@ -851,6 +891,8 @@
 				966A60F42F119CD90064F1A9 /* RangeSliderView.swift in Sources */,
 				966A60F52F119CD90064F1A9 /* SelectableChip.swift in Sources */,
 				966A612F2F1415810064F1A9 /* RoundChatViewModel.swift in Sources */,
+				965BCAF72F1A002000063CD5 /* PostRoundFeedbackView.swift in Sources */,
+				965BCAF82F1A002000063CD5 /* PendingFeedbackSection.swift in Sources */,
 				966A60D52F116FE00064F1A9 /* CreateRoundFlow.swift in Sources */,
 				966A60D62F116FE00064F1A9 /* CreateRoundDetailsStep.swift in Sources */,
 				966A60D72F116FE00064F1A9 /* CreateRoundDateTimeStep.swift in Sources */,
@@ -874,6 +916,7 @@
 				965BCAEB2F19D5ED00063CD5 /* UserRepository.swift in Sources */,
 				966A612D2F1415700064F1A9 /* FirestoreChatRepository.swift in Sources */,
 				966A60692F11330F0064F1A9 /* ProfileRepository.swift in Sources */,
+				965BCAFA2F1A015200063CD5 /* TestDataHelper.swift in Sources */,
 				966A606A2F11330F0064F1A9 /* ProfileSetupView.swift in Sources */,
 				966A606B2F11330F0064F1A9 /* AuthView.swift in Sources */,
 				966A61412F1466A60064F1A9 /* Comment.swift in Sources */,
@@ -881,6 +924,8 @@
 				966A606C2F11330F0064F1A9 /* ProfileSetupViewModel.swift in Sources */,
 				966A606D2F11330F0064F1A9 /* Message.swift in Sources */,
 				9604DC5F2F15F8AC00C7D73F /* AboutMeEditSheet.swift in Sources */,
+				965BCAFD2F1A016300063CD5 /* TestDataSection.swift in Sources */,
+				965BCAEF2F19F7BD00063CD5 /* TrustRepository.swift in Sources */,
 				9604DC602F15F8AC00C7D73F /* PhotoEditSheet.swift in Sources */,
 				9604DC612F15F8AC00C7D73F /* GolfEditSheet.swift in Sources */,
 				966A610D2F13EA170064F1A9 /* FilterSummaryView.swift in Sources */,
@@ -890,12 +935,14 @@
 				965BCAE72F19A3B600063CD5 /* DeepLinkCoordinator.swift in Sources */,
 				966A60F12F119CB10064F1A9 /* RoundDetailMembersSection.swift in Sources */,
 				966A610F2F13EA340064F1A9 /* RoundsEmptyState.swift in Sources */,
+				965BCAF32F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift in Sources */,
 				966A614B2F1466E70064F1A9 /* FeedViewModel.swift in Sources */,
 				966A614C2F1466E70064F1A9 /* CreatePostViewModel.swift in Sources */,
 				9604DC502F15BAF800C7D73F /* FeedRankingConfig.swift in Sources */,
 				9604DC512F15BAF800C7D73F /* FeedRankingService.swift in Sources */,
 				966A614D2F1466E70064F1A9 /* UserPostsViewModel.swift in Sources */,
 				966A614E2F1466E70064F1A9 /* PostDetailViewModel.swift in Sources */,
+				965BCAED2F19F7B100063CD5 /* RoundFeedback.swift in Sources */,
 				966A60EB2F1199770064F1A9 /* EditRoundView.swift in Sources */,
 				966A611E2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift in Sources */,
 				966A611F2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift in Sources */,
@@ -915,6 +962,7 @@
 				966A60C22F1159850064F1A9 /* ProfilePhotoGrid.swift in Sources */,
 				966A607C2F11360E0064F1A9 /* Tier1OnboardingViewModel.swift in Sources */,
 				966A60712F11330F0064F1A9 /* FirestoreSocialRepository.swift in Sources */,
+				965BCAF12F19F7C900063CD5 /* FirestoreTrustRepository.swift in Sources */,
 				966A615C2F1467290064F1A9 /* PostCardView.swift in Sources */,
 				9604DC492F15BADC00C7D73F /* PostStats.swift in Sources */,
 				9604DC4A2F15BADC00C7D73F /* ViewerContext.swift in Sources */,
@@ -1083,7 +1131,8 @@
 				CODE_SIGN_ENTITLEMENTS = TeePals/TeePals.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = Y6F9X8K3XF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TeePals/Info.plist;
@@ -1115,7 +1164,8 @@
 				CODE_SIGN_ENTITLEMENTS = TeePals/TeePals.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = Y6F9X8K3XF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TeePals/Info.plist;

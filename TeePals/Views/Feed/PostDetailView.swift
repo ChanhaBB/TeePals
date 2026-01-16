@@ -11,6 +11,9 @@ struct PostDetailView: View {
 
     @State private var selectedAuthorUid: String?
     @State private var selectedRoundId: String?
+    @State private var showPhotoViewer = false
+    @State private var selectedPhotoIndex = 0
+    @State private var showCommentSheet = false
 
     let onDeleted: (String) -> Void
     let onUpdated: (Post) -> Void
@@ -27,52 +30,64 @@ struct PostDetailView: View {
     
     var body: some View {
         ZStack {
-            AppColors.backgroundGrouped
+            // White background extending to top
+            AppColors.surface
                 .ignoresSafeArea()
-            
-            if viewModel.isLoading {
-                ProgressView()
-            } else if let post = viewModel.post {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: AppSpacing.md) {
-                            // Post content
-                            postContent(post)
-                            
-                            Divider()
-                            
-                            // Comments section
-                            commentsSection
-                        }
-                        .padding(AppSpacing.contentPadding)
-                    }
-                    .scrollDismissesKeyboard(.interactively)
-                }
-                
-                // Comment composer
-                VStack(spacing: 0) {
+
+            VStack(spacing: 0) {
+                // Custom navigation bar
+                customNavigationBar
+
+                if viewModel.isLoading {
                     Spacer()
-                    commentComposer
-                }
-            } else if let error = viewModel.errorMessage {
-                VStack {
-                    Text(error)
-                        .foregroundColor(AppColors.error)
-                    Button("Retry") {
-                        Task { await viewModel.loadPost() }
+                    ProgressView()
+                    Spacer()
+                } else if let post = viewModel.post {
+                    ZStack(alignment: .bottom) {
+                        // Main content with pull-to-refresh
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                                    // Post content card (white, full width)
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        postContent(post)
+                                    }
+                                    .background(AppColors.surface)
+
+                                    // Comments section card (white, full width)
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        commentsSection
+                                    }
+                                    .background(AppColors.surface)
+
+                                    // Bottom padding for comment composer
+                                    Color.clear.frame(height: 80)
+                                }
+                            }
+                            .scrollDismissesKeyboard(.interactively)
+                            .refreshable {
+                                await viewModel.refresh()
+                            }
+                        }
+                        .background(AppColors.backgroundGrouped)
+
+                        // Comment composer
+                        commentComposer
                     }
+                } else if let error = viewModel.errorMessage {
+                    Spacer()
+                    VStack {
+                        Text(error)
+                            .foregroundColor(AppColors.error)
+                        Button("Retry") {
+                            Task { await viewModel.loadPost() }
+                        }
+                    }
+                    Spacer()
                 }
             }
         }
-        .navigationTitle("Post")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if viewModel.isAuthor {
-                    authorMenu
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .alert("Delete Post?", isPresented: $viewModel.isShowingDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 Task {
@@ -91,9 +106,9 @@ struct PostDetailView: View {
             viewModel.onPostUpdated = onUpdated
         }
         .onChange(of: viewModel.replyingTo) { _, newValue in
-            // Focus keyboard when user taps reply
+            // Open comment sheet when user taps reply
             if newValue != nil {
-                isCommentFocused = true
+                showCommentSheet = true
             }
         }
         .sheet(item: Binding(
@@ -127,33 +142,77 @@ struct PostDetailView: View {
         .task {
             await viewModel.loadPost()
         }
-    }
-    
-    // MARK: - Author Menu
-    
-    private var authorMenu: some View {
-        Menu {
-            Button {
-                viewModel.startEditing()
-            } label: {
-                Label("Edit", systemImage: "pencil")
+        .fullScreenCover(isPresented: $showPhotoViewer) {
+            if let post = viewModel.post {
+                PhotoViewerView(photoUrls: post.photoUrls, initialIndex: selectedPhotoIndex)
             }
-            
-            Button(role: .destructive) {
-                viewModel.isShowingDeleteConfirmation = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .foregroundColor(AppColors.textSecondary)
         }
     }
     
-    // MARK: - Post Content
+    // MARK: - Custom Navigation Bar
+
+    private var customNavigationBar: some View {
+        HStack(spacing: AppSpacing.sm) {
+            // Back button with TeePals text
+            Button {
+                dismiss()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.body)
+                        .fontWeight(.semibold)
+
+                    Text("TeePals")
+                        .font(AppTypography.labelLarge)
+                }
+                .foregroundColor(AppColors.textPrimary)
+            }
+
+            Spacer()
+
+            // Three dots menu
+            Menu {
+                if viewModel.isAuthor {
+                    Button {
+                        viewModel.startEditing()
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button(role: .destructive) {
+                        viewModel.isShowingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+
+                Button {
+                    // TODO: Share post
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+
+                Button(role: .destructive) {
+                    // TODO: Report post
+                } label: {
+                    Label("Report", systemImage: "exclamationmark.triangle")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.title3)
+                    .foregroundColor(AppColors.textPrimary)
+                    .frame(width: 44, height: 44)
+            }
+        }
+        .padding(.horizontal, AppSpacing.contentPadding)
+        .padding(.vertical, AppSpacing.sm)
+        .background(AppColors.surface)
+    }
     
+    // MARK: - Post Content
+
     private func postContent(_ post: Post) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+        VStack(alignment: .leading, spacing: 0) {
             // Author header (tappable to view profile)
             Button {
                 selectedAuthorUid = post.authorUid
@@ -181,35 +240,58 @@ struct PostDetailView: View {
                 }
             }
             .buttonStyle(.plain)
-            
-            // Edit mode or display mode
-            if viewModel.isEditing {
-                editTextView
-            } else {
-                Text(post.text)
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textPrimary)
+
+            // Content section with spacing
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                // Title
+                if let title = post.title, !title.isEmpty {
+                    Text(title)
+                        .font(AppTypography.headlineLarge)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppColors.textPrimary)
+                }
+
+                // Edit mode or display mode
+                if viewModel.isEditing {
+                    editTextView
+                } else {
+                    Text(post.text)
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textPrimary)
+                }
+
+                if post.isEdited && !viewModel.isEditing {
+                    Text("Edited")
+                        .font(AppTypography.caption)
+                        .foregroundColor(AppColors.textTertiary)
+                }
+
+                // Photos
+                if post.hasPhotos {
+                    photoSection(post.photoUrls)
+                        .padding(.top, AppSpacing.md)
+                }
+
+                // Linked round
+                if let round = viewModel.linkedRound {
+                    linkedRoundCard(round)
+                        .padding(.top, AppSpacing.sm)
+                }
             }
-            
-            if post.isEdited && !viewModel.isEditing {
-                Text("Edited")
-                    .font(AppTypography.caption)
-                    .foregroundColor(AppColors.textTertiary)
-            }
-            
-            // Photos
-            if post.hasPhotos {
-                photoSection(post.photoUrls)
-            }
-            
-            // Linked round
-            if let round = viewModel.linkedRound {
-                linkedRoundCard(round)
-            }
-            
+            .padding(.top, AppSpacing.lg)
+
+            // Separator before interactions
+            Rectangle()
+                .fill(AppColors.textTertiary.opacity(0.2))
+                .frame(height: 1)
+                .padding(.horizontal, AppSpacing.sm)
+                .padding(.top, AppSpacing.md)
+                .padding(.bottom, AppSpacing.xs)
+
             // Interactions
             interactionsBar(post)
         }
+        .padding(AppSpacing.contentPadding)
     }
     
     private func avatarView(_ post: Post) -> some View {
@@ -266,7 +348,7 @@ struct PostDetailView: View {
     private func photoSection(_ urls: [String]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: AppSpacing.sm) {
-                ForEach(urls, id: \.self) { url in
+                ForEach(Array(urls.enumerated()), id: \.element) { index, url in
                     CachedAsyncImage(url: URL(string: url)) { image in
                         image
                             .resizable()
@@ -277,6 +359,11 @@ struct PostDetailView: View {
                     }
                     .frame(width: 200, height: 200)
                     .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedPhotoIndex = index
+                        showPhotoViewer = true
+                    }
                 }
             }
         }
@@ -338,8 +425,8 @@ struct PostDetailView: View {
     }
     
     private func interactionsBar(_ post: Post) -> some View {
-        HStack(spacing: AppSpacing.lg) {
-            // Upvote
+        HStack(spacing: AppSpacing.xl) {
+            // Like button with text
             Button {
                 Task {
                     await viewModel.toggleUpvote()
@@ -349,120 +436,217 @@ struct PostDetailView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: post.hasUpvoted == true ? "arrow.up.circle.fill" : "arrow.up.circle")
+                HStack(spacing: 6) {
+                    Image(systemName: post.hasUpvoted == true ? "heart.fill" : "heart")
                         .font(.title3)
-                        .foregroundColor(post.hasUpvoted == true ? AppColors.primary : AppColors.textSecondary)
+                        .foregroundColor(post.hasUpvoted == true ? AppColors.error : AppColors.textSecondary)
 
-                    Text("\(post.upvoteCount)")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(post.hasUpvoted == true ? AppColors.primary : AppColors.textSecondary)
+                    Text("Like")
+                        .font(AppTypography.labelMedium)
+                        .foregroundColor(AppColors.textSecondary)
+
+                    if post.upvoteCount > 0 {
+                        Text("\(post.upvoteCount)")
+                            .font(AppTypography.labelMedium)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
                 }
             }
-            
-            // Comments count
-            HStack(spacing: 4) {
+            .buttonStyle(.plain)
+
+            // Comments count with text
+            HStack(spacing: 6) {
                 Image(systemName: "bubble.left")
                     .font(.title3)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Text("\(post.commentCount)")
-                    .font(AppTypography.bodyMedium)
+                    .font(AppTypography.labelMedium)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
         }
-        .padding(.top, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.md)
     }
     
     // MARK: - Comments Section
 
+    @ViewBuilder
     private var commentsSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text("Comments")
-                .font(AppTypography.headlineMedium)
-                .foregroundColor(AppColors.textPrimary)
+        if let post = viewModel.post {
+            VStack(alignment: .leading, spacing: 0) {
+                if viewModel.isLoadingComments {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(AppSpacing.contentPadding)
+                } else if viewModel.commentTree.isEmpty {
+                    Text("No comments yet. Be the first!")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, AppSpacing.lg)
+                        .padding(.horizontal, AppSpacing.contentPadding)
+                } else {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(viewModel.commentTree) { comment in
+                            CommentRowView(
+                                comment: comment,
+                                postAuthorUid: post.authorUid,
+                                isAuthor: comment.authorUid == viewModel.uid,
+                                onReply: { viewModel.setReplyTarget(comment) },
+                                onDelete: { Task { await viewModel.deleteComment(comment) } },
+                                onDeleteReply: { reply in
+                                    Task { await viewModel.deleteComment(reply) }
+                                },
+                                onAuthorTap: { uid in
+                                    selectedAuthorUid = uid
+                                }
+                            )
 
-            if viewModel.isLoadingComments {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-            } else if viewModel.commentTree.isEmpty {
-                Text("No comments yet. Be the first!")
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, AppSpacing.lg)
-            } else {
-                ForEach(viewModel.commentTree) { comment in
-                    CommentRowView(
-                        comment: comment,
-                        isAuthor: comment.authorUid == viewModel.uid,
-                        onReply: { viewModel.setReplyTarget(comment) },
-                        onDelete: { Task { await viewModel.deleteComment(comment) } },
-                        onDeleteReply: { reply in
-                            Task { await viewModel.deleteComment(reply) }
-                        },
-                        onAuthorTap: { uid in
-                            selectedAuthorUid = uid
+                            // Thin separator line between comments
+                            if comment.id != viewModel.commentTree.last?.id {
+                                Rectangle()
+                                    .fill(AppColors.textTertiary.opacity(0.2))
+                                    .frame(height: 1)
+                            }
                         }
-                    )
+                    }
+                    .padding(.vertical, AppSpacing.sm)
                 }
             }
-
-            // Spacer for keyboard
-            Spacer(minLength: 80)
         }
     }
     
     // MARK: - Comment Composer
-    
+
     private var commentComposer: some View {
         VStack(spacing: 0) {
             Divider()
-            
-            VStack(spacing: AppSpacing.xs) {
-                // Reply indicator
-                if let replyTo = viewModel.replyingTo {
-                    HStack {
-                        Text("Replying to @\(replyTo.authorNickname ?? "user")")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        Spacer()
-                        
-                        Button {
-                            viewModel.setReplyTarget(nil)
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(AppColors.textTertiary)
-                        }
-                    }
-                    .padding(.horizontal, AppSpacing.contentPadding)
-                    .padding(.top, AppSpacing.xs)
-                }
-                
+
+            // Simple button to open comment sheet
+            Button {
+                showCommentSheet = true
+            } label: {
                 HStack(spacing: AppSpacing.sm) {
-                    TextField("Add a comment...", text: $viewModel.newCommentText)
-                        .textFieldStyle(.roundedBorder)
+                    Image(systemName: "photo")
+                        .font(.title3)
+                        .foregroundColor(AppColors.textSecondary)
+
+                    Text("Add a comment")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textTertiary)
+
+                    Spacer()
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.vertical, AppSpacing.md)
+            }
+            .buttonStyle(.plain)
+        }
+        .background(AppColors.surface)
+        .sheet(isPresented: $showCommentSheet) {
+            commentSheetView
+        }
+    }
+
+    // MARK: - Comment Sheet
+
+    private var commentSheetView: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                // Close handle
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(AppColors.textTertiary.opacity(0.3))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, AppSpacing.sm)
+
+                // Text editor with placeholder
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $viewModel.newCommentText)
+                        .font(AppTypography.bodyMedium)
+                        .padding(AppSpacing.md)
                         .focused($isCommentFocused)
-                    
+                        .scrollContentBackground(.hidden)
+
+                    // Placeholder
+                    if viewModel.newCommentText.isEmpty {
+                        let placeholderText = viewModel.replyingTo != nil
+                            ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
+                            : "Add a comment"
+
+                        Text(placeholderText)
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textTertiary)
+                            .padding(.horizontal, AppSpacing.md + 5)
+                            .padding(.top, AppSpacing.md + 8)
+                            .allowsHitTesting(false)
+                    }
+                }
+
+                Spacer()
+
+                // Bottom action bar
+                HStack {
+                    // Photo icon
+                    Button {
+                        // TODO: Add photo support
+                    } label: {
+                        Image(systemName: "photo")
+                            .font(.title3)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    Spacer()
+
+                    // Post button
                     Button {
                         Task {
                             await viewModel.submitComment()
-                            isCommentFocused = false
+                            showCommentSheet = false
                         }
                     } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
+                        Text("Post")
+                            .font(AppTypography.labelLarge)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.sm)
+                            .background(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
+                            .cornerRadius(AppSpacing.radiusMedium)
                     }
                     .disabled(!viewModel.canSubmitComment)
                 }
                 .padding(.horizontal, AppSpacing.contentPadding)
-                .padding(.vertical, AppSpacing.sm)
+                .padding(.bottom, AppSpacing.sm)
             }
-            .background(AppColors.backgroundPrimary)
+
+            // X button at top right
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        showCommentSheet = false
+                        viewModel.newCommentText = ""
+                        viewModel.setReplyTarget(nil)
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.body)
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(AppSpacing.sm)
+                    }
+                }
+                .padding(.top, AppSpacing.xs)
+                .padding(.trailing, AppSpacing.xs)
+                Spacer()
+            }
+        }
+        .background(AppColors.surface)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
+        .presentationCornerRadius(AppSpacing.radiusLarge)
+        .onAppear {
+            isCommentFocused = true
         }
     }
 }
@@ -471,6 +655,7 @@ struct PostDetailView: View {
 
 struct CommentRowView: View {
     let comment: Comment
+    let postAuthorUid: String
     let isAuthor: Bool
     let onReply: () -> Void
     let onDelete: () -> Void
@@ -480,9 +665,13 @@ struct CommentRowView: View {
     @State private var showDeleteConfirmation = false
     @State private var showReplies = true
     @State private var replyToDelete: Comment?
-    
+
     private var replyCount: Int {
         comment.replies?.count ?? 0
+    }
+
+    private var isPostAuthor: Bool {
+        comment.authorUid == postAuthorUid
     }
     
     var body: some View {
@@ -513,19 +702,20 @@ struct CommentRowView: View {
     }
     
     // MARK: - Main Comment
-    
-    private var mainCommentView: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
-            // Avatar (tappable)
-            Button {
-                onAuthorTap(comment.authorUid)
-            } label: {
-                avatarView(c: comment, size: 36)
-            }
-            .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 4) {
-                // Header: name, time, edited
+    private var mainCommentView: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            // Header with author info
+            HStack(spacing: AppSpacing.sm) {
+                // Avatar (tappable)
+                Button {
+                    onAuthorTap(comment.authorUid)
+                } label: {
+                    avatarView(c: comment, size: 32)
+                }
+                .buttonStyle(.plain)
+
+                // Author name with red dot if post author
                 HStack(spacing: 4) {
                     Button {
                         onAuthorTap(comment.authorUid)
@@ -535,92 +725,84 @@ struct CommentRowView: View {
                             .foregroundColor(AppColors.textPrimary)
                     }
                     .buttonStyle(.plain)
-                    
-                    Text("·")
-                        .foregroundColor(AppColors.textTertiary)
-                    
-                    Text(comment.timeAgoString)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
-                    
-                    if comment.isEdited {
-                        Text("· edited")
-                            .font(AppTypography.caption)
+
+                    if isPostAuthor {
+                        Text("*")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(AppColors.error)
+                    }
+                }
+
+                Spacer()
+
+                // Delete button for author
+                if isAuthor {
+                    Button {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.caption)
                             .foregroundColor(AppColors.textTertiary)
                     }
                 }
-                
-                // Comment text
-                Text(comment.displayText)
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                
-                // Actions
-                HStack(spacing: AppSpacing.lg) {
-                    Button {
-                        onReply()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrowshape.turn.up.left")
-                                .font(.caption)
-                            Text("Reply")
-                        }
+            }
+
+            // Comment text
+            Text(comment.displayText)
+                .font(AppTypography.bodyMedium)
+                .foregroundColor(AppColors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, AppSpacing.sm)
+
+            // Footer: time, like, reply
+            HStack(spacing: AppSpacing.md) {
+                Text(comment.timeAgoString)
+                    .font(AppTypography.caption)
+                    .foregroundColor(AppColors.textTertiary)
+
+                Button {
+                    // TODO: Implement comment likes
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart")
+                            .font(.caption)
+                            .foregroundColor(AppColors.textSecondary)
+
+                        Text("Like")
+                            .font(AppTypography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                }
+
+                Button {
+                    onReply()
+                } label: {
+                    Text("Reply")
                         .font(AppTypography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    }
-                    
-                    if isAuthor {
-                        Button {
-                            showDeleteConfirmation = true
-                        } label: {
-                            Text("Delete")
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.error.opacity(0.8))
-                        }
-                    }
                 }
-                .padding(.top, 4)
+
+                Spacer()
             }
-            
-            Spacer(minLength: 0)
         }
-        .padding(.vertical, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.md)
+        .padding(.horizontal, AppSpacing.contentPadding)
     }
-    
+
     // MARK: - Replies Section
-    
+
     private var repliesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Toggle button
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showReplies.toggle()
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    // Connecting line
-                    Rectangle()
-                        .fill(AppColors.primary.opacity(0.3))
-                        .frame(width: 2, height: 16)
-                        .padding(.leading, 17) // Align with avatar center
-                    
-                    Image(systemName: showReplies ? "chevron.up" : "chevron.down")
-                        .font(.caption2)
-                        .foregroundColor(AppColors.primary)
-                    
-                    Text(showReplies ? "Hide \(replyCount) \(replyCount == 1 ? "reply" : "replies")" : "View \(replyCount) \(replyCount == 1 ? "reply" : "replies")")
-                        .font(AppTypography.captionEmphasis)
-                        .foregroundColor(AppColors.primary)
-                }
-            }
-            .padding(.vertical, AppSpacing.xs)
-            
             // Replies list
-            if showReplies, let replies = comment.replies {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(replies) { reply in
-                        replyView(reply)
+            if let replies = comment.replies {
+                ForEach(replies) { reply in
+                    replyView(reply)
+
+                    // Separator between replies
+                    if reply.id != replies.last?.id {
+                        Rectangle()
+                            .fill(AppColors.textTertiary.opacity(0.15))
+                            .frame(height: 1)
                     }
                 }
             }
@@ -628,55 +810,85 @@ struct CommentRowView: View {
     }
     
     // MARK: - Reply View (nested comment)
-    
+
     private func replyView(_ reply: Comment) -> some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
-            // Connecting line + avatar
-            HStack(spacing: 0) {
-                Rectangle()
-                    .fill(AppColors.primary.opacity(0.2))
-                    .frame(width: 2)
-                    .padding(.leading, 17) // Align with parent avatar center
+        let isReplyPostAuthor = reply.authorUid == postAuthorUid
+        let isReplyAuthor = reply.authorUid == comment.authorUid || isAuthor
 
-                Spacer()
-                    .frame(width: AppSpacing.sm)
+        return ZStack {
+            // Grey background filling full width
+            AppColors.backgroundSecondary.opacity(0.7)
 
-                Button {
-                    onAuthorTap(reply.authorUid)
-                } label: {
-                    avatarView(c: reply, size: 28)
-                }
-                .buttonStyle(.plain)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                // Header
-                HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                // Header with author info
+                HStack(spacing: AppSpacing.sm) {
+                    // Avatar (tappable)
                     Button {
                         onAuthorTap(reply.authorUid)
                     } label: {
-                        Text(reply.authorNickname ?? "Unknown")
-                            .font(AppTypography.captionEmphasis)
-                            .foregroundColor(AppColors.textPrimary)
+                        avatarView(c: reply, size: 32)
                     }
                     .buttonStyle(.plain)
-                    
-                    Text("·")
-                        .foregroundColor(AppColors.textTertiary)
-                    
-                    Text(reply.timeAgoString)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+
+                    // Author name with red dot if post author
+                    HStack(spacing: 4) {
+                        Button {
+                            onAuthorTap(reply.authorUid)
+                        } label: {
+                            Text(reply.authorNickname ?? "Unknown")
+                                .font(AppTypography.labelMedium)
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                        .buttonStyle(.plain)
+
+                        if isReplyPostAuthor {
+                            Text("*")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(AppColors.error)
+                        }
+                    }
+
+                    Spacer()
+
+                    // Delete button for author
+                    if isReplyAuthor {
+                        Button {
+                            replyToDelete = reply
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textTertiary)
+                        }
+                    }
                 }
-                
-                // Reply text with @mention styling
+
+                // Reply text
                 Text(reply.displayText)
                     .font(AppTypography.bodyMedium)
                     .foregroundColor(AppColors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                
-                // Actions for reply
-                HStack(spacing: AppSpacing.lg) {
+                    .padding(.bottom, AppSpacing.sm)
+
+                // Footer: time, like, reply
+                HStack(spacing: AppSpacing.md) {
+                    Text(reply.timeAgoString)
+                        .font(AppTypography.caption)
+                        .foregroundColor(AppColors.textTertiary)
+
+                    Button {
+                        // TODO: Implement comment likes
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+
+                            Text("Like")
+                                .font(AppTypography.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                    }
+
                     Button {
                         onReply()
                     } label: {
@@ -684,28 +896,14 @@ struct CommentRowView: View {
                             .font(AppTypography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
-                    if reply.authorUid == comment.authorUid || isAuthor {
-                        Button {
-                            replyToDelete = reply
-                        } label: {
-                            Text("Delete")
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.error.opacity(0.8))
-                        }
-                    }
+
+                    Spacer()
                 }
-                .padding(.top, 2)
             }
-            
-            Spacer(minLength: 0)
+            .padding(.vertical, AppSpacing.md)
+            .padding(.leading, AppSpacing.contentPadding + AppSpacing.lg)
+            .padding(.trailing, AppSpacing.contentPadding)
         }
-        .padding(.vertical, AppSpacing.xs)
-        .background(
-            AppColors.backgroundSecondary.opacity(0.3)
-                .cornerRadius(AppSpacing.sm)
-                .padding(.leading, AppSpacing.xl)
-        )
     }
     
     // MARK: - Avatar Helper

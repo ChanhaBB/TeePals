@@ -49,7 +49,7 @@ struct FeedView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showCreatePost) {
+            .fullScreenCover(isPresented: $showCreatePost) {
                 CreatePostView(
                     viewModel: container.makeCreatePostViewModel(),
                     onPostCreated: { post in

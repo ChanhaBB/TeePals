@@ -17,6 +17,8 @@ struct ProfileView: View {
     @State private var isBioExpanded = false
     @State private var showingPhotoViewer = false
     @State private var showingPhotoActions = false
+    @State private var showingPhotoPicker = false
+    @State private var selectedBadge: String?
 
     // Photo picker
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -41,6 +43,9 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .refreshable { await viewModel.refresh() }
             .task { await viewModel.loadProfile() }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshProfile"))) { _ in
+                Task { await viewModel.forceRefresh() }
+            }
             .alert("Sign Out", isPresented: $showingSignOutAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Sign Out", role: .destructive) { authService.signOut() }
@@ -98,18 +103,22 @@ struct ProfileView: View {
                 }
             }
             .confirmationDialog("Profile Photo", isPresented: $showingPhotoActions) {
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    Text("Change Photo")
+                Button("Change Photo") {
+                    showingPhotoPicker = true
                 }
                 Button("Remove Photo", role: .destructive) {
                     Task { await deletePhoto() }
                 }
                 Button("Cancel", role: .cancel) { }
             }
+            .photosPicker(isPresented: $showingPhotoPicker, selection: $selectedPhotoItem, matching: .images)
             .fullScreenCover(isPresented: $showingPhotoViewer) {
                 if let profile = viewModel.publicProfile, !profile.photoUrls.isEmpty {
                     PhotoViewerView(photoUrls: profile.photoUrls, initialIndex: 0)
                 }
+            }
+            .sheet(item: $selectedBadge) { badge in
+                BadgeExplanationView(badgeName: badge)
             }
         }
     }
@@ -178,10 +187,17 @@ struct ProfileView: View {
         ScrollView {
             VStack(spacing: AppSpacing.lg) {
                 unifiedHeader(profile: profile)
+
                 aboutMeCard(profile: profile)
                 golfCard(profile: profile)
+                badgesCard(profile: profile)
                 myPostsButton
                 signOutSection
+
+                // TESTING ONLY - Commented out for beta
+                // #if DEBUG
+                // TestDataSection()
+                // #endif
             }
             .padding(AppSpacing.contentPadding)
         }
@@ -379,7 +395,8 @@ struct ProfileView: View {
 
     private func buildPersonalInfo(profile: PublicProfile) -> String? {
         var parts: [String] = []
-        if let age = profile.age {
+        // Use accurate age from ViewModel (PrivateProfile) instead of approximation
+        if let age = viewModel.age {
             parts.append("\(age)")
         }
         if let gender = profile.gender {
@@ -527,6 +544,66 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Badges Card
+
+    private func badgesCard(profile: PublicProfile) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            // Header
+            Text("Achievements")
+                .font(AppTypography.headlineMedium)
+                .foregroundColor(AppColors.textPrimary)
+
+            if profile.earnedBadges.isEmpty {
+                // Empty state
+                Text("Play more rounds to unlock badges!")
+                    .font(AppTypography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(.top, 4)
+            } else {
+                // Badges grid
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(profile.earnedBadges, id: \.self) { badge in
+                        Button {
+                            selectedBadge = badge
+                        } label: {
+                            HStack(spacing: 10) {
+                                Text(badge)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(AppColors.textPrimary)
+
+                                Spacer()
+                            }
+                            .padding(.vertical, 4)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    // Play again stat (if eligible)
+                    if profile.shouldShowPlayAgainStat {
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        HStack(spacing: 8) {
+                            Text("Would Play Again:")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.textSecondary)
+                            Text("\(Int(profile.recentWouldPlayAgainPct * 100))%")
+                                .font(AppTypography.bodyMedium)
+                                .foregroundColor(AppColors.success)
+                                .fontWeight(.semibold)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppSpacing.md)
+        .background(AppColors.surface)
+        .cornerRadius(AppRadii.card)
+    }
+
     // MARK: - My Posts Button
 
     private var myPostsButton: some View {
@@ -604,6 +681,7 @@ struct ProfileView: View {
         // Reset
         selectedPhotoItem = nil
         photoEditViewModel = nil
+        showingPhotoPicker = false
     }
 
     private func deletePhoto() async {
@@ -629,12 +707,140 @@ struct ProfileView: View {
     }
 }
 
+// MARK: - Badge Explanation View
+
+private struct BadgeExplanationView: View {
+    let badgeName: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Drag indicator
+            Spacer()
+                .frame(height: 20)
+
+            // Content
+            VStack(spacing: AppSpacing.lg) {
+                // Icon & Title
+                VStack(spacing: AppSpacing.sm) {
+                    Text(badgeEmoji)
+                        .font(.system(size: 48))
+
+                    Text(badgeTitle)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(AppColors.textPrimary)
+                }
+
+                // Description
+                VStack(spacing: AppSpacing.md) {
+                    Text(badgeDescription)
+                        .font(AppTypography.bodyLarge)
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+
+                    // How to earn
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        Text("How to earn:")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(AppColors.textPrimary)
+
+                        Text(howToEarn)
+                            .font(AppTypography.bodyMedium)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(AppSpacing.md)
+                    .background(AppColors.primaryLight.opacity(0.1))
+                    .cornerRadius(AppSpacing.radiusMedium)
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+
+                // Done button
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Got it")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(AppColors.primary)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.top, AppSpacing.sm)
+            }
+
+            Spacer()
+        }
+        .presentationDetents([.height(450)])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var badgeEmoji: String {
+        if badgeName.contains("⭐") { return "⭐" }
+        if badgeName.contains("🕐") { return "🕐" }
+        if badgeName.contains("🤝") { return "🤝" }
+        if badgeName.contains("📊") { return "📊" }
+        if badgeName.contains("💬") { return "💬" }
+        return "🏆"
+    }
+
+    private var badgeTitle: String {
+        if badgeName.contains("Trusted Regular") { return "Trusted Regular" }
+        if badgeName.contains("On-Time") { return "On-Time" }
+        if badgeName.contains("Respectful") { return "Respectful" }
+        if badgeName.contains("Well-Matched") { return "Well-Matched" }
+        if badgeName.contains("Clear Communicator") { return "Clear Communicator" }
+        return "Badge"
+    }
+
+    private var badgeDescription: String {
+        if badgeName.contains("Trusted Regular") {
+            return "You're a consistent and reliable member of the TeePals community"
+        }
+        if badgeName.contains("On-Time") {
+            return "You have a track record of showing up on time for rounds"
+        }
+        if badgeName.contains("Respectful") {
+            return "Playing partners appreciate your positive attitude and respectful demeanor"
+        }
+        if badgeName.contains("Well-Matched") {
+            return "Your stated skill level accurately reflects your actual play"
+        }
+        if badgeName.contains("Clear Communicator") {
+            return "You communicate effectively with your playing partners"
+        }
+        return "Achievement badge"
+    }
+
+    private var howToEarn: String {
+        if badgeName.contains("Trusted Regular") {
+            return "Complete 20+ rounds with consistently positive feedback from playing partners"
+        }
+        if badgeName.contains("On-Time") {
+            return "Receive positive feedback for punctuality from multiple playing partners"
+        }
+        if badgeName.contains("Respectful") {
+            return "Maintain a respectful and positive attitude across multiple rounds"
+        }
+        if badgeName.contains("Well-Matched") {
+            return "Playing partners confirm your skill level matches your actual play"
+        }
+        if badgeName.contains("Clear Communicator") {
+            return "Receive positive feedback for communication from playing partners"
+        }
+        return "Complete rounds and receive positive feedback"
+    }
+}
+
 // MARK: - Preview
 
 #if DEBUG
 #Preview {
     let container = AppContainer()
-    return ProfileView(
+    ProfileView(
         viewModel: ProfileViewModel(
             profileRepository: ProfilePreviewMocks.repository,
             socialRepository: ProfilePreviewMocks.socialRepository,
