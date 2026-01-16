@@ -38,6 +38,8 @@
 		965BCAE22F19A39600063CD5 /* ShareLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE12F19A39600063CD5 /* ShareLinkService.swift */; };
 		965BCAE42F19A3A500063CD5 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE32F19A3A500063CD5 /* ShareSheet.swift */; };
 		965BCAE72F19A3B600063CD5 /* DeepLinkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE52F19A3B600063CD5 /* DeepLinkCoordinator.swift */; };
+		965BCAE92F19D5B300063CD5 /* FirestoreUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */; };
+		965BCAEB2F19D5ED00063CD5 /* UserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */; };
 		966A5FC42F0FF7050064F1A9 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 966A5FC32F0FF7050064F1A9 /* FirebaseAnalytics */; };
 		966A5FC62F10EE420064F1A9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */; };
 		966A605D2F11330F0064F1A9 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60312F11330F0064F1A9 /* AppContainer.swift */; };
@@ -201,6 +203,8 @@
 		965BCAE12F19A39600063CD5 /* ShareLinkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLinkService.swift; sourceTree = "<group>"; };
 		965BCAE32F19A3A500063CD5 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		965BCAE52F19A3B600063CD5 /* DeepLinkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkCoordinator.swift; sourceTree = "<group>"; };
+		965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreUserRepository.swift; sourceTree = "<group>"; };
+		965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRepository.swift; sourceTree = "<group>"; };
 		966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		966A60312F11330F0064F1A9 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		966A60332F11330F0064F1A9 /* FirestoreProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreProfileRepository.swift; sourceTree = "<group>"; };
@@ -421,6 +425,7 @@
 		966A60352F11330F0064F1A9 /* FirebaseRepositories */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAE82F19D5B300063CD5 /* FirestoreUserRepository.swift */,
 				965BCADD2F18644A00063CD5 /* FirestoreNotificationsRepository.swift */,
 				966A61452F1466C50064F1A9 /* FirestorePostsRepository.swift */,
 				966A612C2F1415700064F1A9 /* FirestoreChatRepository.swift */,
@@ -463,6 +468,7 @@
 		966A60412F11330F0064F1A9 /* Repositories */ = {
 			isa = PBXGroup;
 			children = (
+				965BCAEA2F19D5ED00063CD5 /* UserRepository.swift */,
 				965BCADB2F18643900063CD5 /* NotificationsRepository.swift */,
 				966A61432F1466B70064F1A9 /* PostsRepository.swift */,
 				966A612A2F1415640064F1A9 /* ChatRepository.swift */,
@@ -815,6 +821,7 @@
 				966A60A02F1146770064F1A9 /* AppColors.swift in Sources */,
 				965BCADE2F18644A00063CD5 /* FirestoreNotificationsRepository.swift in Sources */,
 				00000001 /* TeePalsApp.swift in Sources */,
+				965BCAE92F19D5B300063CD5 /* FirestoreUserRepository.swift in Sources */,
 				966A60C62F116F460064F1A9 /* RoundsRepository.swift in Sources */,
 				966A61382F1418670064F1A9 /* KeyboardDismissModifier.swift in Sources */,
 				966A605D2F11330F0064F1A9 /* AppContainer.swift in Sources */,
@@ -864,6 +871,7 @@
 				966A61072F13E2230064F1A9 /* GeoHashUtil.swift in Sources */,
 				966A60FD2F11AAE90064F1A9 /* SectionCard.swift in Sources */,
 				966A60DD2F117C670064F1A9 /* RoundsListViewModel.swift in Sources */,
+				965BCAEB2F19D5ED00063CD5 /* UserRepository.swift in Sources */,
 				966A612D2F1415700064F1A9 /* FirestoreChatRepository.swift in Sources */,
 				966A60692F11330F0064F1A9 /* ProfileRepository.swift in Sources */,
 				966A606A2F11330F0064F1A9 /* ProfileSetupView.swift in Sources */,

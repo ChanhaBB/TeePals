@@ -13,7 +13,15 @@ final class FirestoreProfileRepository: ProfileRepository {
     private var currentUid: String? {
         Auth.auth().currentUser?.uid
     }
-    
+
+    // MARK: - Profile Existence Check
+
+    func profileExists(uid: String) async throws -> Bool {
+        let docRef = db.collection(FirestoreCollection.profilesPublic).document(uid)
+        let snapshot = try await docRef.getDocument()
+        return snapshot.exists
+    }
+
     // MARK: - Fetch Public Profile
     
     func fetchPublicProfile(uid: String) async throws -> PublicProfile? {

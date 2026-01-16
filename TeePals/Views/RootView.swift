@@ -48,7 +48,8 @@ struct LoadingView: View {
 }
 
 #Preview {
-    RootView()
-        .environmentObject(AuthService())
-        .environmentObject(AppContainer())
+    let container = AppContainer()
+    return RootView()
+        .environmentObject(container.authService)
+        .environmentObject(container)
 }

@@ -157,6 +157,7 @@ private enum PreviewMocks {
     static let profileRepository: ProfileRepository = MockRepo()
     
     private class MockRepo: ProfileRepository {
+    func profileExists(uid: String) async throws -> Bool { false }
         func fetchPublicProfile(uid: String) async throws -> PublicProfile? { nil }
         func fetchPrivateProfile(uid: String) async throws -> PrivateProfile? { nil }
         func upsertPublicProfile(_ profile: PublicProfile) async throws {}

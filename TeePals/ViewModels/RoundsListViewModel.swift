@@ -22,9 +22,9 @@ final class RoundsListViewModel: ObservableObject {
 
     private var hasLoadedOnce = false // Track if we've loaded before
 
-    // Computed property: only show skeleton on first load
+    // Computed property: show skeleton until first load completes
     var shouldShowSkeleton: Bool {
-        !hasLoadedOnce && isLoading
+        !hasLoadedOnce
     }
 
     // User's profile for default filters
@@ -108,20 +108,18 @@ final class RoundsListViewModel: ObservableObject {
     // MARK: - Load Rounds
     
     func loadRounds() async {
-        // Skip if already has data and currently loading
-        let hasData = !rounds.isEmpty
-        guard !hasData || !isLoading else { return }
+        // Skip if already loaded once (prevents redundant loads on tab switches)
+        guard !hasLoadedOnce else { return }
+
+        // Skip if currently loading
+        guard !isLoading else { return }
 
         // Initialize filters from profile if not already done
         if filters.centerLat == nil {
             await initializeFilters()
         }
 
-        // Only show skeleton if: first load OR we have cached data
-        let shouldShowSkeleton = !hasLoadedOnce || !rounds.isEmpty
-        if shouldShowSkeleton {
-            isLoading = true
-        }
+        isLoading = true
         errorMessage = nil
         nextPageCursor = nil
 
@@ -251,6 +249,8 @@ final class RoundsListViewModel: ObservableObject {
     }
     
     func refresh() async {
+        // Allow refresh even if already loaded
+        hasLoadedOnce = false
         await loadRounds()
     }
     

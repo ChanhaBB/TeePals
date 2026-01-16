@@ -56,6 +56,7 @@ struct AuthView: View {
 }
 
 #Preview {
-    AuthView()
-        .environmentObject(AuthService())
+    let container = AppContainer()
+    return AuthView()
+        .environmentObject(container.authService)
 }

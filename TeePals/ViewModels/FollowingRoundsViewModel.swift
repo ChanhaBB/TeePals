@@ -22,9 +22,9 @@ final class FollowingRoundsViewModel: ObservableObject {
 
     private var hasLoadedOnce = false // Track if we've loaded before
 
-    // Computed property: only show skeleton on first load
+    // Computed property: show skeleton until first load completes
     var shouldShowSkeleton: Bool {
-        !hasLoadedOnce && isLoading
+        !hasLoadedOnce
     }
 
     var isEmpty: Bool {
@@ -50,15 +50,13 @@ final class FollowingRoundsViewModel: ObservableObject {
     // MARK: - Load Data
     
     func loadRounds(dateRange: DateRangeOption = .next30) async {
-        // Skip if already has data and currently loading
-        let hasData = !rounds.isEmpty
-        guard !hasData || !isLoading else { return }
+        // Skip if already loaded once (prevents redundant loads on tab switches)
+        guard !hasLoadedOnce else { return }
 
-        // Only show skeleton if: first load OR we have cached data
-        let shouldShowSkeleton = !hasLoadedOnce || !rounds.isEmpty
-        if shouldShowSkeleton {
-            isLoading = true
-        }
+        // Skip if currently loading
+        guard !isLoading else { return }
+
+        isLoading = true
         errorMessage = nil
 
         defer { isLoading = false }
@@ -85,6 +83,8 @@ final class FollowingRoundsViewModel: ObservableObject {
     }
     
     func refresh(dateRange: DateRangeOption = .next30) async {
+        // Allow refresh even if already loaded
+        hasLoadedOnce = false
         await loadRounds(dateRange: dateRange)
     }
     

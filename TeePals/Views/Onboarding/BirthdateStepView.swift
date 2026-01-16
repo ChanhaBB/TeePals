@@ -109,6 +109,7 @@ struct BirthdateStepView_Previews: PreviewProvider {
 }
 
 private class PreviewMockProfileRepository: ProfileRepository {
+    func profileExists(uid: String) async throws -> Bool { false }
     func fetchPublicProfile(uid: String) async throws -> PublicProfile? { nil }
     func fetchPrivateProfile(uid: String) async throws -> PrivateProfile? { nil }
     func upsertPublicProfile(_ profile: PublicProfile) async throws {}

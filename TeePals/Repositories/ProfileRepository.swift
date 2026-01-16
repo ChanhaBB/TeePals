@@ -4,7 +4,13 @@ import Foundation
 /// Implementations handle the actual data source (Firestore, mock, etc.)
 /// Views and ViewModels depend only on this protocol, not on Firebase directly.
 protocol ProfileRepository {
-    
+
+    /// Checks if a public profile exists for the given UID.
+    /// Used by AuthService to determine authentication state.
+    /// - Parameter uid: The user's unique identifier
+    /// - Returns: True if the public profile exists, false otherwise
+    func profileExists(uid: String) async throws -> Bool
+
     /// Fetches a user's public profile by UID.
     /// - Parameter uid: The user's unique identifier
     /// - Returns: The public profile if it exists

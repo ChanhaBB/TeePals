@@ -2,7 +2,6 @@ import Foundation
 import AuthenticationServices
 import CryptoKit
 import FirebaseAuth
-import FirebaseFirestore
 
 enum AuthState: Equatable {
     case loading
@@ -16,12 +15,18 @@ class AuthService: ObservableObject {
     @Published var authState: AuthState = .loading
     @Published var currentUser: FirebaseAuth.User?
     @Published var errorMessage: String?
-    
+
     private var authStateListener: AuthStateDidChangeListenerHandle?
     private var currentNonce: String?
-    private let db = Firestore.firestore()
-    
-    init() {
+
+    // MARK: - Dependencies
+
+    private let profileRepository: ProfileRepository
+    private let userRepository: UserRepository
+
+    init(profileRepository: ProfileRepository, userRepository: UserRepository) {
+        self.profileRepository = profileRepository
+        self.userRepository = userRepository
         setupAuthStateListener()
     }
     
@@ -51,8 +56,8 @@ class AuthService: ObservableObject {
     private func checkProfileStatus(userId: String) async {
         do {
             // v2: Check profiles_public/{uid} as source of truth
-            let doc = try await db.collection(FirestoreCollection.profilesPublic).document(userId).getDocument()
-            if doc.exists {
+            let exists = try await profileRepository.profileExists(uid: userId)
+            if exists {
                 authState = .authenticated
             } else {
                 authState = .needsProfile
@@ -107,28 +112,20 @@ class AuthService: ObservableObject {
     }
     
     private func createUserIfNeeded(user: FirebaseAuth.User, fullName: PersonNameComponents?) async {
-        let userRef = db.collection(FirestoreCollection.users).document(user.uid)
-        
         do {
-            let doc = try await userRef.getDocument()
-            if !doc.exists {
-                // Build display name from Apple's full name or fall back to email
-                var displayName = "Golfer"
-                if let givenName = fullName?.givenName {
-                    displayName = givenName
-                    if let familyName = fullName?.familyName {
-                        displayName += " \(familyName)"
-                    }
-                } else if let email = user.email {
-                    displayName = email.components(separatedBy: "@").first ?? "Golfer"
+            // Build display name from Apple's full name or fall back to email
+            var displayName = "Golfer"
+            if let givenName = fullName?.givenName {
+                displayName = givenName
+                if let familyName = fullName?.familyName {
+                    displayName += " \(familyName)"
                 }
-                
-                let newUser = User(displayName: displayName)
-                try userRef.setData(from: newUser)
-            } else {
-                // Update last active
-                try await userRef.updateData(["lastActiveAt": FieldValue.serverTimestamp()])
+            } else if let email = user.email {
+                displayName = email.components(separatedBy: "@").first ?? "Golfer"
             }
+
+            // Create user document if needed, or update last active if exists
+            try await userRepository.createUserIfNeeded(uid: user.uid, displayName: displayName)
         } catch {
             print("Error creating/updating user: \(error)")
         }

@@ -633,15 +633,16 @@ struct ProfileView: View {
 
 #if DEBUG
 #Preview {
-    ProfileView(
+    let container = AppContainer()
+    return ProfileView(
         viewModel: ProfileViewModel(
             profileRepository: ProfilePreviewMocks.repository,
             socialRepository: ProfilePreviewMocks.socialRepository,
             currentUid: { "preview-uid" }
         )
     )
-    .environmentObject(AuthService())
-    .environmentObject(AppContainer())
+    .environmentObject(container.authService)
+    .environmentObject(container)
 }
 
 enum ProfilePreviewMocks {
@@ -649,6 +650,7 @@ enum ProfilePreviewMocks {
     static let socialRepository: SocialRepository = MockSocialRepo()
 
     private class MockProfileRepo: ProfileRepository {
+        func profileExists(uid: String) async throws -> Bool { true }
         func fetchPublicProfile(uid: String) async throws -> PublicProfile? {
             PublicProfile(
                 id: uid, nickname: "GolfPro", gender: .male,

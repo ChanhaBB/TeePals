@@ -4,7 +4,6 @@ import FirebaseCore
 @main
 struct TeePalsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var authService = AuthService()
     @StateObject private var container = AppContainer()
     @StateObject private var deepLinkCoordinator = DeepLinkCoordinator()
 
@@ -15,7 +14,7 @@ struct TeePalsApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(authService)
+                .environmentObject(container.authService)
                 .environmentObject(container)
                 .environmentObject(deepLinkCoordinator)
                 .onOpenURL { url in

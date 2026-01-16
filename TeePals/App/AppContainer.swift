@@ -8,21 +8,32 @@ import Combine
 final class AppContainer: ObservableObject {
     
     // MARK: - Repositories (Singletons)
-    
+
     private(set) lazy var profileRepository: ProfileRepository = {
         FirestoreProfileRepository()
     }()
-    
+
+    private(set) lazy var userRepository: UserRepository = {
+        FirestoreUserRepository()
+    }()
+
     private(set) lazy var socialRepository: SocialRepository = {
         FirestoreSocialRepository()
     }()
-    
+
     private(set) lazy var roundsRepository: RoundsRepository = {
         FirestoreRoundsRepository()
     }()
     
     // MARK: - Services (Singletons)
-    
+
+    private(set) lazy var authService: AuthService = {
+        AuthService(
+            profileRepository: profileRepository,
+            userRepository: userRepository
+        )
+    }()
+
     private(set) lazy var storageService: StorageServiceProtocol = {
         StorageService()
     }()
@@ -91,6 +102,11 @@ final class AppContainer: ObservableObject {
         }
     }
 
+    // Rounds tab ViewModels (singletons to preserve state across tab switches)
+    @Published var roundsListViewModel: RoundsListViewModel?
+    @Published var activityRoundsViewModel: ActivityRoundsViewModel?
+    @Published var followingRoundsViewModel: FollowingRoundsViewModel?
+
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Current User UID
@@ -158,11 +174,18 @@ final class AppContainer: ObservableObject {
     }
     
     func makeRoundsListViewModel() -> RoundsListViewModel {
-        RoundsListViewModel(
+        if let existing = roundsListViewModel {
+            return existing
+        }
+        let vm = RoundsListViewModel(
             roundsSearchService: roundsSearchService,
             profileRepository: profileRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
+        Task { @MainActor in
+            roundsListViewModel = vm
+        }
+        return vm
     }
     
     func makeRoundDetailViewModel(roundId: String) -> RoundDetailViewModel {
@@ -186,20 +209,34 @@ final class AppContainer: ObservableObject {
     }
     
     func makeActivityRoundsViewModel() -> ActivityRoundsViewModel {
-        ActivityRoundsViewModel(
+        if let existing = activityRoundsViewModel {
+            return existing
+        }
+        let vm = ActivityRoundsViewModel(
             activityService: activityRoundsService,
             roundsRepository: roundsRepository,
             profileRepository: profileRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
+        Task { @MainActor in
+            activityRoundsViewModel = vm
+        }
+        return vm
     }
-    
+
     func makeFollowingRoundsViewModel() -> FollowingRoundsViewModel {
-        FollowingRoundsViewModel(
+        if let existing = followingRoundsViewModel {
+            return existing
+        }
+        let vm = FollowingRoundsViewModel(
             followingService: followingRoundsService,
             profileRepository: profileRepository,
             socialRepository: socialRepository
         )
+        Task { @MainActor in
+            followingRoundsViewModel = vm
+        }
+        return vm
     }
     
     func makeRoundChatViewModel(roundId: String) -> RoundChatViewModel {

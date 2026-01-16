@@ -100,8 +100,9 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView()
-        .environmentObject(AuthService())
-        .environmentObject(AppContainer())
+    let container = AppContainer()
+    return MainTabView()
+        .environmentObject(container.authService)
+        .environmentObject(container)
         .environmentObject(DeepLinkCoordinator())
 }

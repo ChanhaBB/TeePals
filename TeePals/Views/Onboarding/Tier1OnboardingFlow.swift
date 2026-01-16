@@ -210,18 +210,20 @@ struct ProgressDot: View {
 #if DEBUG
 struct Tier1OnboardingFlow_Previews: PreviewProvider {
     static var previews: some View {
-        Tier1OnboardingFlow(
+        let container = AppContainer()
+        return Tier1OnboardingFlow(
             viewModel: Tier1OnboardingViewModel(
                 profileRepository: MockProfileRepository(),
                 currentUid: { "preview" }
             )
         )
-        .environmentObject(AuthService())
+        .environmentObject(container.authService)
     }
 }
 
 // Mock for previews
 private class MockProfileRepository: ProfileRepository {
+    func profileExists(uid: String) async throws -> Bool { false }
     func fetchPublicProfile(uid: String) async throws -> PublicProfile? { nil }
     func fetchPrivateProfile(uid: String) async throws -> PrivateProfile? { nil }
     func upsertPublicProfile(_ profile: PublicProfile) async throws {}
