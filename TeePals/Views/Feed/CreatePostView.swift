@@ -96,9 +96,12 @@ struct CreatePostView: View {
                     uploadingOverlay
                 }
             }
-            .onAppear {
-                titleFocused = true
-            }
+            .background(
+                ViewDidAppearHandler {
+                    // This fires after the fullScreenCover animation completes
+                    titleFocused = true
+                }
+            )
         }
     }
 
@@ -436,3 +439,36 @@ struct CreatePostView_Previews: PreviewProvider {
     }
 }
 #endif
+
+// MARK: - ViewDidAppear Handler
+
+/// UIKit bridge that fires a callback when viewDidAppear is called.
+/// This ensures actions happen after the presentation animation completes.
+private struct ViewDidAppearHandler: UIViewControllerRepresentable {
+    let onAppear: () -> Void
+
+    func makeUIViewController(context: Context) -> ViewDidAppearViewController {
+        ViewDidAppearViewController(onAppear: onAppear)
+    }
+
+    func updateUIViewController(_ uiViewController: ViewDidAppearViewController, context: Context) {}
+
+    class ViewDidAppearViewController: UIViewController {
+        let onAppear: () -> Void
+
+        init(onAppear: @escaping () -> Void) {
+            self.onAppear = onAppear
+            super.init(nibName: nil, bundle: nil)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            onAppear()
+        }
+    }
+}
+

@@ -41,11 +41,7 @@ struct FeedView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        var transaction = Transaction()
-                        transaction.disablesAnimations = true
-                        withTransaction(transaction) {
-                            showCreatePost = true
-                        }
+                        showCreatePost = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
@@ -60,9 +56,6 @@ struct FeedView: View {
                         viewModel.postCreated(post)
                     }
                 )
-            }
-            .transaction { transaction in
-                transaction.disablesAnimations = true
             }
             .sheet(item: $selectedPost) { post in
                 PostDetailSheet(
