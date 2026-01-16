@@ -526,6 +526,8 @@ struct PostDetailView: View {
 
             // Simple button to open comment sheet
             Button {
+                // Clear any previous reply target
+                viewModel.setReplyTarget(nil)
                 showCommentSheet = true
             } label: {
                 HStack(spacing: AppSpacing.sm) {

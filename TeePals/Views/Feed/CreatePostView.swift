@@ -467,7 +467,10 @@ private struct ViewDidAppearHandler: UIViewControllerRepresentable {
 
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
-            onAppear()
+            // Dispatch on next run loop to ensure view is fully settled
+            DispatchQueue.main.async {
+                self.onAppear()
+            }
         }
     }
 }
