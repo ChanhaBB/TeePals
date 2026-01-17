@@ -74,7 +74,15 @@ struct PostDetailView: View {
                         }
                         .background(AppColors.backgroundGrouped)
 
-                        // Comment composer (overlaid at bottom, outside scroll hierarchy)
+                        // Safe-area background fill (behind composer, doesn't affect sizing)
+                        VStack {
+                            Spacer()
+                            AppColors.surface
+                                .frame(height: 100)
+                                .ignoresSafeArea(edges: .bottom)
+                        }
+
+                        // Comment composer (single content stack, overlaid at bottom)
                         commentComposer
                     }
                 } else if let error = viewModel.errorMessage {
@@ -540,125 +548,18 @@ struct PostDetailView: View {
     // MARK: - Comment Composer
 
     private var commentComposer: some View {
-        // Two-layer structure: unclipped background + clipped content
-        ZStack(alignment: .top) {
-            // Layer 1: Full safe-area background (NOT clipped)
-            VStack(spacing: 0) {
-                Color.clear
-                    .frame(height: 0)  // Just to establish layout
-                AppColors.surface
-                    .ignoresSafeArea(edges: .bottom)
-            }
-
-            // Layer 2: Content with rounded corners (clipped, on top)
-            VStack(spacing: 0) {
-                // Drag handle
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(AppColors.textTertiary.opacity(0.3))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, AppSpacing.sm)
-                    .gesture(
-                        DragGesture()
-                            .onEnded { value in
-                                // Dismiss if swiped down
-                                if value.translation.height > 50 {
-                                    viewModel.newCommentText = ""
-                                    viewModel.setReplyTarget(nil)
-                                    isComposingComment = false
-                                    isCommentFocused = false
-                                    commentPhotoImage = nil
-                                    selectedCommentPhoto = nil
-                                }
-                            }
-                    )
-
-                // Text input area
-                if !isComposingComment {
-                    // Collapsed state - entire row tappable
-                    HStack {
-                        Text("Add a comment")
-                            .font(AppTypography.bodyMedium)
-                            .foregroundColor(AppColors.textTertiary)
-                        Spacer()
-                    }
-                    .padding(AppSpacing.md)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        viewModel.setReplyTarget(nil)
-                        isComposingComment = true
-                        isCommentFocused = true
-                    }
-                } else {
-                    // Expanded state - native TextEditor
-                    ZStack(alignment: .topLeading) {
-                        TextEditor(text: $viewModel.newCommentText)
-                            .font(.system(size: 16))
-                            .frame(minHeight: 100, maxHeight: 150)
-                            .scrollContentBackground(.hidden)
-                            .focused($isCommentFocused)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 4)
-
-                        // Placeholder overlay
-                        if viewModel.newCommentText.isEmpty {
-                            Text(viewModel.replyingTo != nil
-                                ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
-                                : "Add a comment")
-                                .font(.system(size: 16))
-                                .foregroundColor(Color(UIColor.placeholderText))
-                                .padding(.leading, 8)
-                                .padding(.top, 12)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .padding(.horizontal, AppSpacing.contentPadding)
-                    .padding(.vertical, AppSpacing.sm)
-                }
-
-                // Photo preview (only show when image is loaded)
-                if let photoImage = commentPhotoImage {
-                    HStack {
-                        ZStack(alignment: .topTrailing) {
-                            Image(uiImage: photoImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
-
-                            Button {
-                                commentPhotoImage = nil
-                                selectedCommentPhoto = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundColor(.white)
-                                    .background(Circle().fill(Color.black.opacity(0.5)))
-                            }
-                            .offset(x: 4, y: -4)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.horizontal, AppSpacing.contentPadding)
-                    .padding(.bottom, AppSpacing.sm)
-                }
-
-                // Action bar with photo and post button (only when composing)
-                if isComposingComment {
-                    HStack(spacing: AppSpacing.sm) {
-                        // Photo picker
-                        PhotosPicker(selection: $selectedCommentPhoto, matching: .images) {
-                            Image(systemName: "photo")
-                                .font(.title2)
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-
-                        Spacer()
-
-                        // Post button
-                        Button {
-                            Task {
-                                await viewModel.submitComment()
+        // Single content stack with rounded corners (no full-height background inside)
+        VStack(spacing: 0) {
+            // Drag handle
+            RoundedRectangle(cornerRadius: 3)
+                .fill(AppColors.textTertiary.opacity(0.3))
+                .frame(width: 36, height: 5)
+                .padding(.top, AppSpacing.sm)
+                .gesture(
+                    DragGesture()
+                        .onEnded { value in
+                            // Dismiss if swiped down
+                            if value.translation.height > 50 {
                                 viewModel.newCommentText = ""
                                 viewModel.setReplyTarget(nil)
                                 isComposingComment = false
@@ -666,36 +567,132 @@ struct PostDetailView: View {
                                 commentPhotoImage = nil
                                 selectedCommentPhoto = nil
                             }
-                        } label: {
-                            Text("Post")
-                                .font(AppTypography.labelLarge)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, AppSpacing.lg)
-                                .padding(.vertical, AppSpacing.sm)
-                                .background(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
-                                .cornerRadius(AppSpacing.radiusMedium)
                         }
-                        .disabled(!viewModel.canSubmitComment)
+                )
+
+            // Text input area
+            if !isComposingComment {
+                // Collapsed state - entire row tappable
+                HStack {
+                    Text("Add a comment")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textTertiary)
+                    Spacer()
+                }
+                .padding(AppSpacing.md)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    viewModel.setReplyTarget(nil)
+                    isComposingComment = true
+                    isCommentFocused = true
+                }
+            } else {
+                // Expanded state - native TextEditor
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $viewModel.newCommentText)
+                        .font(.system(size: 16))
+                        .frame(minHeight: 100, maxHeight: 150)
+                        .scrollContentBackground(.hidden)
+                        .focused($isCommentFocused)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 4)
+
+                    // Placeholder overlay
+                    if viewModel.newCommentText.isEmpty {
+                        Text(viewModel.replyingTo != nil
+                            ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
+                            : "Add a comment")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(UIColor.placeholderText))
+                            .padding(.leading, 8)
+                            .padding(.top, 12)
+                            .allowsHitTesting(false)
                     }
-                    .padding(.horizontal, AppSpacing.contentPadding)
-                    .padding(.bottom, AppSpacing.sm)
                 }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.vertical, AppSpacing.sm)
             }
-            .background(AppColors.surface)
-            .clipShape(
-                RoundedCornerShape(corners: [.topLeft, .topRight], radius: AppSpacing.radiusLarge)
-            )
-            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -2)
-            .background(
-                GeometryReader { geometry in
-                    Color.clear.preference(
-                        key: ComposerHeightPreferenceKey.self,
-                        value: geometry.size.height
-                    )
+
+            // Photo preview (only show when image is loaded)
+            if let photoImage = commentPhotoImage {
+                HStack {
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: photoImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+
+                        Button {
+                            commentPhotoImage = nil
+                            selectedCommentPhoto = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .background(Circle().fill(Color.black.opacity(0.5)))
+                        }
+                        .offset(x: 4, y: -4)
+                    }
+
+                    Spacer()
                 }
-            )
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.bottom, AppSpacing.sm)
+            }
+
+            // Action bar with photo and post button (only when composing)
+            if isComposingComment {
+                HStack(spacing: AppSpacing.sm) {
+                    // Photo picker
+                    PhotosPicker(selection: $selectedCommentPhoto, matching: .images) {
+                        Image(systemName: "photo")
+                            .font(.title2)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    Spacer()
+
+                    // Post button
+                    Button {
+                        Task {
+                            await viewModel.submitComment()
+                            viewModel.newCommentText = ""
+                            viewModel.setReplyTarget(nil)
+                            isComposingComment = false
+                            isCommentFocused = false
+                            commentPhotoImage = nil
+                            selectedCommentPhoto = nil
+                        }
+                    } label: {
+                        Text("Post")
+                            .font(AppTypography.labelLarge)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, AppSpacing.lg)
+                            .padding(.vertical, AppSpacing.sm)
+                            .background(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
+                            .cornerRadius(AppSpacing.radiusMedium)
+                    }
+                    .disabled(!viewModel.canSubmitComment)
+                }
+                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.bottom, AppSpacing.sm)
+            }
         }
+        .background(AppColors.surface)
+        .clipShape(
+            RoundedCornerShape(corners: [.topLeft, .topRight], radius: AppSpacing.radiusLarge)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -2)
+        .background(
+            GeometryReader { geometry in
+                Color.clear.preference(
+                    key: ComposerHeightPreferenceKey.self,
+                    value: geometry.size.height
+                )
+            }
+        )
         .onPreferenceChange(ComposerHeightPreferenceKey.self) { height in
             composerHeight = height
         }
