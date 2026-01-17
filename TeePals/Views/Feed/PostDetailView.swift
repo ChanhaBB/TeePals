@@ -62,6 +62,7 @@ struct PostDetailView: View {
                             .background(AppColors.surface)
                         }
                     }
+                    .scrollDisabled(isComposingComment)  // Disable scroll when composing
                     .scrollDismissesKeyboard(.interactively)
                     .refreshable {
                         await viewModel.refresh()
@@ -665,8 +666,15 @@ struct PostDetailView: View {
                 .padding(.bottom, AppSpacing.sm)
             }
         }
-        .background(AppColors.surface)
-        .cornerRadius(AppSpacing.radiusLarge, corners: [.topLeft, .topRight])
+        .frame(maxWidth: .infinity)
+        .background(
+            // Background that fills entire safe area
+            AppColors.surface
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .clipShape(
+            RoundedCornerShape(corners: [.topLeft, .topRight], radius: AppSpacing.radiusLarge)
+        )
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -2)
     }
 
@@ -959,17 +967,11 @@ private struct IdentifiableString: Identifiable {
     var id: String { value }
 }
 
-// MARK: - View Extension for Specific Corner Radius
+// MARK: - Rounded Corner Shape
 
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
+struct RoundedCornerShape: Shape {
+    var corners: UIRectCorner
+    var radius: CGFloat
 
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(
