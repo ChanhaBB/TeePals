@@ -540,8 +540,17 @@ struct PostDetailView: View {
     // MARK: - Comment Composer
 
     private var commentComposer: some View {
-        VStack(spacing: 0) {
-            // Content layer with rounded corners
+        // Two-layer structure: unclipped background + clipped content
+        ZStack(alignment: .top) {
+            // Layer 1: Full safe-area background (NOT clipped)
+            VStack(spacing: 0) {
+                Color.clear
+                    .frame(height: 0)  // Just to establish layout
+                AppColors.surface
+                    .ignoresSafeArea(edges: .bottom)
+            }
+
+            // Layer 2: Content with rounded corners (clipped, on top)
             VStack(spacing: 0) {
                 // Drag handle
                 RoundedRectangle(cornerRadius: 3)
@@ -686,11 +695,6 @@ struct PostDetailView: View {
                     )
                 }
             )
-
-            // Bottom safe area fill (extends below content)
-            AppColors.surface
-                .frame(height: 100)
-                .edgesIgnoringSafeArea(.bottom)
         }
         .onPreferenceChange(ComposerHeightPreferenceKey.self) { height in
             composerHeight = height
