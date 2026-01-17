@@ -98,7 +98,6 @@ struct CreatePostView: View {
             }
             .background(
                 ViewDidAppearHandler {
-                    // This fires after the fullScreenCover animation completes
                     titleFocused = true
                 }
             )
@@ -443,7 +442,7 @@ struct CreatePostView_Previews: PreviewProvider {
 // MARK: - ViewDidAppear Handler
 
 /// UIKit bridge that fires a callback when viewDidAppear is called.
-/// This ensures actions happen after the presentation animation completes.
+/// This ensures focus happens exactly when the fullScreenCover animation completes.
 private struct ViewDidAppearHandler: UIViewControllerRepresentable {
     let onAppear: () -> Void
 
@@ -467,10 +466,8 @@ private struct ViewDidAppearHandler: UIViewControllerRepresentable {
 
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
-            // Dispatch on next run loop to ensure view is fully settled
-            DispatchQueue.main.async {
-                self.onAppear()
-            }
+            // Call immediately - no async dispatch
+            onAppear()
         }
     }
 }
