@@ -7,7 +7,6 @@ struct CreatePostView: View {
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: CreatePostViewModel
-    @FocusState private var titleFocused: Bool
     @FocusState private var textFocused: Bool
 
     let onPostCreated: (Post) -> Void
@@ -96,11 +95,6 @@ struct CreatePostView: View {
                     uploadingOverlay
                 }
             }
-            .background(
-                ViewDidAppearHandler {
-                    titleFocused = true
-                }
-            )
         }
     }
 
@@ -167,12 +161,16 @@ struct CreatePostView: View {
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            TextField("Write a specific title", text: $viewModel.title)
-                .font(AppTypography.headlineMedium)
-                .focused($titleFocused)
-                .padding(.horizontal, AppSpacing.contentPadding)
-                .padding(.top, AppSpacing.lg)
-                .padding(.bottom, AppSpacing.sm)
+            UIKitTextField(
+                text: $viewModel.title,
+                placeholder: "Write a specific title",
+                font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                maxLength: viewModel.maxTitleLength
+            )
+            .frame(height: 44)
+            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.top, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.sm)
 
             // Character count
             HStack {
@@ -439,35 +437,64 @@ struct CreatePostView_Previews: PreviewProvider {
 }
 #endif
 
-// MARK: - ViewDidAppear Handler
+// MARK: - UIKit TextField Wrapper
 
-/// UIKit bridge that fires a callback when viewDidAppear is called.
-/// This ensures focus happens exactly when the fullScreenCover animation completes.
-private struct ViewDidAppearHandler: UIViewControllerRepresentable {
-    let onAppear: () -> Void
+/// UIKit TextField wrapper that becomes first responder immediately when created.
+/// This allows the keyboard to animate up during the modal presentation.
+struct UIKitTextField: UIViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let font: UIFont
+    let maxLength: Int
 
-    func makeUIViewController(context: Context) -> ViewDidAppearViewController {
-        ViewDidAppearViewController(onAppear: onAppear)
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.placeholder = placeholder
+        textField.font = font
+        textField.delegate = context.coordinator
+        textField.returnKeyType = .next
+        textField.autocapitalizationType = .sentences
+        textField.autocorrectionType = .default
+
+        // Become first responder immediately - keyboard starts animating with modal
+        DispatchQueue.main.async {
+            textField.becomeFirstResponder()
+        }
+
+        return textField
     }
 
-    func updateUIViewController(_ uiViewController: ViewDidAppearViewController, context: Context) {}
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        uiView.text = text
+    }
 
-    class ViewDidAppearViewController: UIViewController {
-        let onAppear: () -> Void
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, maxLength: maxLength)
+    }
 
-        init(onAppear: @escaping () -> Void) {
-            self.onAppear = onAppear
-            super.init(nibName: nil, bundle: nil)
+    class Coordinator: NSObject, UITextFieldDelegate {
+        @Binding var text: String
+        let maxLength: Int
+
+        init(text: Binding<String>, maxLength: Int) {
+            _text = text
+            self.maxLength = maxLength
         }
 
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
+        func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+            let currentText = textField.text ?? ""
+            guard let stringRange = Range(range, in: currentText) else { return false }
+            let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
+
+            // Update binding
+            text = updatedText
+
+            // Enforce max length
+            return updatedText.count <= maxLength
         }
 
-        override func viewDidAppear(_ animated: Bool) {
-            super.viewDidAppear(animated)
-            // Call immediately - no async dispatch
-            onAppear()
+        func textFieldDidChangeSelection(_ textField: UITextField) {
+            text = textField.text ?? ""
         }
     }
 }
