@@ -34,6 +34,7 @@ final class PostDetailViewModel: ObservableObject {
     
     // Comment composer
     @Published var newCommentText: String = ""
+    @Published var commentDraft: String = ""  // Persists within this post only
     @Published var replyingTo: Comment?
     @Published var isSubmittingComment = false
     
@@ -67,6 +68,10 @@ final class PostDetailViewModel: ObservableObject {
     var canSubmitComment: Bool {
         !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !isSubmittingComment
+    }
+
+    var hasDraft: Bool {
+        !commentDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     // MARK: - Load Post
@@ -269,6 +274,7 @@ final class PostDetailViewModel: ObservableObject {
 
             // Reset
             newCommentText = ""
+            commentDraft = ""  // Clear draft on successful submit
             replyingTo = nil
 
         } catch {

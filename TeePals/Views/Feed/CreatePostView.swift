@@ -386,6 +386,7 @@ struct CreatePostView_Previews: PreviewProvider {
         func updatePost(_ post: Post) async throws {}
         func deletePost(id: String) async throws {}
         func updateAuthorProfile(uid: String, nickname: String, photoUrl: String?) async throws {}
+        func updateCommentAuthorProfile(uid: String, nickname: String, photoUrl: String?) async throws {}
         func fetchFeed(filter: FeedFilter, limit: Int, after: Date?) async throws -> [Post] { [] }
         func fetchUserPosts(uid: String, limit: Int, after: Date?) async throws -> [Post] { [] }
         func toggleUpvote(postId: String) async throws -> Bool { false }

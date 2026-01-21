@@ -20,7 +20,7 @@ final class FollowingRoundsViewModel: ObservableObject {
     @Published var isLoading = false // Start false, set true only when loading
     @Published var errorMessage: String?
 
-    private var hasLoadedOnce = false // Track if we've loaded before
+    @Published private(set) var hasLoadedOnce = false // Track if we've loaded before
 
     // Computed property: show skeleton until first load completes
     var shouldShowSkeleton: Bool {

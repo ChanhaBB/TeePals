@@ -188,6 +188,39 @@ final class FirestorePostsRepository: PostsRepository {
         print("✅ [Posts] Updated \(snapshot.documents.count) posts with new profile data")
     }
 
+    func updateCommentAuthorProfile(uid: String, nickname: String, photoUrl: String?) async throws {
+        guard let currentUid = currentUid, currentUid == uid else {
+            throw PostsError.unauthorized
+        }
+
+        print("💬 [Posts] Updating author profile for all comments by \(uid)")
+
+        // Use collectionGroup to find all comments by this user across all posts
+        let snapshot = try await db.collectionGroup("comments")
+            .whereField("authorUid", isEqualTo: uid)
+            .getDocuments()
+
+        print("💬 [Posts] Found \(snapshot.documents.count) comments to update")
+
+        // Update in batches (Firestore batch max is 500)
+        let batchSize = 500
+        for chunk in snapshot.documents.chunked(into: batchSize) {
+            let batch = db.batch()
+
+            for doc in chunk {
+                // Construct the full document reference from the path
+                batch.updateData([
+                    "authorNickname": nickname,
+                    "authorPhotoUrl": photoUrl ?? ""
+                ], forDocument: doc.reference)
+            }
+
+            try await batch.commit()
+        }
+
+        print("✅ [Posts] Updated \(snapshot.documents.count) comments with new profile data")
+    }
+
     // MARK: - Feed Queries
     
     func fetchFeed(

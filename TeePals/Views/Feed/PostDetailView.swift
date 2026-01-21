@@ -1,5 +1,4 @@
 import SwiftUI
-import PhotosUI
 
 /// Detail view for a single post with comments.
 /// Supports upvoting, editing, deleting, and nested comments.
@@ -13,11 +12,8 @@ struct PostDetailView: View {
     @State private var selectedRoundId: String?
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
-    @State private var isComposingComment = false
-    @State private var selectedCommentPhoto: PhotosPickerItem?
-    @State private var commentPhotoImage: UIImage?
     @FocusState private var isCommentFocused: Bool
-    @State private var composerHeight: CGFloat = 80  // Default collapsed height
+    @State private var commentInputState: CommentInputState = .resting
 
     let onDeleted: (String) -> Void
     let onUpdated: (Post) -> Void
@@ -31,13 +27,11 @@ struct PostDetailView: View {
         self.onDeleted = onDeleted
         self.onUpdated = onUpdated
     }
-    
-    var body: some View {
-        ZStack {
-            // White background extending to top
-            AppColors.surface
-                .ignoresSafeArea()
 
+    // No longer needed - state management is handled within CommentComposerSheet
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 // Custom navigation bar
                 customNavigationBar
@@ -47,7 +41,9 @@ struct PostDetailView: View {
                     ProgressView()
                     Spacer()
                 } else if let post = viewModel.post {
-                    ZStack(alignment: .bottom) {
+                    ZStack {
+                        AppColors.backgroundGrouped.ignoresSafeArea()
+
                         // Entire page scrollable (post + comments)
                         ScrollView {
                             VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -62,29 +58,14 @@ struct PostDetailView: View {
                                     commentsSection
                                 }
                                 .background(AppColors.surface)
-
-                                // Bottom padding for composer
-                                Color.clear.frame(height: composerHeight)
                             }
                         }
-                        .scrollDisabled(isCommentFocused)  // Disable scroll when focused
                         .scrollDismissesKeyboard(.interactively)
                         .refreshable {
                             await viewModel.refresh()
                         }
-                        .background(AppColors.backgroundGrouped)
-
-                        // Safe-area background fill (behind composer, doesn't affect sizing)
-                        VStack {
-                            Spacer()
-                            AppColors.surface
-                                .frame(height: 100)
-                                .ignoresSafeArea(edges: .bottom)
-                        }
-
-                        // Comment composer (single content stack, overlaid at bottom)
-                        commentComposer
                     }
+                    // Comment composer is now always visible at bottom via overlay
                 } else if let error = viewModel.errorMessage {
                     Spacer()
                     VStack {
@@ -97,8 +78,18 @@ struct PostDetailView: View {
                     Spacer()
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
+
+            // Comment input bar at bottom - slides up naturally with keyboard
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                CommentInputBar(
+                    viewModel: viewModel,
+                    isCommentFocused: $isCommentFocused,
+                    inputState: $commentInputState,
+                    userProfilePhotoUrl: container.currentUserProfilePhotoUrl
+                )
+            }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .alert("Delete Post?", isPresented: $viewModel.isShowingDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 Task {
@@ -116,26 +107,15 @@ struct PostDetailView: View {
             // Wire up the callback
             viewModel.onPostUpdated = onUpdated
         }
+        .onDisappear {
+            // Clear draft when leaving post
+            viewModel.commentDraft = ""
+            viewModel.newCommentText = ""
+        }
         .onChange(of: viewModel.replyingTo) { _, newValue in
             // Show composer when user taps reply
             if newValue != nil {
-                isComposingComment = true
-                isCommentFocused = true
-            }
-        }
-        .onChange(of: selectedCommentPhoto) { _, newItem in
-            Task {
-                if let newItem,
-                   let data = try? await newItem.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    commentPhotoImage = image
-                }
-            }
-        }
-        .onChange(of: isCommentFocused) { _, newValue in
-            // Sync composing state with focus
-            if newValue {
-                isComposingComment = true
+                commentInputState = .active
             }
         }
         .sheet(item: Binding(
@@ -175,7 +155,7 @@ struct PostDetailView: View {
             }
         }
     }
-    
+
     // MARK: - Custom Navigation Bar
 
     private var customNavigationBar: some View {
@@ -539,172 +519,132 @@ struct PostDetailView: View {
                             }
                         }
                     }
-                    .padding(.vertical, AppSpacing.sm)
+                    .padding(.top, AppSpacing.sm)
                 }
             }
-        }
-    }
-    
-    // MARK: - Comment Composer
-
-    private var commentComposer: some View {
-        // Single content stack with rounded corners (no full-height background inside)
-        VStack(spacing: 0) {
-            // Drag handle
-            RoundedRectangle(cornerRadius: 3)
-                .fill(AppColors.textTertiary.opacity(0.3))
-                .frame(width: 36, height: 5)
-                .padding(.top, AppSpacing.sm)
-                .gesture(
-                    DragGesture()
-                        .onEnded { value in
-                            // Dismiss if swiped down
-                            if value.translation.height > 50 {
-                                viewModel.newCommentText = ""
-                                viewModel.setReplyTarget(nil)
-                                isComposingComment = false
-                                isCommentFocused = false
-                                commentPhotoImage = nil
-                                selectedCommentPhoto = nil
-                            }
-                        }
-                )
-
-            // Text input area
-            if !isComposingComment {
-                // Collapsed state - entire row tappable
-                HStack {
-                    Text("Add a comment")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textTertiary)
-                    Spacer()
-                }
-                .padding(AppSpacing.md)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    viewModel.setReplyTarget(nil)
-                    isComposingComment = true
-                    isCommentFocused = true
-                }
-            } else {
-                // Expanded state - native TextEditor
-                ZStack(alignment: .topLeading) {
-                    TextEditor(text: $viewModel.newCommentText)
-                        .font(.system(size: 16))
-                        .frame(minHeight: 100, maxHeight: 150)
-                        .scrollContentBackground(.hidden)
-                        .focused($isCommentFocused)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 4)
-
-                    // Placeholder overlay
-                    if viewModel.newCommentText.isEmpty {
-                        Text(viewModel.replyingTo != nil
-                            ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
-                            : "Add a comment")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color(UIColor.placeholderText))
-                            .padding(.leading, 8)
-                            .padding(.top, 12)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .padding(.horizontal, AppSpacing.contentPadding)
-                .padding(.vertical, AppSpacing.sm)
-            }
-
-            // Photo preview (only show when image is loaded)
-            if let photoImage = commentPhotoImage {
-                HStack {
-                    ZStack(alignment: .topTrailing) {
-                        Image(uiImage: photoImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
-
-                        Button {
-                            commentPhotoImage = nil
-                            selectedCommentPhoto = nil
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.white)
-                                .background(Circle().fill(Color.black.opacity(0.5)))
-                        }
-                        .offset(x: 4, y: -4)
-                    }
-
-                    Spacer()
-                }
-                .padding(.horizontal, AppSpacing.contentPadding)
-                .padding(.bottom, AppSpacing.sm)
-            }
-
-            // Action bar with photo and post button (only when composing)
-            if isComposingComment {
-                HStack(spacing: AppSpacing.sm) {
-                    // Photo picker
-                    PhotosPicker(selection: $selectedCommentPhoto, matching: .images) {
-                        Image(systemName: "photo")
-                            .font(.title2)
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-
-                    Spacer()
-
-                    // Post button
-                    Button {
-                        Task {
-                            await viewModel.submitComment()
-                            viewModel.newCommentText = ""
-                            viewModel.setReplyTarget(nil)
-                            isComposingComment = false
-                            isCommentFocused = false
-                            commentPhotoImage = nil
-                            selectedCommentPhoto = nil
-                        }
-                    } label: {
-                        Text("Post")
-                            .font(AppTypography.labelLarge)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, AppSpacing.lg)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
-                            .cornerRadius(AppSpacing.radiusMedium)
-                    }
-                    .disabled(!viewModel.canSubmitComment)
-                }
-                .padding(.horizontal, AppSpacing.contentPadding)
-                .padding(.bottom, AppSpacing.sm)
-            }
-        }
-        .background(AppColors.surface)
-        .clipShape(
-            RoundedCornerShape(corners: [.topLeft, .topRight], radius: AppSpacing.radiusLarge)
-        )
-        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -2)
-        .background(
-            GeometryReader { geometry in
-                Color.clear.preference(
-                    key: ComposerHeightPreferenceKey.self,
-                    value: geometry.size.height
-                )
-            }
-        )
-        .onPreferenceChange(ComposerHeightPreferenceKey.self) { height in
-            composerHeight = height
         }
     }
 }
 
-// MARK: - Preference Key for Composer Height
+// MARK: - Comment Input Bar
 
-struct ComposerHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 80
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+// MARK: - Comment Input State
+enum CommentInputState {
+    case resting  // Not focused, no draft
+    case draft    // Not focused, has draft
+    case active   // Focused, editing
+}
+
+struct CommentInputBar: View {
+    @ObservedObject var viewModel: PostDetailViewModel
+    @FocusState.Binding var isCommentFocused: Bool
+    @Binding var inputState: CommentInputState
+    @State private var dynamicHeight: CGFloat = 36  // Track dynamic height
+    let userProfilePhotoUrl: String?
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 12) {
+            // Profile photo (bigger for prominence)
+            CachedAsyncImage(url: URL(string: userProfilePhotoUrl ?? "")) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                Circle().fill(AppColors.textTertiary.opacity(0.3))
+                    .overlay {
+                        Image(systemName: "person.fill")
+                            .foregroundColor(AppColors.textTertiary.opacity(0.6))
+                            .font(.system(size: 20))
+                    }
+            }
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
+
+            // Oval text field capsule (grows with content)
+            HStack(alignment: .bottom, spacing: 8) {
+                FocusableTextView(
+                    text: $viewModel.newCommentText,
+                    placeholder: viewModel.replyingTo != nil
+                        ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
+                        : "Join the conversation...",
+                    font: UIFont.systemFont(ofSize: 15),
+                    shouldFocus: isCommentFocused,
+                    onFocusChange: { focused in
+                        if focused {
+                            inputState = .active
+                        } else {
+                            // Save draft on blur
+                            viewModel.commentDraft = viewModel.newCommentText
+                            inputState = viewModel.hasDraft ? .draft : .resting
+                        }
+                    },
+                    onHeightChange: { newHeight in
+                        // Only animate when height actually changes
+                        if newHeight != self.dynamicHeight {
+                            withAnimation(.easeInOut(duration: 0.08)) {
+                                self.dynamicHeight = newHeight
+                            }
+                        }
+                    }
+                )
+                .frame(height: dynamicHeight)  // Now dynamic!
+
+                // Right button (Clear or Post)
+                if inputState == .draft && !isCommentFocused {
+                    // Clear button when draft exists and not focused
+                    Button {
+                        viewModel.commentDraft = ""
+                        viewModel.newCommentText = ""
+                        inputState = .resting
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(AppColors.textTertiary)
+                            .font(.system(size: 22))
+                    }
+                    .padding(.bottom, 4)
+                } else if inputState == .active || viewModel.canSubmitComment {
+                    // Post button (up arrow icon like IG)
+                    Button {
+                        Task {
+                            await viewModel.submitComment()
+                            inputState = .resting
+                            isCommentFocused = false
+                        }
+                    } label: {
+                        if viewModel.isSubmittingComment {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primary))
+                        } else {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
+                        }
+                    }
+                    .disabled(!viewModel.canSubmitComment)
+                    .padding(.bottom, 2)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(AppColors.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+        .padding(.horizontal, AppSpacing.contentPadding)
+        .padding(.vertical, 8)
+        .background(AppColors.surface.ignoresSafeArea(edges: .bottom))
+        .onChange(of: inputState) { _, newState in
+            if newState == .active {
+                // Load draft when becoming active
+                if viewModel.hasDraft && viewModel.newCommentText.isEmpty {
+                    viewModel.newCommentText = viewModel.commentDraft
+                }
+                isCommentFocused = true
+            }
+        }
+        .onTapGesture {
+            // Tap anywhere on bar to focus (if not already active)
+            if inputState != .active {
+                inputState = .active
+            }
+        }
     }
 }
 
@@ -1011,4 +951,212 @@ struct RoundedCornerShape: Shape {
     }
 }
 
+// MARK: - Focusable TextView Wrapper
+
+/// SwiftUI wrapper for text input with external focus control
+struct FocusableTextView: View {
+    @Binding var text: String
+    let placeholder: String
+    let font: UIFont
+    let shouldFocus: Bool
+    let onFocusChange: ((Bool) -> Void)?
+    let onHeightChange: ((CGFloat) -> Void)?
+
+    init(
+        text: Binding<String>,
+        placeholder: String,
+        font: UIFont,
+        shouldFocus: Bool,
+        onFocusChange: ((Bool) -> Void)? = nil,
+        onHeightChange: ((CGFloat) -> Void)? = nil
+    ) {
+        self._text = text
+        self.placeholder = placeholder
+        self.font = font
+        self.shouldFocus = shouldFocus
+        self.onFocusChange = onFocusChange
+        self.onHeightChange = onHeightChange
+    }
+
+    var body: some View {
+        UIKitTextView(
+            text: $text,
+            placeholder: placeholder,
+            font: font,
+            shouldFocus: shouldFocus,
+            onFocusChange: onFocusChange,
+            onHeightChange: onHeightChange ?? { _ in }
+        )
+        .onChange(of: shouldFocus) { _, newValue in
+            // Handle focus changes outside the view update cycle
+            if newValue {
+                NotificationCenter.default.post(name: .focusCommentTextField, object: nil)
+            }
+        }
+    }
+}
+
+extension NSNotification.Name {
+    static let focusCommentTextField = NSNotification.Name("focusCommentTextField")
+}
+
+// MARK: - UIKit TextView Wrapper
+
+/// UIKit TextView wrapper with focus change callback.
+struct UIKitTextView: UIViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let font: UIFont
+    let shouldFocus: Bool
+    let onFocusChange: ((Bool) -> Void)?
+    let onHeightChange: (CGFloat) -> Void
+
+    init(text: Binding<String>, placeholder: String, font: UIFont, shouldFocus: Bool = false, onFocusChange: ((Bool) -> Void)? = nil, onHeightChange: @escaping (CGFloat) -> Void) {
+        self._text = text
+        self.placeholder = placeholder
+        self.font = font
+        self.shouldFocus = shouldFocus
+        self.onFocusChange = onFocusChange
+        self.onHeightChange = onHeightChange
+    }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.font = font
+        textView.delegate = context.coordinator
+        textView.autocapitalizationType = .sentences
+        textView.autocorrectionType = .default
+        textView.isScrollEnabled = false  // Start disabled, enable dynamically when content exceeds 150pt
+        textView.backgroundColor = .clear
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
+
+        // Ensure it can become first responder immediately
+        textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        // Add notification observer for focus requests
+        context.coordinator.setupNotificationObserver(for: textView)
+
+        // Pre-warm responder if needed - triggers keyboard immediately
+        if shouldFocus {
+            DispatchQueue.main.async {
+                textView.becomeFirstResponder()
+            }
+        }
+
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+
+        // Update height if needed (with safeguards)
+        context.coordinator.updateHeightIfNeeded(uiView)
+
+        // Update placeholder visibility
+        context.coordinator.updatePlaceholder(in: uiView)
+    }
+
+    static func dismantleUIView(_ uiView: UITextView, coordinator: Coordinator) {
+        coordinator.removeNotificationObserver()
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, placeholder: placeholder, onFocusChange: onFocusChange, onHeightChange: onHeightChange)
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        @Binding var text: String
+        let placeholder: String
+        let onFocusChange: ((Bool) -> Void)?
+        let onHeightChange: (CGFloat) -> Void
+        private var placeholderLabel: UILabel?
+        weak var textView: UITextView?
+        private var notificationObserver: NSObjectProtocol?
+        private var lastReportedHeight: CGFloat = 36  // Track last height to prevent loops
+
+        init(text: Binding<String>, placeholder: String, onFocusChange: ((Bool) -> Void)?, onHeightChange: @escaping (CGFloat) -> Void) {
+            _text = text
+            self.placeholder = placeholder
+            self.onFocusChange = onFocusChange
+            self.onHeightChange = onHeightChange
+        }
+
+        func setupNotificationObserver(for textView: UITextView) {
+            self.textView = textView
+            notificationObserver = NotificationCenter.default.addObserver(
+                forName: .focusCommentTextField,
+                object: nil,
+                queue: .main
+            ) { [weak textView] _ in
+                textView?.becomeFirstResponder()
+            }
+        }
+
+        func removeNotificationObserver() {
+            if let observer = notificationObserver {
+                NotificationCenter.default.removeObserver(observer)
+                notificationObserver = nil
+            }
+        }
+
+        func textViewDidBeginEditing(_ textView: UITextView) {
+            onFocusChange?(true)
+            // Update placeholder visibility based on text content
+            updatePlaceholder(in: textView)
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            onFocusChange?(false)
+            // Restore placeholder visibility if text is empty
+            updatePlaceholder(in: textView)
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            text = textView.text
+            updateHeightIfNeeded(textView)
+            updatePlaceholder(in: textView)
+        }
+
+        func updateHeightIfNeeded(_ textView: UITextView) {
+            let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: .infinity))
+            // Clamp between 36pt (1 line) and 120pt (~5 lines)
+            let newHeight = min(max(36, size.height), 120)
+
+            // Only report if height changed significantly (1pt threshold to avoid jitter)
+            if abs(newHeight - lastReportedHeight) > 1.0 {
+                lastReportedHeight = newHeight
+                onHeightChange(newHeight)
+            }
+
+            // Enable scrolling ONLY when we hit max height (immediate, not async)
+            textView.isScrollEnabled = size.height > 120
+        }
+
+        func updatePlaceholder(in textView: UITextView) {
+            // Create placeholder label if needed
+            if placeholderLabel == nil {
+                let label = UILabel()
+                label.text = placeholder
+                label.font = textView.font
+                label.textColor = UIColor.placeholderText
+                label.numberOfLines = 0
+                label.translatesAutoresizingMaskIntoConstraints = false
+                textView.addSubview(label)
+
+                NSLayoutConstraint.activate([
+                    label.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: 8),
+                    label.trailingAnchor.constraint(equalTo: textView.trailingAnchor, constant: -8),
+                    label.topAnchor.constraint(equalTo: textView.topAnchor, constant: 8)
+                ])
+
+                placeholderLabel = label
+            }
+
+            // Show/hide placeholder
+            placeholderLabel?.isHidden = !textView.text.isEmpty
+        }
+    }
+}
 

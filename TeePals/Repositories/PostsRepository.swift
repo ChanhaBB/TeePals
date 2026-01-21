@@ -22,6 +22,10 @@ protocol PostsRepository {
     /// Called when user updates their profile photo or nickname.
     func updateAuthorProfile(uid: String, nickname: String, photoUrl: String?) async throws
 
+    /// Updates denormalized author profile data on all comments by this user.
+    /// Called when user updates their profile photo or nickname.
+    func updateCommentAuthorProfile(uid: String, nickname: String, photoUrl: String?) async throws
+
     // MARK: - Feed Queries (Legacy - kept for compatibility)
 
     /// Fetches feed posts for the current user.

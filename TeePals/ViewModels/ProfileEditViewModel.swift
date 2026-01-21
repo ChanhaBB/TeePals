@@ -209,18 +209,32 @@ final class ProfileEditViewModel: ObservableObject {
                 try await profileRepository.upsertPrivateProfile(privateProfile)
             }
 
-            // Update all posts if nickname or photo changed
+            // Update all posts and comments if nickname or photo changed
             let newPhotoUrl = photoUrls.first
             let nicknameChanged = originalNickname != nil && originalNickname != trimmedNickname
             let photoChanged = originalPhotoUrl != newPhotoUrl
 
             if nicknameChanged || photoChanged {
-                print("📝 [ProfileEdit] Profile changed - updating posts (nickname: \(nicknameChanged), photo: \(photoChanged))")
+                print("📝 [ProfileEdit] Profile changed - updating posts and comments (nickname: \(nicknameChanged), photo: \(photoChanged))")
+
+                // Update posts
                 try? await postsRepository.updateAuthorProfile(
                     uid: uid,
                     nickname: trimmedNickname,
                     photoUrl: newPhotoUrl
                 )
+
+                // Update comments
+                do {
+                    try await postsRepository.updateCommentAuthorProfile(
+                        uid: uid,
+                        nickname: trimmedNickname,
+                        photoUrl: newPhotoUrl
+                    )
+                } catch {
+                    print("❌ [ProfileEdit] Failed to update comments: \(error)")
+                    print("❌ [ProfileEdit] Error details: \(error.localizedDescription)")
+                }
             }
 
             // Update tracked values

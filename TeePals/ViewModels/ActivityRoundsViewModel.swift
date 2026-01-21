@@ -27,7 +27,7 @@ final class ActivityRoundsViewModel: ObservableObject {
     @Published var isLoadingInvited = false
     @Published var errorMessage: String?
 
-    private var hasLoadedOnce = false // Track if we've loaded before
+    @Published private(set) var hasLoadedOnce = false // Track if we've loaded before
 
     // Computed property: show skeleton until first load completes
     var shouldShowSkeleton: Bool {
@@ -79,6 +79,9 @@ final class ActivityRoundsViewModel: ObservableObject {
 
         errorMessage = nil
 
+        // Ensure hasLoadedOnce is set even if loading is interrupted
+        defer { hasLoadedOnce = true }
+
         // Load all three sections concurrently
         async let hostingTask: () = loadHostingRounds(dateRange: dateRange)
         async let requestedTask: () = loadRequestedRounds(dateRange: dateRange)
@@ -87,11 +90,12 @@ final class ActivityRoundsViewModel: ObservableObject {
         await hostingTask
         await requestedTask
         await invitedTask
-
-        hasLoadedOnce = true
     }
-    
+
     func refresh(dateRange: DateRangeOption = .next30) async {
+        // Skip if currently loading to prevent race conditions
+        guard !isLoading else { return }
+
         // Allow refresh even if already loaded
         hasLoadedOnce = false
         await loadActivity(dateRange: dateRange)

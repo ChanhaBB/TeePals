@@ -99,15 +99,17 @@ final class FirestoreActivityRoundsService: ActivityRoundsService {
             for doc in roundsSnapshot.documents {
                 guard let round = try? roundsDecoder.decode(from: doc.data(), id: doc.documentID) else { continue }
                 
-                // Apply date filter
-                if let dateRange = dateRange, let startTime = round.startTime {
-                    if startTime < dateRange.startDate || startTime >= dateRange.endDate {
-                        continue
-                    }
-                }
-                
                 // Find matching membership
                 guard let membership = chunk.first(where: { $0.roundId == doc.documentID }) else { continue }
+
+                // Apply date filter (but always include pending requests)
+                if membership.status != .requested {
+                    if let dateRange = dateRange, let startTime = round.startTime {
+                        if startTime < dateRange.startDate || startTime >= dateRange.endDate {
+                            continue
+                        }
+                    }
+                }
                 
                 // Skip canceled rounds
                 if round.status == .canceled { continue }

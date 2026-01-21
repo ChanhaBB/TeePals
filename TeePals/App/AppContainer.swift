@@ -114,13 +114,19 @@ final class AppContainer: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Current User UID
-    
+
     var currentUid: String? {
         Auth.auth().currentUser?.uid
     }
-    
+
     func currentUidProvider() -> String? {
         currentUid
+    }
+
+    // MARK: - Current User Profile Photo
+
+    var currentUserProfilePhotoUrl: String? {
+        profileViewModel?.publicProfile?.photoUrls.first
     }
     
     // MARK: - ViewModel Factories

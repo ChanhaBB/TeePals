@@ -261,11 +261,16 @@ final class RoundDetailViewModel: ObservableObject {
     }
     
     func leaveRound() async {
-        isActioning = true
         errorMessage = nil
 
         // Get current user's nickname before leaving
         let myNickname = currentUid().flatMap { memberProfiles[$0]?.nickname } ?? "A member"
+
+        // Save current membership for rollback if needed
+        let previousMembership = myMembership
+
+        // Optimistic update: immediately show as not a member
+        myMembership = nil
 
         do {
             // Send system message BEFORE leaving (while we still have write permission)
@@ -286,10 +291,10 @@ final class RoundDetailViewModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             successMessage = nil
         } catch {
+            // Rollback on error
+            myMembership = previousMembership
             errorMessage = error.localizedDescription
         }
-
-        isActioning = false
     }
 
     func cancelRequest() async {

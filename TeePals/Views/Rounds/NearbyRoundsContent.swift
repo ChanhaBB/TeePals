@@ -9,31 +9,29 @@ struct NearbyRoundsContent: View {
     let onShowFilters: () -> Void
     
     var body: some View {
-        Group {
+        ScrollView {
             if viewModel.shouldShowSkeleton {
                 loadingState
             } else if let error = viewModel.errorMessage {
-                errorState(error)
+                errorStateContent(error)
             } else if viewModel.hasRounds {
-                roundsList
+                roundsListContent
             } else {
                 emptyState
             }
         }
     }
-    
+
     // MARK: - Loading State
-    
+
     private var loadingState: some View {
-        ScrollView {
-            VStack(spacing: AppSpacing.md) {
-                ForEach(0..<4, id: \.self) { _ in
-                    SkeletonCard(style: .roundCard)
-                }
+        VStack(spacing: AppSpacing.md) {
+            ForEach(0..<4, id: \.self) { _ in
+                SkeletonCard(style: .roundCard)
             }
-            .padding(AppSpacing.contentPadding)
-            .padding(.bottom, 100)
         }
+        .padding(AppSpacing.contentPadding)
+        .padding(.bottom, 100)
     }
     
     // MARK: - Empty State
@@ -46,50 +44,46 @@ struct NearbyRoundsContent: View {
     }
     
     // MARK: - Error State
-    
-    private func errorState(_ message: String) -> some View {
-        ScrollView {
-            VStack {
-                Spacer(minLength: AppSpacing.xxl)
-                
-                InlineErrorBanner(message, actionTitle: "Retry") {
-                    viewModel.errorMessage = nil
-                    Task { await viewModel.loadRounds() }
-                }
-                .padding(.horizontal, AppSpacing.contentPadding)
-                
-                Spacer()
+
+    private func errorStateContent(_ message: String) -> some View {
+        VStack {
+            Spacer(minLength: AppSpacing.xxl)
+
+            InlineErrorBanner(message, actionTitle: "Retry") {
+                viewModel.errorMessage = nil
+                Task { await viewModel.loadRounds() }
             }
+            .padding(.horizontal, AppSpacing.contentPadding)
+
+            Spacer()
         }
     }
-    
+
     // MARK: - Rounds List
-    
-    private var roundsList: some View {
-        ScrollView {
-            LazyVStack(spacing: AppSpacing.md) {
-                ForEach(viewModel.rounds) { round in
-                    RoundCardView(
-                        round: round,
-                        hostProfile: viewModel.hostProfile(for: round),
-                        context: .nearby,
-                        onTap: { onRoundTap(round) }
-                    )
-                    .onAppear {
-                        Task {
-                            await viewModel.loadMoreIfNeeded(currentRound: round)
-                        }
+
+    private var roundsListContent: some View {
+        LazyVStack(spacing: AppSpacing.md) {
+            ForEach(viewModel.rounds) { round in
+                RoundCardView(
+                    round: round,
+                    hostProfile: viewModel.hostProfile(for: round),
+                    context: .nearby,
+                    onTap: { onRoundTap(round) }
+                )
+                .onAppear {
+                    Task {
+                        await viewModel.loadMoreIfNeeded(currentRound: round)
                     }
                 }
-                
-                if viewModel.isLoadingMore {
-                    ProgressView()
-                        .padding()
-                }
             }
-            .padding(AppSpacing.contentPadding)
-            .padding(.bottom, 100)
+
+            if viewModel.isLoadingMore {
+                ProgressView()
+                    .padding()
+            }
         }
+        .padding(AppSpacing.contentPadding)
+        .padding(.bottom, 100)
     }
 }
 

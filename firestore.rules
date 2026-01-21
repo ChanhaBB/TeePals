@@ -463,5 +463,12 @@ service cloud.firestore {
       // This enables Activity tab's "requested rounds" feature
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
+
+    match /{path=**}/comments/{commentId} {
+      // Allow users to query and update their own comments across all posts
+      // This enables profile updates to propagate to all user comments
+      allow read: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
   }
 }
