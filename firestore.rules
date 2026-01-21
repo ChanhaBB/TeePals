@@ -177,22 +177,36 @@ service cloud.firestore {
       
       // ROUND MEMBERS subcollection
       match /members/{memberUid} {
+        // Helper: Check if user is round host
+        function isRoundHost() {
+          return get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
+        }
+
+        // Helper: Check if user is accepted member
+        function isAcceptedMember() {
+          return exists(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid))
+            && get(/databases/$(database)/documents/rounds/$(roundId)/members/$(request.auth.uid)).data.status == 'accepted';
+        }
+
         // Members and host can read member list
         allow read: if isSignedIn();
-        
+
         // User can add themselves as a member (join request)
-        allow create: if isOwner(memberUid)
-          && request.resource.data.uid == memberUid;
-        
+        // Host can invite others (create member with invited status)
+        // Accepted members can invite others (create member with invited status)
+        allow create: if (isOwner(memberUid) && request.resource.data.uid == memberUid)
+          || isRoundHost()
+          || isAcceptedMember();
+
         // User can update their own membership (leave, etc.)
         // Host can update any membership (accept, decline, remove)
         allow update: if isOwner(memberUid)
-          || get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
-        
+          || isRoundHost();
+
         // User can delete their own membership (leave)
         // Host can remove members
         allow delete: if isOwner(memberUid)
-          || get(/databases/$(database)/documents/rounds/$(roundId)).data.hostUid == request.auth.uid;
+          || isRoundHost();
       }
       
       // ROUND MESSAGES subcollection (Chat)
@@ -292,6 +306,18 @@ service cloud.firestore {
         // Author can delete their comment
         allow delete: if isSignedIn()
           && resource.data.authorUid == request.auth.uid;
+
+        // COMMENT LIKES subcollection
+        match /likes/{uid} {
+          // Anyone can read likes
+          allow read: if isSignedIn();
+
+          // User can add/remove their own like
+          allow create, delete: if isSignedIn() && request.auth.uid == uid;
+
+          // No updates needed
+          allow update: if false;
+        }
       }
     }
 

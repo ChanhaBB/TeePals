@@ -90,6 +90,8 @@ private class MockPostsRepo: PostsRepository {
     func fetchComments(postId: String) async throws -> [Comment] { [] }
     func updateComment(_ comment: Comment) async throws {}
     func deleteComment(postId: String, commentId: String) async throws {}
+    func toggleCommentLike(postId: String, commentId: String) async throws -> Bool { false }
+    func hasLikedComment(postId: String, commentId: String) async throws -> Bool { false }
     func fetchFriendsPostsCandidates(authorUids: [String], windowStart: Date, limit: Int) async throws -> [Post] { [] }
     func fetchRecentPublicPosts(windowStart: Date, limit: Int) async throws -> [Post] { [] }
     func fetchTrendingPostIds(limit: Int) async throws -> [(String, Double)] { [] }

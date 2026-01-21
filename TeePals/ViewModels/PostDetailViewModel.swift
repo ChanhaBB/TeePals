@@ -302,6 +302,38 @@ final class PostDetailViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
     }
+
+    func toggleCommentLike(_ comment: Comment) async {
+        guard let commentId = comment.id else { return }
+
+        // Optimistic update
+        let wasLiked = comment.hasLiked ?? false
+        if let index = comments.firstIndex(where: { $0.id == commentId }) {
+            comments[index].hasLiked = !wasLiked
+            let delta = wasLiked ? -1 : 1
+            if let currentCount = comments[index].likeCount {
+                comments[index].likeCount = max(0, currentCount + delta)
+            }
+
+            // Rebuild tree to reflect changes
+            commentTree = comments.buildCommentTree()
+        }
+
+        do {
+            _ = try await postsRepository.toggleCommentLike(postId: postId, commentId: commentId)
+        } catch {
+            // Revert on error
+            if let index = comments.firstIndex(where: { $0.id == commentId }) {
+                comments[index].hasLiked = wasLiked
+                let revertDelta = wasLiked ? 1 : -1
+                if let currentCount = comments[index].likeCount {
+                    comments[index].likeCount = max(0, currentCount + revertDelta)
+                }
+                commentTree = comments.buildCommentTree()
+            }
+            errorMessage = error.localizedDescription
+        }
+    }
 }
 
 

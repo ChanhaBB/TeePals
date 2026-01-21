@@ -12,7 +12,7 @@ struct PostDetailView: View {
     @State private var selectedRoundId: String?
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
-    @FocusState private var isCommentFocused: Bool
+    @State private var isCommentFocused: Bool = false
     @State private var commentInputState: CommentInputState = .resting
 
     let onDeleted: (String) -> Void
@@ -65,7 +65,6 @@ struct PostDetailView: View {
                             await viewModel.refresh()
                         }
                     }
-                    // Comment composer is now always visible at bottom via overlay
                 } else if let error = viewModel.errorMessage {
                     Spacer()
                     VStack {
@@ -86,7 +85,8 @@ struct PostDetailView: View {
                     viewModel: viewModel,
                     isCommentFocused: $isCommentFocused,
                     inputState: $commentInputState,
-                    userProfilePhotoUrl: container.currentUserProfilePhotoUrl
+                    userProfilePhotoUrl: container.currentUserProfilePhotoUrl,
+                    onActivate: { activateComposer(replyTo: nil) }
                 )
             }
         }
@@ -103,6 +103,7 @@ struct PostDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+        .interactiveDismissDisabled(isCommentFocused || commentInputState != .resting)
         .onAppear {
             // Wire up the callback
             viewModel.onPostUpdated = onUpdated
@@ -111,12 +112,6 @@ struct PostDetailView: View {
             // Clear draft when leaving post
             viewModel.commentDraft = ""
             viewModel.newCommentText = ""
-        }
-        .onChange(of: viewModel.replyingTo) { _, newValue in
-            // Show composer when user taps reply
-            if newValue != nil {
-                commentInputState = .active
-            }
         }
         .sheet(item: Binding(
             get: { selectedAuthorUid.map { IdentifiableString(value: $0) } },
@@ -153,6 +148,27 @@ struct PostDetailView: View {
             if let post = viewModel.post {
                 PhotoViewerView(photoUrls: post.photoUrls, initialIndex: selectedPhotoIndex)
             }
+        }
+    }
+
+    // MARK: - Composer Activation
+
+    /// Single entry point for activating the comment composer
+    private func activateComposer(replyTo: Comment?) {
+        // FIX 1: Wrap ALL state changes in Task to prevent AttributeGraph cycle
+        // This defers mutations until after the current view update completes
+        Task { @MainActor in
+            if let comment = replyTo {
+                viewModel.setReplyTarget(comment)
+            } else {
+                viewModel.setReplyTarget(nil)
+                if viewModel.hasDraft && viewModel.newCommentText.isEmpty {
+                    viewModel.newCommentText = viewModel.commentDraft
+                }
+            }
+
+            // Then trigger focus
+            isCommentFocused = true
         }
     }
 
@@ -501,7 +517,10 @@ struct PostDetailView: View {
                                 comment: comment,
                                 postAuthorUid: post.authorUid,
                                 isAuthor: comment.authorUid == viewModel.uid,
-                                onReply: { viewModel.setReplyTarget(comment) },
+                                onReply: {
+                                    activateComposer(replyTo: comment)
+                                },
+                                onLike: { c in Task { await viewModel.toggleCommentLike(c) } },
                                 onDelete: { Task { await viewModel.deleteComment(comment) } },
                                 onDeleteReply: { reply in
                                     Task { await viewModel.deleteComment(reply) }
@@ -537,10 +556,11 @@ enum CommentInputState {
 
 struct CommentInputBar: View {
     @ObservedObject var viewModel: PostDetailViewModel
-    @FocusState.Binding var isCommentFocused: Bool
+    @Binding var isCommentFocused: Bool
     @Binding var inputState: CommentInputState
     @State private var dynamicHeight: CGFloat = 36  // Track dynamic height
     let userProfilePhotoUrl: String?
+    let onActivate: () -> Void
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
@@ -568,20 +588,25 @@ struct CommentInputBar: View {
                     font: UIFont.systemFont(ofSize: 15),
                     shouldFocus: isCommentFocused,
                     onFocusChange: { focused in
-                        if focused {
-                            inputState = .active
-                        } else {
-                            // Save draft on blur
-                            viewModel.commentDraft = viewModel.newCommentText
-                            inputState = viewModel.hasDraft ? .draft : .resting
+                        // ALWAYS defer SwiftUI state mutations via Task
+                        // This prevents "Publishing changes from within view updates" warning
+                        // The userDismissedKeyboard flag (non-SwiftUI) prevents refocus races
+                        Task { @MainActor in
+                            if focused {
+                                isCommentFocused = true
+                                inputState = .active
+                            } else {
+                                isCommentFocused = false
+                                viewModel.commentDraft = viewModel.newCommentText
+                                inputState = viewModel.hasDraft ? .draft : .resting
+                            }
                         }
                     },
                     onHeightChange: { newHeight in
-                        // Only animate when height actually changes
-                        if newHeight != self.dynamicHeight {
-                            withAnimation(.easeInOut(duration: 0.08)) {
-                                self.dynamicHeight = newHeight
-                            }
+                        // Only update when height changes by more than 0.5pt (prevents jitter)
+                        // NO ANIMATION - prevents AttributeGraph cycles during focus transitions
+                        if abs(newHeight - self.dynamicHeight) > 0.5 {
+                            self.dynamicHeight = newHeight
                         }
                     }
                 )
@@ -600,13 +625,17 @@ struct CommentInputBar: View {
                             .font(.system(size: 22))
                     }
                     .padding(.bottom, 4)
-                } else if inputState == .active || viewModel.canSubmitComment {
+                } else if isCommentFocused || viewModel.canSubmitComment {
                     // Post button (up arrow icon like IG)
                     Button {
                         Task {
-                            await viewModel.submitComment()
-                            inputState = .resting
+                            // Dismiss keyboard first
                             isCommentFocused = false
+                            // Then submit
+                            await viewModel.submitComment()
+                            // Clear reply target so placeholder resets
+                            viewModel.setReplyTarget(nil)
+                            inputState = .resting
                         }
                     } label: {
                         if viewModel.isSubmittingComment {
@@ -630,19 +659,9 @@ struct CommentInputBar: View {
         .padding(.horizontal, AppSpacing.contentPadding)
         .padding(.vertical, 8)
         .background(AppColors.surface.ignoresSafeArea(edges: .bottom))
-        .onChange(of: inputState) { _, newState in
-            if newState == .active {
-                // Load draft when becoming active
-                if viewModel.hasDraft && viewModel.newCommentText.isEmpty {
-                    viewModel.newCommentText = viewModel.commentDraft
-                }
-                isCommentFocused = true
-            }
-        }
         .onTapGesture {
-            // Tap anywhere on bar to focus (if not already active)
-            if inputState != .active {
-                inputState = .active
+            if !isCommentFocused {
+                onActivate()
             }
         }
     }
@@ -655,6 +674,7 @@ struct CommentRowView: View {
     let postAuthorUid: String
     let isAuthor: Bool
     let onReply: () -> Void
+    let onLike: (Comment) -> Void
     let onDelete: () -> Void
     let onDeleteReply: (Comment) -> Void
     let onAuthorTap: (String) -> Void
@@ -731,17 +751,6 @@ struct CommentRowView: View {
                 }
 
                 Spacer()
-
-                // Delete button for author
-                if isAuthor {
-                    Button {
-                        showDeleteConfirmation = true
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.caption)
-                            .foregroundColor(AppColors.textTertiary)
-                    }
-                }
             }
 
             // Comment text
@@ -751,23 +760,29 @@ struct CommentRowView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, AppSpacing.sm)
 
-            // Footer: time, like, reply
-            HStack(spacing: AppSpacing.md) {
+            // Footer: time, like, reply, menu
+            HStack(spacing: AppSpacing.lg) {
                 Text(comment.timeAgoString)
                     .font(AppTypography.caption)
                     .foregroundColor(AppColors.textTertiary)
 
                 Button {
-                    // TODO: Implement comment likes
+                    onLike(comment)
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "heart")
+                        Image(systemName: (comment.hasLiked ?? false) ? "heart.fill" : "heart")
                             .font(.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor((comment.hasLiked ?? false) ? AppColors.error : AppColors.textSecondary)
 
-                        Text("Like")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                        if let likeCount = comment.likeCount, likeCount > 0 {
+                            Text("\(likeCount)")
+                                .font(AppTypography.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        } else {
+                            Text("Like")
+                                .font(AppTypography.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
                     }
                 }
 
@@ -777,6 +792,27 @@ struct CommentRowView: View {
                     Text("Reply")
                         .font(AppTypography.caption)
                         .foregroundColor(AppColors.textSecondary)
+                }
+
+                // Three dots menu - always visible
+                Menu {
+                    if isAuthor {
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+
+                    Button {
+                        // TODO: Implement report
+                    } label: {
+                        Label("Report", systemImage: "exclamationmark.triangle")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18))
+                        .foregroundColor(AppColors.textTertiary)
                 }
 
                 Spacer()
@@ -846,17 +882,6 @@ struct CommentRowView: View {
                     }
 
                     Spacer()
-
-                    // Delete button for author
-                    if isReplyAuthor {
-                        Button {
-                            replyToDelete = reply
-                        } label: {
-                            Image(systemName: "ellipsis")
-                                .font(.caption)
-                                .foregroundColor(AppColors.textTertiary)
-                        }
-                    }
                 }
 
                 // Reply text
@@ -866,23 +891,29 @@ struct CommentRowView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, AppSpacing.sm)
 
-                // Footer: time, like, reply
-                HStack(spacing: AppSpacing.md) {
+                // Footer: time, like, reply, menu
+                HStack(spacing: AppSpacing.lg) {
                     Text(reply.timeAgoString)
                         .font(AppTypography.caption)
                         .foregroundColor(AppColors.textTertiary)
 
                     Button {
-                        // TODO: Implement comment likes
+                        onLike(reply)
                     } label: {
                         HStack(spacing: 4) {
-                            Image(systemName: "heart")
+                            Image(systemName: (reply.hasLiked ?? false) ? "heart.fill" : "heart")
                                 .font(.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor((reply.hasLiked ?? false) ? AppColors.error : AppColors.textSecondary)
 
-                            Text("Like")
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                            if let likeCount = reply.likeCount, likeCount > 0 {
+                                Text("\(likeCount)")
+                                    .font(AppTypography.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            } else {
+                                Text("Like")
+                                    .font(AppTypography.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
                         }
                     }
 
@@ -892,6 +923,27 @@ struct CommentRowView: View {
                         Text("Reply")
                             .font(AppTypography.caption)
                             .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    // Three dots menu - always visible
+                    Menu {
+                        if isReplyAuthor {
+                            Button(role: .destructive) {
+                                replyToDelete = reply
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+
+                        Button {
+                            // TODO: Implement report
+                        } label: {
+                            Label("Report", systemImage: "exclamationmark.triangle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 18))
+                            .foregroundColor(AppColors.textTertiary)
                     }
 
                     Spacer()
@@ -987,17 +1039,7 @@ struct FocusableTextView: View {
             onFocusChange: onFocusChange,
             onHeightChange: onHeightChange ?? { _ in }
         )
-        .onChange(of: shouldFocus) { _, newValue in
-            // Handle focus changes outside the view update cycle
-            if newValue {
-                NotificationCenter.default.post(name: .focusCommentTextField, object: nil)
-            }
-        }
     }
-}
-
-extension NSNotification.Name {
-    static let focusCommentTextField = NSNotification.Name("focusCommentTextField")
 }
 
 // MARK: - UIKit TextView Wrapper
@@ -1033,15 +1075,8 @@ struct UIKitTextView: UIViewRepresentable {
         // Ensure it can become first responder immediately
         textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        // Add notification observer for focus requests
-        context.coordinator.setupNotificationObserver(for: textView)
-
-        // Pre-warm responder if needed - triggers keyboard immediately
-        if shouldFocus {
-            DispatchQueue.main.async {
-                textView.becomeFirstResponder()
-            }
-        }
+        // Initialize placeholder label on first creation
+        context.coordinator.updatePlaceholder(in: textView)
 
         return textView
     }
@@ -1051,15 +1086,52 @@ struct UIKitTextView: UIViewRepresentable {
             uiView.text = text
         }
 
-        // Update height if needed (with safeguards)
-        context.coordinator.updateHeightIfNeeded(uiView)
+        // FOCUS LOGIC: Sync UIKit state with SwiftUI intent
+        let isActuallyFocused = uiView.isFirstResponder
 
-        // Update placeholder visibility
-        context.coordinator.updatePlaceholder(in: uiView)
+        if shouldFocus && !isActuallyFocused {
+            // SwiftUI wants focus, but UIKit doesn't have it
+
+            // CRITICAL GUARD: If user just dismissed keyboard, SwiftUI state may be stale
+            // Don't refocus until the deferred Task updates shouldFocus to false
+            if context.coordinator.userDismissedKeyboard {
+                // User explicitly dismissed - ignore stale focus request
+                return
+            }
+
+            // Request focus
+            if uiView.window != nil {
+                uiView.becomeFirstResponder()
+            } else {
+                // If not on screen yet (layout transition), retry next run loop
+                DispatchQueue.main.async {
+                    if uiView.window != nil && !uiView.isFirstResponder {
+                        uiView.becomeFirstResponder()
+                    }
+                }
+            }
+        } else if !shouldFocus {
+            // SwiftUI wants unfocus
+            if isActuallyFocused {
+                // UIKit still has focus → resign it
+                uiView.resignFirstResponder()
+            }
+            // Clear dismissal flag now that we're settled in unfocused state
+            // This allows future focus requests (Reply button) to work
+            context.coordinator.userDismissedKeyboard = false
+        }
+
+        // Height updates ONLY triggered by textViewDidChange (prevents layout loops)
+
+        // Placeholder Update: Only if changed (prevents redundant updates)
+        if context.coordinator.placeholder != placeholder {
+            context.coordinator.placeholder = placeholder
+            context.coordinator.updatePlaceholder(in: uiView)
+        }
     }
 
     static func dismantleUIView(_ uiView: UITextView, coordinator: Coordinator) {
-        coordinator.removeNotificationObserver()
+        // Cleanup handled automatically
     }
 
     func makeCoordinator() -> Coordinator {
@@ -1068,13 +1140,17 @@ struct UIKitTextView: UIViewRepresentable {
 
     class Coordinator: NSObject, UITextViewDelegate {
         @Binding var text: String
-        let placeholder: String
+        var placeholder: String  // Changed from 'let' to 'var' so it can update
         let onFocusChange: ((Bool) -> Void)?
         let onHeightChange: (CGFloat) -> Void
         private var placeholderLabel: UILabel?
-        weak var textView: UITextView?
-        private var notificationObserver: NSObjectProtocol?
         private var lastReportedHeight: CGFloat = 36  // Track last height to prevent loops
+        private var hasReportedFocus = false  // Track if we've already reported this focus state
+
+        // CRITICAL: Flag to prevent refocus race without mutating SwiftUI state
+        // This is set immediately when user dismisses keyboard, preventing refocus
+        // even while SwiftUI state is still stale (deferred via Task)
+        var userDismissedKeyboard = false
 
         init(text: Binding<String>, placeholder: String, onFocusChange: ((Bool) -> Void)?, onHeightChange: @escaping (CGFloat) -> Void) {
             _text = text
@@ -1083,32 +1159,30 @@ struct UIKitTextView: UIViewRepresentable {
             self.onHeightChange = onHeightChange
         }
 
-        func setupNotificationObserver(for textView: UITextView) {
-            self.textView = textView
-            notificationObserver = NotificationCenter.default.addObserver(
-                forName: .focusCommentTextField,
-                object: nil,
-                queue: .main
-            ) { [weak textView] _ in
-                textView?.becomeFirstResponder()
-            }
-        }
-
-        func removeNotificationObserver() {
-            if let observer = notificationObserver {
-                NotificationCenter.default.removeObserver(observer)
-                notificationObserver = nil
-            }
-        }
-
         func textViewDidBeginEditing(_ textView: UITextView) {
-            onFocusChange?(true)
-            // Update placeholder visibility based on text content
+            // Clear dismissal flag (user is now actively typing)
+            userDismissedKeyboard = false
+
+            // Only notify SwiftUI if we haven't already reported focused state
+            // This prevents redundant callbacks when activateComposer triggers focus
+            if !hasReportedFocus {
+                hasReportedFocus = true
+                onFocusChange?(true)
+            }
             updatePlaceholder(in: textView)
         }
 
         func textViewDidEndEditing(_ textView: UITextView) {
-            onFocusChange?(false)
+            // Set flag IMMEDIATELY (non-SwiftUI state, no warning)
+            // This prevents refocus even while SwiftUI state is stale
+            userDismissedKeyboard = true
+
+            // Only notify SwiftUI if we're transitioning from focused to unfocused
+            if hasReportedFocus {
+                hasReportedFocus = false
+                // DEFER SwiftUI state update to prevent "Publishing changes" warning
+                onFocusChange?(false)
+            }
             // Restore placeholder visibility if text is empty
             updatePlaceholder(in: textView)
         }
@@ -1138,7 +1212,6 @@ struct UIKitTextView: UIViewRepresentable {
             // Create placeholder label if needed
             if placeholderLabel == nil {
                 let label = UILabel()
-                label.text = placeholder
                 label.font = textView.font
                 label.textColor = UIColor.placeholderText
                 label.numberOfLines = 0
@@ -1154,7 +1227,9 @@ struct UIKitTextView: UIViewRepresentable {
                 placeholderLabel = label
             }
 
-            // Show/hide placeholder
+            // Always update placeholder text (not just on creation)
+            placeholderLabel?.text = placeholder
+            // Show/hide placeholder based on text content
             placeholderLabel?.isHidden = !textView.text.isEmpty
         }
     }

@@ -469,10 +469,30 @@ final class FirestorePostsRepository: PostsRepository {
             .collection("comments")
             .order(by: "createdAt", descending: false)
             .getDocuments()
-        
-        return snapshot.documents.compactMap { doc in
+
+        var comments = snapshot.documents.compactMap { doc in
             try? decodeComment(from: doc.data(), id: doc.documentID, postId: postId)
         }
+
+        // Enrich with hasLiked for current user
+        if let uid = currentUid, !comments.isEmpty {
+            // Batch check all likes in parallel
+            await withTaskGroup(of: (Int, Bool).self) { group in
+                for (index, comment) in comments.enumerated() {
+                    guard let commentId = comment.id else { continue }
+                    group.addTask {
+                        let hasLiked = (try? await self.hasLikedComment(postId: postId, commentId: commentId)) ?? false
+                        return (index, hasLiked)
+                    }
+                }
+
+                for await (index, hasLiked) in group {
+                    comments[index].hasLiked = hasLiked
+                }
+            }
+        }
+
+        return comments
     }
     
     func updateComment(_ comment: Comment) async throws {
@@ -523,7 +543,53 @@ final class FirestorePostsRepository: PostsRepository {
         // NOTE: commentCount is updated automatically by Cloud Function (onCommentWrite)
         // This ensures consistent counting and prevents race conditions
     }
-    
+
+    // MARK: - Comment Likes
+
+    func toggleCommentLike(postId: String, commentId: String) async throws -> Bool {
+        guard let uid = currentUid else {
+            throw PostsError.notAuthenticated
+        }
+
+        let likeRef = db.collection(FirestoreCollection.posts)
+            .document(postId)
+            .collection("comments")
+            .document(commentId)
+            .collection("likes")
+            .document(uid)
+
+        // Check current state
+        let likeDoc = try await likeRef.getDocument()
+        let wasLiked = likeDoc.exists
+
+        if wasLiked {
+            // Remove like - Cloud Function will update count asynchronously
+            try await likeRef.delete()
+            return false
+        } else {
+            // Add like - Cloud Function will update count asynchronously
+            try await likeRef.setData([
+                "uid": uid,
+                "createdAt": FieldValue.serverTimestamp()
+            ])
+            return true
+        }
+    }
+
+    func hasLikedComment(postId: String, commentId: String) async throws -> Bool {
+        guard let uid = currentUid else { return false }
+
+        let likeRef = db.collection(FirestoreCollection.posts)
+            .document(postId)
+            .collection("comments")
+            .document(commentId)
+            .collection("likes")
+            .document(uid)
+
+        let doc = try await likeRef.getDocument()
+        return doc.exists
+    }
+
     // MARK: - Advanced Feed Queries (Phase 4.2)
 
     func fetchFriendsPostsCandidates(
@@ -765,10 +831,10 @@ final class FirestorePostsRepository: PostsRepository {
               let text = data["text"] as? String else {
             throw PostsError.decodingFailed
         }
-        
+
         let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
         let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
-        
+
         return Comment(
             id: id,
             postId: postId,
@@ -781,6 +847,8 @@ final class FirestorePostsRepository: PostsRepository {
             isEdited: data["isEdited"] as? Bool ?? false,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            likeCount: data["likeCount"] as? Int ?? 0,
+            hasLiked: nil,  // Will be enriched in fetchComments
             authorNickname: data["authorNickname"] as? String,
             authorPhotoUrl: data["authorPhotoUrl"] as? String
         )

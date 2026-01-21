@@ -103,6 +103,15 @@ protocol PostsRepository {
     /// Deletes a comment (author only).
     func deleteComment(postId: String, commentId: String) async throws
 
+    // MARK: - Comment Likes
+
+    /// Toggles like on a comment.
+    /// - Returns: True if liked, false if unliked
+    func toggleCommentLike(postId: String, commentId: String) async throws -> Bool
+
+    /// Checks if current user has liked a comment.
+    func hasLikedComment(postId: String, commentId: String) async throws -> Bool
+
     // MARK: - Stats (Phase 4.2)
 
     /// Fetches postStats for a single post

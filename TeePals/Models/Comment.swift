@@ -19,9 +19,14 @@ struct Comment: Codable, Identifiable, Equatable {
     var isEdited: Bool
     let createdAt: Date
     var updatedAt: Date
-    
+
+    // MARK: - Likes
+
+    var likeCount: Int?           // Total likes on this comment
+    var hasLiked: Bool?           // True if current user liked this comment
+
     // MARK: - Denormalized (for display)
-    
+
     var authorNickname: String?
     var authorPhotoUrl: String?
     
@@ -48,6 +53,8 @@ struct Comment: Codable, Identifiable, Equatable {
         isEdited: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
+        likeCount: Int? = nil,
+        hasLiked: Bool? = nil,
         authorNickname: String? = nil,
         authorPhotoUrl: String? = nil,
         replies: [Comment]? = nil
@@ -63,6 +70,8 @@ struct Comment: Codable, Identifiable, Equatable {
         self.isEdited = isEdited
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.likeCount = likeCount
+        self.hasLiked = hasLiked
         self.authorNickname = authorNickname
         self.authorPhotoUrl = authorPhotoUrl
         self.replies = replies
