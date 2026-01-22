@@ -176,9 +176,8 @@ struct PostDetailView: View {
 
     /// Single entry point for activating the comment composer
     private func activateComposer(replyTo: Comment?) {
-        // FIX 1: Wrap ALL state changes in Task to prevent AttributeGraph cycle
-        // This defers mutations until after the current view update completes
         Task { @MainActor in
+            // 1) Data update (reply target / placeholder / draft)
             if let comment = replyTo {
                 viewModel.setReplyTarget(comment)
             } else {
@@ -188,8 +187,11 @@ struct PostDetailView: View {
                 }
             }
 
-            // Then trigger focus
-            // STEP 2 FIX: Update commentInputState (source of truth), not isCommentFocused
+            // 2) Break the transaction - let SwiftUI re-render placeholder/layout
+            // This prevents AttributeGraph cycle when placeholder changes + focus requested in same frame
+            await Task.yield()
+
+            // 3) Focus update (now in separate frame, after placeholder settled)
             commentInputState = .active
         }
     }
