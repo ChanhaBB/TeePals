@@ -12,8 +12,28 @@ struct PostDetailView: View {
     @State private var selectedRoundId: String?
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
-    @State private var isCommentFocused: Bool = false
     @State private var commentInputState: CommentInputState = .resting
+
+    // STEP 4: Removed redundant @State isCommentFocused
+    // Computed binding derives focus from inputState (single source of truth)
+    // This binding ensures isCommentFocused and inputState never drift out of sync
+    private var isCommentFocusedBinding: Binding<Bool> {
+        Binding(
+            get: {
+                // Derive from inputState (source of truth)
+                commentInputState == .active
+            },
+            set: { newValue in
+                // Update inputState based on focus change
+                if newValue {
+                    commentInputState = .active
+                } else {
+                    // When unfocusing, check if we have draft
+                    commentInputState = viewModel.hasDraft ? .draft : .resting
+                }
+            }
+        )
+    }
 
     let onDeleted: (String) -> Void
     let onUpdated: (Post) -> Void
@@ -83,7 +103,7 @@ struct PostDetailView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 CommentInputBar(
                     viewModel: viewModel,
-                    isCommentFocused: $isCommentFocused,
+                    isCommentFocused: isCommentFocusedBinding,  // STEP 2: Use computed binding (single source of truth)
                     inputState: $commentInputState,
                     userProfilePhotoUrl: container.currentUserProfilePhotoUrl,
                     onActivate: { activateComposer(replyTo: nil) }
@@ -103,7 +123,8 @@ struct PostDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
-        .interactiveDismissDisabled(isCommentFocused || commentInputState != .resting)
+        // STEP 3: Use commentInputState (source of truth) instead of isCommentFocused
+        .interactiveDismissDisabled(commentInputState != .resting)
         .onAppear {
             // Wire up the callback
             viewModel.onPostUpdated = onUpdated
@@ -168,7 +189,8 @@ struct PostDetailView: View {
             }
 
             // Then trigger focus
-            isCommentFocused = true
+            // STEP 2 FIX: Update commentInputState (source of truth), not isCommentFocused
+            commentInputState = .active
         }
     }
 
