@@ -148,6 +148,7 @@ struct CommentRowView: View {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18))
                         .foregroundColor(AppColors.textTertiary)
+                        .frame(width: 44)  // Only expand width, let height be natural
                 }
 
                 Spacer()
@@ -279,6 +280,7 @@ struct CommentRowView: View {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18))
                             .foregroundColor(AppColors.textTertiary)
+                            .frame(width: 44)  // Only expand width, let height be natural
                     }
 
                     Spacer()

@@ -80,8 +80,12 @@ struct UIKitTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
+        // Update text if changed
         if uiView.text != text {
             uiView.text = text
+            // CRITICAL: Update placeholder visibility when text changes programmatically
+            // Without this, clearing text from SwiftUI (e.g., after posting) leaves placeholder hidden
+            context.coordinator.updatePlaceholder(in: uiView)
         }
 
         // FOCUS LOGIC: Sync UIKit state with SwiftUI intent
@@ -97,22 +101,23 @@ struct UIKitTextView: UIViewRepresentable {
                 return
             }
 
-            // Request focus
-            if uiView.window != nil {
-                uiView.becomeFirstResponder()
-            } else {
-                // If not on screen yet (layout transition), retry next run loop
-                DispatchQueue.main.async {
-                    if uiView.window != nil && !uiView.isFirstResponder {
-                        uiView.becomeFirstResponder()
-                    }
+            // CRITICAL: Always defer becomeFirstResponder to AFTER current SwiftUI update
+            // Calling it synchronously causes AttributeGraph cycle (SwiftUI tries to update
+            // focus state while already in the middle of an update pass)
+            DispatchQueue.main.async {
+                if uiView.window != nil && !uiView.isFirstResponder {
+                    uiView.becomeFirstResponder()
                 }
             }
         } else if !shouldFocus {
             // SwiftUI wants unfocus
             if isActuallyFocused {
-                // UIKit still has focus → resign it
-                uiView.resignFirstResponder()
+                // CRITICAL: Defer resignFirstResponder to avoid AttributeGraph cycle
+                // Same issue as becomeFirstResponder - calling it synchronously during
+                // SwiftUI's update pass causes cycle detection
+                DispatchQueue.main.async {
+                    uiView.resignFirstResponder()
+                }
             }
             // Clear dismissal flag now that we're settled in unfocused state
             // This allows future focus requests (Reply button) to work

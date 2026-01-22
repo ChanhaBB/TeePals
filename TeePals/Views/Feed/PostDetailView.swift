@@ -101,13 +101,20 @@ struct PostDetailView: View {
 
             // Comment input bar at bottom - slides up naturally with keyboard
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                CommentInputBar(
-                    viewModel: viewModel,
-                    isCommentFocused: isCommentFocusedBinding,  // STEP 2: Use computed binding (single source of truth)
-                    inputState: $commentInputState,
-                    userProfilePhotoUrl: container.currentUserProfilePhotoUrl,
-                    onActivate: { activateComposer(replyTo: nil) }
-                )
+                VStack(spacing: 0) {
+                    // STEP 1: Reply banner (only shown when replying)
+                    if let replyTarget = viewModel.replyingTo {
+                        replyBanner(replyTarget)
+                    }
+
+                    CommentInputBar(
+                        viewModel: viewModel,
+                        isCommentFocused: isCommentFocusedBinding,
+                        inputState: $commentInputState,
+                        userProfilePhotoUrl: container.currentUserProfilePhotoUrl,
+                        onActivate: { activateComposer(replyTo: nil) }
+                    )
+                }
             }
         }
         .alert("Delete Post?", isPresented: $viewModel.isShowingDeleteConfirmation) {
@@ -176,24 +183,18 @@ struct PostDetailView: View {
 
     /// Single entry point for activating the comment composer
     private func activateComposer(replyTo: Comment?) {
-        Task { @MainActor in
-            // 1) Data update (reply target / placeholder / draft)
-            if let comment = replyTo {
-                viewModel.setReplyTarget(comment)
-            } else {
-                viewModel.setReplyTarget(nil)
-                if viewModel.hasDraft && viewModel.newCommentText.isEmpty {
-                    viewModel.newCommentText = viewModel.commentDraft
-                }
+        // Set reply target if provided
+        if let comment = replyTo {
+            viewModel.setReplyTarget(comment)
+        } else {
+            viewModel.setReplyTarget(nil)
+            if viewModel.hasDraft && viewModel.newCommentText.isEmpty {
+                viewModel.newCommentText = viewModel.commentDraft
             }
-
-            // 2) Break the transaction - let SwiftUI re-render placeholder/layout
-            // This prevents AttributeGraph cycle when placeholder changes + focus requested in same frame
-            await Task.yield()
-
-            // 3) Focus update (now in separate frame, after placeholder settled)
-            commentInputState = .active
         }
+
+        // Focus the composer
+        commentInputState = .active
     }
 
     // MARK: - Custom Navigation Bar
@@ -516,7 +517,30 @@ struct PostDetailView: View {
         }
         .padding(.vertical, AppSpacing.md)
     }
-    
+
+    // MARK: - Reply Banner
+
+    private func replyBanner(_ comment: Comment) -> some View {
+        HStack(spacing: 8) {
+            Text("Replying to @\(comment.authorNickname ?? "user")")
+                .font(AppTypography.caption)
+                .foregroundColor(AppColors.textSecondary)
+
+            Spacer()
+
+            Button {
+                viewModel.setReplyTarget(nil)
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(AppColors.textTertiary)
+                    .font(.system(size: 18))
+            }
+        }
+        .padding(.horizontal, AppSpacing.contentPadding)
+        .padding(.vertical, AppSpacing.sm)
+        .background(AppColors.backgroundSecondary)
+    }
+
     // MARK: - Comments Section
 
     @ViewBuilder

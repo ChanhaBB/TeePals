@@ -40,9 +40,7 @@ struct CommentInputBar: View {
             HStack(alignment: .bottom, spacing: 8) {
                 FocusableTextView(
                     text: $viewModel.newCommentText,
-                    placeholder: viewModel.replyingTo != nil
-                        ? "Replying to @\(viewModel.replyingTo?.authorNickname ?? "user")"
-                        : "Join the conversation...",
+                    placeholder: "Join the conversation...",
                     font: UIFont.systemFont(ofSize: 15),
                     shouldFocus: isCommentFocused,
                     onFocusChange: { focused in
@@ -51,10 +49,10 @@ struct CommentInputBar: View {
                         // The userDismissedKeyboard flag (non-SwiftUI) prevents refocus races
                         Task { @MainActor in
                             if focused {
-                                isCommentFocused = true
+                                // Only update inputState (source of truth)
+                                // isCommentFocused derives from it via computed binding
                                 inputState = .active
                             } else {
-                                isCommentFocused = false
                                 viewModel.commentDraft = viewModel.newCommentText
                                 inputState = viewModel.hasDraft ? .draft : .resting
                             }
