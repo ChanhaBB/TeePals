@@ -6,9 +6,9 @@ import SwiftUI
 /// Handles main comment display, reply threading, and user interactions.
 struct CommentRowView: View {
     let comment: Comment
+    let currentUserUid: String?
     let postAuthorUid: String
-    let isAuthor: Bool
-    let onReply: () -> Void
+    let onReply: (Comment) -> Void
     let onLike: (Comment) -> Void
     let onDelete: () -> Void
     let onDeleteReply: (Comment) -> Void
@@ -56,32 +56,46 @@ struct CommentRowView: View {
     // MARK: - Main Comment
 
     private var mainCommentView: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+        let isAuthor = comment.authorUid == currentUserUid
+
+        return VStack(alignment: .leading, spacing: AppSpacing.sm) {
             // Header with author info
             HStack(spacing: AppSpacing.sm) {
-                // Avatar (tappable)
-                Button {
-                    onAuthorTap(comment.authorUid)
-                } label: {
-                    avatarView(c: comment, size: 32)
-                }
-                .buttonStyle(.plain)
+                if comment.isSoftDeleted {
+                    // Deleted comment: generic avatar (not tappable)
+                    Circle()
+                        .fill(AppColors.textTertiary.opacity(0.3))
+                        .frame(width: 32, height: 32)
 
-                // Author name with red dot if post author
-                HStack(spacing: 4) {
+                    // Deleted user label
+                    Text("Deleted User")
+                        .font(AppTypography.labelMedium)
+                        .foregroundColor(AppColors.textTertiary)
+                } else {
+                    // Avatar (tappable)
                     Button {
                         onAuthorTap(comment.authorUid)
                     } label: {
-                        Text(comment.authorNickname ?? "Unknown")
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.textPrimary)
+                        avatarView(c: comment, size: 32)
                     }
                     .buttonStyle(.plain)
 
-                    if isPostAuthor {
-                        Text("*")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(AppColors.error)
+                    // Author name with red dot if post author
+                    HStack(spacing: 4) {
+                        Button {
+                            onAuthorTap(comment.authorUid)
+                        } label: {
+                            Text(comment.authorNickname ?? "Unknown")
+                                .font(AppTypography.labelMedium)
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                        .buttonStyle(.plain)
+
+                        if isPostAuthor {
+                            Text("*")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(AppColors.error)
+                        }
                     }
                 }
 
@@ -91,15 +105,17 @@ struct CommentRowView: View {
             // Comment text
             Text(comment.displayText)
                 .font(AppTypography.bodyMedium)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(comment.isSoftDeleted ? AppColors.textTertiary : AppColors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, AppSpacing.sm)
 
-            // Footer: time, like, reply, menu
+            // Footer: time, like, reply, menu (hide actions for deleted comments)
             HStack(spacing: AppSpacing.lg) {
                 Text(comment.timeAgoString)
                     .font(AppTypography.caption)
                     .foregroundColor(AppColors.textTertiary)
+
+                if !comment.isSoftDeleted {
 
                 Button {
                     onLike(comment)
@@ -122,7 +138,7 @@ struct CommentRowView: View {
                 }
 
                 Button {
-                    onReply()
+                    onReply(comment)
                 } label: {
                     Text("Reply")
                         .font(AppTypography.caption)
@@ -149,6 +165,7 @@ struct CommentRowView: View {
                         .font(.system(size: 18))
                         .foregroundColor(AppColors.textTertiary)
                         .frame(width: 44)  // Only expand width, let height be natural
+                }
                 }
 
                 Spacer()
@@ -182,7 +199,7 @@ struct CommentRowView: View {
 
     private func replyView(_ reply: Comment) -> some View {
         let isReplyPostAuthor = reply.authorUid == postAuthorUid
-        let isReplyAuthor = reply.authorUid == comment.authorUid || isAuthor
+        let isReplyAuthor = reply.authorUid == currentUserUid
 
         return ZStack {
             // Grey background filling full width
@@ -254,7 +271,7 @@ struct CommentRowView: View {
                     }
 
                     Button {
-                        onReply()
+                        onReply(reply)
                     } label: {
                         Text("Reply")
                             .font(AppTypography.caption)

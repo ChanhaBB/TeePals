@@ -218,12 +218,6 @@ final class PostDetailViewModel: ObservableObject {
     
     func setReplyTarget(_ comment: Comment?) {
         replyingTo = comment
-        if comment != nil {
-            // Pre-fill @mention for nested replies
-            if comment?.depth == Comment.maxDepth {
-                newCommentText = "@\(comment?.authorNickname ?? "") "
-            }
-        }
     }
     
     func submitComment() async {
@@ -287,16 +281,31 @@ final class PostDetailViewModel: ObservableObject {
     func deleteComment(_ comment: Comment) async {
         guard let commentId = comment.id else { return }
 
+        // Determine if this will be a soft or hard delete
+        let willSoftDelete = comment.depth == 0 && (comment.replies?.isEmpty == false)
+
         do {
             try await postsRepository.deleteComment(postId: postId, commentId: commentId)
 
-            // Optimistic update: Replace arrays entirely (SwiftUI detects new references)
-            let newComments = comments.filter { $0.id != commentId }
-            comments = newComments
-            commentTree = newComments.buildCommentTree()
-
-            // NOTE: commentCount is decremented in Firestore by the repository
-            // We don't need to update it locally - it will be correct when we reload
+            // Optimistic update based on deletion type
+            if willSoftDelete {
+                // Soft delete: mark comment as deleted but keep in list
+                if let index = comments.firstIndex(where: { $0.id == commentId }) {
+                    var updatedComment = comments[index]
+                    updatedComment.isDeleted = true
+                    var newComments = comments
+                    newComments[index] = updatedComment
+                    comments = newComments
+                    commentTree = newComments.buildCommentTree()
+                }
+                // NOTE: commentCount should NOT decrement for soft deletes
+            } else {
+                // Hard delete: remove comment from list
+                let newComments = comments.filter { $0.id != commentId }
+                comments = newComments
+                commentTree = newComments.buildCommentTree()
+                // NOTE: commentCount is decremented in Firestore by Cloud Function
+            }
 
         } catch {
             errorMessage = error.localizedDescription

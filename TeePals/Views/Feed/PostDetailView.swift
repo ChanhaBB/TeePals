@@ -563,10 +563,10 @@ struct PostDetailView: View {
                         ForEach(viewModel.commentTree) { comment in
                             CommentRowView(
                                 comment: comment,
+                                currentUserUid: viewModel.uid,
                                 postAuthorUid: post.authorUid,
-                                isAuthor: comment.authorUid == viewModel.uid,
-                                onReply: {
-                                    activateComposer(replyTo: comment)
+                                onReply: { commentToReplyTo in
+                                    activateComposer(replyTo: commentToReplyTo)
                                 },
                                 onLike: { c in Task { await viewModel.toggleCommentLike(c) } },
                                 onDelete: { Task { await viewModel.deleteComment(comment) } },

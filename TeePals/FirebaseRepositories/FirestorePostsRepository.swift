@@ -519,29 +519,61 @@ final class FirestorePostsRepository: PostsRepository {
         guard let uid = currentUid else {
             throw PostsError.notAuthenticated
         }
-        
-        // Verify ownership
+
+        // Fetch comment to verify ownership and check depth
         let doc = try await db.collection(FirestoreCollection.posts)
             .document(postId)
             .collection("comments")
             .document(commentId)
             .getDocument()
-        
+
         guard let data = doc.data(),
               let authorUid = data["authorUid"] as? String,
               authorUid == uid else {
             throw PostsError.unauthorized
         }
-        
-        // Delete comment
-        try await db.collection(FirestoreCollection.posts)
-            .document(postId)
-            .collection("comments")
-            .document(commentId)
-            .delete()
 
-        // NOTE: commentCount is updated automatically by Cloud Function (onCommentWrite)
-        // This ensures consistent counting and prevents race conditions
+        let depth = data["depth"] as? Int ?? 0
+
+        // Determine deletion strategy
+        var shouldSoftDelete = false
+
+        if depth == 0 {
+            // Check if this level-0 comment has any replies
+            let repliesSnapshot = try await db.collection(FirestoreCollection.posts)
+                .document(postId)
+                .collection("comments")
+                .whereField("parentCommentId", isEqualTo: commentId)
+                .limit(to: 1)
+                .getDocuments()
+
+            shouldSoftDelete = !repliesSnapshot.documents.isEmpty
+        }
+
+        if shouldSoftDelete {
+            // Soft delete: mark as deleted but preserve document for threading
+            try await db.collection(FirestoreCollection.posts)
+                .document(postId)
+                .collection("comments")
+                .document(commentId)
+                .updateData([
+                    "isDeleted": true,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ])
+
+            // NOTE: commentCount should NOT decrement for soft deletes
+            // The comment is still visible in the UI as a placeholder
+        } else {
+            // Hard delete: remove document completely
+            try await db.collection(FirestoreCollection.posts)
+                .document(postId)
+                .collection("comments")
+                .document(commentId)
+                .delete()
+
+            // NOTE: commentCount is decremented automatically by Cloud Function (onCommentWrite)
+            // This ensures consistent counting and prevents race conditions
+        }
     }
 
     // MARK: - Comment Likes
@@ -845,6 +877,7 @@ final class FirestorePostsRepository: PostsRepository {
             replyToNickname: data["replyToNickname"] as? String,
             depth: data["depth"] as? Int ?? 0,
             isEdited: data["isEdited"] as? Bool ?? false,
+            isDeleted: data["isDeleted"] as? Bool,
             createdAt: createdAt,
             updatedAt: updatedAt,
             likeCount: data["likeCount"] as? Int ?? 0,

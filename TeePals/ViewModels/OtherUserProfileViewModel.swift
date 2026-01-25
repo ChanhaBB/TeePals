@@ -20,7 +20,7 @@ final class OtherUserProfileViewModel: ObservableObject {
     @Published var followingCount: Int = 0
     @Published var isFollowing = false
     @Published var isMutualFollow = false
-    @Published var isFollowActionLoading = false
+    @Published var isFollowedByThem = false
 
     let uid: String
     
@@ -61,13 +61,14 @@ final class OtherUserProfileViewModel: ObservableObject {
             async let followingCountData = socialRepository.getFollowingCount(uid: uid)
 
             // Load follow status in parallel if authenticated
-            let followStatusData: (isFollowing: Bool, isMutual: Bool)
+            let followStatusData: (isFollowing: Bool, isMutual: Bool, isFollowedBy: Bool)
             if let _ = currentUid() {
                 async let isFollowingData = socialRepository.isFollowing(targetUid: uid)
                 async let isMutualFollowData = socialRepository.isMutualFollow(targetUid: uid)
-                followStatusData = try await (isFollowingData, isMutualFollowData)
+                async let isFollowedByData = socialRepository.isFollowedBy(targetUid: uid)
+                followStatusData = try await (isFollowingData, isMutualFollowData, isFollowedByData)
             } else {
-                followStatusData = (false, false)
+                followStatusData = (false, false, false)
             }
 
             // Wait for all data to complete
@@ -81,6 +82,7 @@ final class OtherUserProfileViewModel: ObservableObject {
             followingCount = fetchedFollowingCount
             isFollowing = followStatusData.isFollowing
             isMutualFollow = followStatusData.isMutual
+            isFollowedByThem = followStatusData.isFollowedBy
 
             isLoading = false
         } catch {
@@ -93,27 +95,40 @@ final class OtherUserProfileViewModel: ObservableObject {
     
     func toggleFollow() async {
         guard let _ = currentUid(), !isOwnProfile else { return }
-        
-        isFollowActionLoading = true
-        
-        do {
-            if isFollowing {
-                try await socialRepository.unfollow(targetUid: uid)
-                isFollowing = false
-                isMutualFollow = false
-                followerCount = max(0, followerCount - 1)
-            } else {
-                try await socialRepository.follow(targetUid: uid)
-                isFollowing = true
-                // Check if they follow us back (making it mutual)
-                isMutualFollow = try await socialRepository.isFollowedBy(targetUid: uid)
-                followerCount += 1
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
 
-        isFollowActionLoading = false
+        // Optimistic update: change UI immediately
+        let wasFollowing = isFollowing
+        let wasFollowerCount = followerCount
+
+        if isFollowing {
+            // Unfollow: update UI instantly
+            isFollowing = false
+            isMutualFollow = false
+            followerCount = max(0, followerCount - 1)
+
+            do {
+                try await socialRepository.unfollow(targetUid: uid)
+            } catch {
+                // Revert on error (will correct on refresh)
+                isFollowing = wasFollowing
+                followerCount = wasFollowerCount
+            }
+        } else {
+            // Follow: update UI instantly
+            isFollowing = true
+            if isFollowedByThem {
+                isMutualFollow = true
+            }
+            followerCount += 1
+
+            do {
+                try await socialRepository.follow(targetUid: uid)
+            } catch {
+                // Revert on error (will correct on refresh)
+                isFollowing = wasFollowing
+                followerCount = wasFollowerCount
+            }
+        }
     }
 }
 

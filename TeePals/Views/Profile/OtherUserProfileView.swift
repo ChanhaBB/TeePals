@@ -333,26 +333,31 @@ struct OtherUserProfileView: View {
                 // Mutual follow = Friends
                 SecondaryButton(
                     "Friends",
-                    icon: "person.2.fill",
-                    isLoading: viewModel.isFollowActionLoading
+                    icon: "person.2.fill"
                 ) {
                     Task { await viewModel.toggleFollow() }
                 }
             } else if viewModel.isFollowing {
-                // One-way follow
+                // One-way follow (you follow them)
                 SecondaryButton(
                     "Following",
-                    icon: "checkmark",
-                    isLoading: viewModel.isFollowActionLoading
+                    icon: "checkmark"
+                ) {
+                    Task { await viewModel.toggleFollow() }
+                }
+            } else if viewModel.isFollowedByThem {
+                // They follow you - show "Follow Back"
+                PrimaryButton(
+                    "Follow Back",
+                    icon: "arrow.turn.down.left"
                 ) {
                     Task { await viewModel.toggleFollow() }
                 }
             } else {
-                // Not following
+                // No relationship
                 PrimaryButton(
                     "Follow",
-                    icon: "plus",
-                    isLoading: viewModel.isFollowActionLoading
+                    icon: "plus"
                 ) {
                     Task { await viewModel.toggleFollow() }
                 }

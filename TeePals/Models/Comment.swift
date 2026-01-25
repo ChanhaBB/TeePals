@@ -17,6 +17,7 @@ struct Comment: Codable, Identifiable, Equatable {
     var replyToNickname: String?  // denormalized for display
     var depth: Int                // 0 = top-level, 1 = nested reply
     var isEdited: Bool
+    var isDeleted: Bool?          // true if soft-deleted (preserves threading)
     let createdAt: Date
     var updatedAt: Date
 
@@ -51,6 +52,7 @@ struct Comment: Codable, Identifiable, Equatable {
         replyToNickname: String? = nil,
         depth: Int = 0,
         isEdited: Bool = false,
+        isDeleted: Bool? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         likeCount: Int? = nil,
@@ -68,6 +70,7 @@ struct Comment: Codable, Identifiable, Equatable {
         self.replyToNickname = replyToNickname
         self.depth = min(depth, Comment.maxDepth)
         self.isEdited = isEdited
+        self.isDeleted = isDeleted
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.likeCount = likeCount
@@ -88,6 +91,7 @@ struct Comment: Codable, Identifiable, Equatable {
     var isTopLevel: Bool { parentCommentId == nil }
     var isReply: Bool { parentCommentId != nil }
     var hasMention: Bool { replyToUid != nil }
+    var isSoftDeleted: Bool { isDeleted == true }
     
     /// Time ago string for display
     var timeAgoString: String {
@@ -98,6 +102,9 @@ struct Comment: Codable, Identifiable, Equatable {
     
     /// Display text with @mention prefix if applicable
     var displayText: String {
+        if isSoftDeleted {
+            return "[Comment deleted]"
+        }
         if let nickname = replyToNickname, depth >= Comment.maxDepth {
             return "@\(nickname) \(text)"
         }
