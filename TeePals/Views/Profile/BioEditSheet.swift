@@ -6,7 +6,7 @@ struct BioEditSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var localBio: String = ""
-    let characterLimit = 160
+    let characterLimit = 300
     let onSave: () -> Void
 
     init(viewModel: ProfileEditViewModel, onSave: @escaping () -> Void) {

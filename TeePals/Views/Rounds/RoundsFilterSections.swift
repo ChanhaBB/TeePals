@@ -1,5 +1,37 @@
 import SwiftUI
 
+// MARK: - Hosted By Section
+
+struct FilterHostedBySection: View {
+    @Binding var selectedHostedBy: HostedByOption
+
+    var body: some View {
+        SectionCard(title: "Hosted By") {
+            HStack(spacing: AppSpacing.sm) {
+                hostedByChip(.everyone)
+                hostedByChip(.following)
+            }
+        }
+    }
+
+    private func hostedByChip(_ option: HostedByOption) -> some View {
+        let isSelected = selectedHostedBy == option
+
+        return Button {
+            selectedHostedBy = option
+        } label: {
+            Text(option.displayText)
+                .font(AppTypography.labelMedium)
+                .foregroundColor(isSelected ? .white : AppColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+                .background(isSelected ? AppColors.primary : AppColors.backgroundSecondary)
+                .cornerRadius(AppSpacing.radiusMedium)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Date Range Section
 
 struct FilterDateRangeSection: View {

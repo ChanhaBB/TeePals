@@ -109,7 +109,7 @@ final class AppContainer: ObservableObject {
     // Rounds tab ViewModels (singletons to preserve state across tab switches)
     @Published var roundsListViewModel: RoundsListViewModel?
     @Published var activityRoundsViewModel: ActivityRoundsViewModel?
-    @Published var followingRoundsViewModel: FollowingRoundsViewModel?
+    @Published var activityRoundsViewModelV2: ActivityRoundsViewModelV2?
 
     private var cancellables = Set<AnyCancellable>()
     
@@ -189,7 +189,9 @@ final class AppContainer: ObservableObject {
         }
         let vm = RoundsListViewModel(
             roundsSearchService: roundsSearchService,
+            followingRoundsService: followingRoundsService,
             profileRepository: profileRepository,
+            socialRepository: socialRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
         Task { @MainActor in
@@ -234,21 +236,22 @@ final class AppContainer: ObservableObject {
         return vm
     }
 
-    func makeFollowingRoundsViewModel() -> FollowingRoundsViewModel {
-        if let existing = followingRoundsViewModel {
+    func makeActivityRoundsViewModelV2() -> ActivityRoundsViewModelV2 {
+        if let existing = activityRoundsViewModelV2 {
             return existing
         }
-        let vm = FollowingRoundsViewModel(
-            followingService: followingRoundsService,
+        let vm = ActivityRoundsViewModelV2(
+            activityService: activityRoundsService,
+            roundsRepository: roundsRepository,
             profileRepository: profileRepository,
-            socialRepository: socialRepository
+            currentUid: { [weak self] in self?.currentUid }
         )
         Task { @MainActor in
-            followingRoundsViewModel = vm
+            activityRoundsViewModelV2 = vm
         }
         return vm
     }
-    
+
     func makeRoundChatViewModel(roundId: String) -> RoundChatViewModel {
         RoundChatViewModel(
             roundId: roundId,

@@ -6,11 +6,13 @@ import UIKit
 final class RoundsListViewModel: ObservableObject {
     
     // MARK: - Dependencies
-    
+
     private let roundsSearchService: RoundsSearchService
+    private let followingRoundsService: FollowingRoundsService
     private let profileRepository: ProfileRepository
+    private let socialRepository: SocialRepository
     private let currentUid: () -> String?
-    
+
     // MARK: - State
 
     @Published var rounds: [Round] = []
@@ -47,11 +49,15 @@ final class RoundsListViewModel: ObservableObject {
 
     init(
         roundsSearchService: RoundsSearchService,
+        followingRoundsService: FollowingRoundsService,
         profileRepository: ProfileRepository,
+        socialRepository: SocialRepository,
         currentUid: @escaping () -> String?
     ) {
         self.roundsSearchService = roundsSearchService
+        self.followingRoundsService = followingRoundsService
         self.profileRepository = profileRepository
+        self.socialRepository = socialRepository
         self.currentUid = currentUid
     }
 
@@ -68,15 +74,15 @@ final class RoundsListViewModel: ObservableObject {
     /// Current filter summary for display
     var filterSummary: String {
         var parts: [String] = []
-        
+
         if filters.distance != RoundsListFilters.defaultDistance {
             parts.append(filters.distance.displayText)
         }
-        
+
         if filters.dateRange != RoundsListFilters.defaultDateRange {
             parts.append(filters.dateRange.displayText)
         }
-        
+
         return parts.isEmpty ? "Default" : parts.joined(separator: " • ")
     }
     
@@ -124,51 +130,61 @@ final class RoundsListViewModel: ObservableObject {
         nextPageCursor = nil
 
         do {
-            let searchFilter: RoundsSearchFilter
+            let fetchedRounds: [Round]
 
-            switch filters.searchMode {
-            case .geo:
-                // Geo mode: Must have a center location
-                guard let centerLat = filters.centerLat,
-                      let centerLng = filters.centerLng,
-                      let radiusMiles = filters.radiusMiles else {
-                    errorMessage = "Please set your location in your profile to search for rounds."
-                    isLoading = false
-                    return
+            // Branch based on hostedBy filter
+            if filters.hostedBy == .following {
+                // Use following service (fetches rounds from followed users)
+                fetchedRounds = try await followingRoundsService.fetchFollowingHostedRounds(dateRange: filters.dateRange)
+            } else {
+                // Use regular geo/discovery search (everyone)
+                let searchFilter: RoundsSearchFilter
+
+                switch filters.searchMode {
+                case .geo:
+                    // Geo mode: Must have a center location
+                    guard let centerLat = filters.centerLat,
+                          let centerLng = filters.centerLng,
+                          let radiusMiles = filters.radiusMiles else {
+                        errorMessage = "Please set your location in your profile to search for rounds."
+                        isLoading = false
+                        return
+                    }
+
+                    searchFilter = RoundsSearchFilter(
+                        centerLat: centerLat,
+                        centerLng: centerLng,
+                        radiusMiles: radiusMiles,
+                        startTimeMin: filters.dateRange.startDate,
+                        startTimeMax: filters.dateRange.endDate,
+                        status: .open,
+                        visibility: .public,
+                        excludeFullRounds: true
+                    )
+
+                case .discovery:
+                    // Discovery mode: Date-only, use a dummy center (ignored in query)
+                    searchFilter = RoundsSearchFilter(
+                        centerLat: 0,
+                        centerLng: 0,
+                        radiusMiles: 0, // 0 signals discovery mode
+                        startTimeMin: filters.dateRange.startDate,
+                        startTimeMax: filters.dateRange.endDate,
+                        status: .open,
+                        visibility: .public,
+                        excludeFullRounds: true,
+                        isDiscoveryMode: true
+                    )
                 }
 
-                searchFilter = RoundsSearchFilter(
-                    centerLat: centerLat,
-                    centerLng: centerLng,
-                    radiusMiles: radiusMiles,
-                    startTimeMin: filters.dateRange.startDate,
-                    startTimeMax: filters.dateRange.endDate,
-                    status: .open,
-                    visibility: .public,
-                    excludeFullRounds: true
-                )
-
-            case .discovery:
-                // Discovery mode: Date-only, use a dummy center (ignored in query)
-                searchFilter = RoundsSearchFilter(
-                    centerLat: 0,
-                    centerLng: 0,
-                    radiusMiles: 0, // 0 signals discovery mode
-                    startTimeMin: filters.dateRange.startDate,
-                    startTimeMax: filters.dateRange.endDate,
-                    status: .open,
-                    visibility: .public,
-                    excludeFullRounds: true,
-                    isDiscoveryMode: true
-                )
+                let page = try await roundsSearchService.searchRounds(filter: searchFilter, page: nil)
+                fetchedRounds = page.items
+                nextPageCursor = page.nextPageCursor
+                isTruncated = page.isTruncated
+                lastSearchDebug = page.debug
             }
 
-            let page = try await roundsSearchService.searchRounds(filter: searchFilter, page: nil)
-
-            let sortedRounds = sortResults(page.items)
-            nextPageCursor = page.nextPageCursor
-            isTruncated = page.isTruncated
-            lastSearchDebug = page.debug
+            let sortedRounds = sortResults(fetchedRounds)
 
             // Load profiles before showing rounds (everything appears together)
             await loadHostProfiles(for: sortedRounds)
@@ -187,6 +203,9 @@ final class RoundsListViewModel: ObservableObject {
     }
     
     func loadMoreIfNeeded(currentRound: Round) async {
+        // Following mode doesn't support pagination (returns all rounds at once)
+        guard filters.hostedBy != .following else { return }
+
         guard hasMorePages,
               !isLoadingMore,
               let lastRound = rounds.last,
@@ -275,7 +294,8 @@ final class RoundsListViewModel: ObservableObject {
         cityLabel: String? = nil,
         distance: DistanceSelection? = nil,
         dateRange: DateRangeOption? = nil,
-        sortBy: RoundSortOption? = nil
+        sortBy: RoundSortOption? = nil,
+        hostedBy: HostedByOption? = nil
     ) {
         if let centerLat = centerLat {
             filters.centerLat = centerLat
@@ -295,18 +315,23 @@ final class RoundsListViewModel: ObservableObject {
         if let sortBy = sortBy {
             filters.sortBy = sortBy
         }
-        
+        if let hostedBy = hostedBy {
+            filters.hostedBy = hostedBy
+        }
+
         // Check if any filters differ from defaults
         hasActiveFilters = filters.distance != RoundsListFilters.defaultDistance ||
                           filters.dateRange != RoundsListFilters.defaultDateRange ||
-                          filters.sortBy != .date
+                          filters.sortBy != .date ||
+                          filters.hostedBy != .everyone
     }
-    
+
     func applyFilters(_ newFilters: RoundsListFilters) {
         filters = newFilters
         hasActiveFilters = newFilters.distance != RoundsListFilters.defaultDistance ||
                           newFilters.dateRange != RoundsListFilters.defaultDateRange ||
-                          newFilters.sortBy != .date
+                          newFilters.sortBy != .date ||
+                          newFilters.hostedBy != .everyone
     }
     
     func resetFilters() {
@@ -395,6 +420,21 @@ final class RoundsListViewModel: ObservableObject {
 
 /// Filters for the rounds list UI.
 /// Separate from RoundsSearchFilter to allow simpler UI state management.
+// MARK: - Hosted By Option
+
+/// Filter for who can host rounds shown in results
+enum HostedByOption: Equatable, Hashable {
+    case everyone   // Show all rounds
+    case following  // Show only rounds from users you follow
+
+    var displayText: String {
+        switch self {
+        case .everyone: return "Everyone"
+        case .following: return "Following"
+        }
+    }
+}
+
 struct RoundsListFilters: Equatable {
     var centerLat: Double?
     var centerLng: Double?
@@ -402,14 +442,16 @@ struct RoundsListFilters: Equatable {
     var distance: DistanceSelection  // Distance enum with .anywhere support
     var dateRange: DateRangeOption
     var sortBy: RoundSortOption
-    
+    var hostedBy: HostedByOption     // Filter by who hosts the round
+
     init(
         centerLat: Double? = nil,
         centerLng: Double? = nil,
         cityLabel: String? = nil,
         distance: DistanceSelection = .miles(25),
         dateRange: DateRangeOption = RoundsListFilters.defaultDateRange,
-        sortBy: RoundSortOption = .date
+        sortBy: RoundSortOption = .date,
+        hostedBy: HostedByOption = .everyone
     ) {
         self.centerLat = centerLat
         self.centerLng = centerLng
@@ -417,6 +459,7 @@ struct RoundsListFilters: Equatable {
         self.distance = distance
         self.dateRange = dateRange
         self.sortBy = sortBy
+        self.hostedBy = hostedBy
     }
     
     // MARK: - Computed Properties

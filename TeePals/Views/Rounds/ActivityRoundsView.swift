@@ -178,8 +178,8 @@ struct ActivityRoundsView: View {
 
     private func badge(for status: MemberStatus) -> RoundCardBadge {
         switch status {
-        case .requested: return .pending
-        case .accepted: return .approved
+        case .requested: return .requested
+        case .accepted: return .confirmed
         case .declined: return .declined
         case .invited: return .invited
         case .removed, .left: return .declined

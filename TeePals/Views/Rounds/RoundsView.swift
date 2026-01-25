@@ -1,29 +1,26 @@
 import SwiftUI
 
-/// Main Rounds tab view with segmented control: Nearby | Activity | Following
+/// Main Rounds tab view with segmented control: Nearby | Activity
 struct RoundsView: View {
-    
+
     // MARK: - Dependencies
 
     @EnvironmentObject var container: AppContainer
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var nearbyViewModel: RoundsListViewModel
-    @StateObject private var activityViewModel: ActivityRoundsViewModel
-    @StateObject private var followingViewModel: FollowingRoundsViewModel
+    @StateObject private var activityViewModel: ActivityRoundsViewModelV2
 
     @State private var selectedSegment: RoundsSegment = .nearby
     @State private var showingCreateRound = false
     @State private var showingFilters = false
     @State private var selectedRound: Round?
-    
+
     init(
         nearbyViewModel: RoundsListViewModel,
-        activityViewModel: ActivityRoundsViewModel,
-        followingViewModel: FollowingRoundsViewModel
+        activityViewModel: ActivityRoundsViewModelV2
     ) {
         _nearbyViewModel = StateObject(wrappedValue: nearbyViewModel)
         _activityViewModel = StateObject(wrappedValue: activityViewModel)
-        _followingViewModel = StateObject(wrappedValue: followingViewModel)
     }
     
     var body: some View {
@@ -118,23 +115,15 @@ struct RoundsView: View {
                 )
             }
             .refreshable { await nearbyViewModel.refresh() }
-            
+
         case .activity:
-            ActivityRoundsViewRefactored(
+            ActivityRoundsViewV2(
                 viewModel: activityViewModel,
                 onRoundTap: { selectedRound = $0 },
                 onCreateRound: { attemptCreateRound() },
                 onSwitchToNearby: { selectedSegment = .nearby }
             )
             .refreshable { await activityViewModel.refresh() }
-            
-        case .following:
-            FollowingRoundsView(
-                viewModel: followingViewModel,
-                onRoundTap: { selectedRound = $0 },
-                onSwitchToNearby: { selectedSegment = .nearby }
-            )
-            .refreshable { await followingViewModel.refresh() }
         }
     }
     
@@ -198,17 +187,14 @@ struct RoundsView: View {
             await nearbyViewModel.loadRounds()
         case .activity:
             await activityViewModel.loadActivity()
-        case .following:
-            await followingViewModel.loadRounds()
         }
     }
-    
+
     private func refreshCurrentSegment() {
         Task {
             switch selectedSegment {
             case .nearby: await nearbyViewModel.refresh()
             case .activity: await activityViewModel.refresh()
-            case .following: await followingViewModel.refresh()
             }
         }
     }
@@ -217,25 +203,12 @@ struct RoundsView: View {
         // Load segments that aren't currently selected in the background
         switch selectedSegment {
         case .nearby:
-            // Preload Activity and Following
-            async let activity: () = activityViewModel.loadActivity()
-            async let following: () = followingViewModel.loadRounds()
-            await activity
-            await following
+            // Preload Activity
+            await activityViewModel.loadActivity()
 
         case .activity:
-            // Preload Nearby and Following
-            async let nearby: () = nearbyViewModel.loadRounds()
-            async let following: () = followingViewModel.loadRounds()
-            await nearby
-            await following
-
-        case .following:
-            // Preload Nearby and Activity
-            async let nearby: () = nearbyViewModel.loadRounds()
-            async let activity: () = activityViewModel.loadActivity()
-            await nearby
-            await activity
+            // Preload Nearby
+            await nearbyViewModel.loadRounds()
         }
     }
 

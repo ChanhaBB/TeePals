@@ -108,13 +108,19 @@ struct Round: Codable, Identifiable, Hashable {
     }
     
     // MARK: - Computed Properties
-    
+
     var isFull: Bool {
         acceptedCount >= maxPlayers
     }
-    
+
     var spotsRemaining: Int {
         max(0, maxPlayers - acceptedCount)
+    }
+
+    /// Whether this round is in the past.
+    var isPast: Bool {
+        guard let teeTime = displayTeeTime else { return false }
+        return teeTime < Date()
     }
     
     /// Display course name (chosen or first candidate)

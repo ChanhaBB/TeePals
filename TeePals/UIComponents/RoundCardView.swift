@@ -118,8 +118,8 @@ struct RoundCardView: View {
                 .background(AppColors.primary)
                 .cornerRadius(AppSpacing.radiusSmall)
 
-        case .pending:
-            Text("PENDING")
+        case .requested:
+            Text("REQUESTED")
                 .font(.caption2)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.warning)
@@ -128,14 +128,24 @@ struct RoundCardView: View {
                 .background(AppColors.warning.opacity(0.15))
                 .cornerRadius(AppSpacing.radiusSmall)
 
-        case .approved:
-            Text("APPROVED")
+        case .confirmed:
+            Text("CONFIRMED")
                 .font(.caption2)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.success)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(AppColors.success.opacity(0.15))
+                .cornerRadius(AppSpacing.radiusSmall)
+
+        case .played:
+            Text("PLAYED")
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(AppColors.textSecondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(AppColors.backgroundSecondary)
                 .cornerRadius(AppSpacing.radiusSmall)
 
         case .declined:
@@ -218,8 +228,9 @@ struct RoundCardView: View {
 
 enum RoundCardBadge: Equatable {
     case hosting
-    case pending
-    case approved
-    case declined
-    case invited
+    case requested    // User requested to join (was "pending")
+    case confirmed    // Approved to join - future rounds (was "approved")
+    case played       // Approved - past rounds
+    case invited      // User needs to accept/decline
+    case declined     // Not shown in Activity (kept for compatibility)
 }

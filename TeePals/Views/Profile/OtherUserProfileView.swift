@@ -9,7 +9,6 @@ struct OtherUserProfileView: View {
     @State private var showingFollowers = false
     @State private var showingFollowing = false
     @State private var showingPhotoViewer = false
-    @State private var isBioExpanded = false
 
     init(viewModel: OtherUserProfileViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -193,30 +192,15 @@ struct OtherUserProfileView: View {
                 Text(bio)
                     .font(AppTypography.bodyMedium)
                     .foregroundColor(AppColors.textPrimary)
-                    .lineLimit(isBioExpanded ? nil : 2)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                // More/Less button
-                if bioNeedsExpansion(bio) {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isBioExpanded.toggle()
-                        }
-                    } label: {
-                        Text(isBioExpanded ? "Show Less" : "Show More")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.primary)
-                    }
-                }
+                    .padding(AppSpacing.md)
+                    .background(AppColors.backgroundSecondary)
+                    .cornerRadius(AppRadii.card)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, AppSpacing.sm)
-    }
-
-    private func bioNeedsExpansion(_ text: String) -> Bool {
-        return text.count > 100
     }
 
     private func buildPersonalInfo(profile: PublicProfile) -> String? {

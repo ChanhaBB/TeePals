@@ -15,8 +15,7 @@ struct MainTabView: View {
             
             RoundsView(
                 nearbyViewModel: container.makeRoundsListViewModel(),
-                activityViewModel: container.makeActivityRoundsViewModel(),
-                followingViewModel: container.makeFollowingRoundsViewModel()
+                activityViewModel: container.makeActivityRoundsViewModelV2()
             )
                 .tabItem {
                     Label("Rounds", systemImage: "figure.golf")

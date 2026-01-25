@@ -53,6 +53,11 @@
 		965BCB032F21C2CB00063CD5 /* CommentComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB022F21C2CB00063CD5 /* CommentComposer.swift */; };
 		965BCB052F21C44800063CD5 /* CommentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB042F21C44800063CD5 /* CommentRowView.swift */; };
 		965BCB072F21C47E00063CD5 /* RoundedCornerShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB062F21C47E00063CD5 /* RoundedCornerShape.swift */; };
+		965BCB092F2317D600063CD5 /* ActivityRoundsViewModelV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB082F2317D600063CD5 /* ActivityRoundsViewModelV2.swift */; };
+		965BCB0B2F23183F00063CD5 /* ActivityTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB0A2F23183F00063CD5 /* ActivityTypes.swift */; };
+		965BCB0D2F23185100063CD5 /* ActivityRoundsViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB0C2F23185100063CD5 /* ActivityRoundsViewV2.swift */; };
+		965BCB102F23185E00063CD5 /* ActivityFilterChips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB0E2F23185E00063CD5 /* ActivityFilterChips.swift */; };
+		965BCB112F23185E00063CD5 /* CollapsibleSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965BCB0F2F23185E00063CD5 /* CollapsibleSection.swift */; };
 		966A5FC42F0FF7050064F1A9 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 966A5FC32F0FF7050064F1A9 /* FirebaseAnalytics */; };
 		966A5FC62F10EE420064F1A9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */; };
 		966A605D2F11330F0064F1A9 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60312F11330F0064F1A9 /* AppContainer.swift */; };
@@ -152,9 +157,7 @@
 		966A611A2F13FAA50064F1A9 /* FirestoreFollowingRoundsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61172F13FAA50064F1A9 /* FirestoreFollowingRoundsService.swift */; };
 		966A611B2F13FAA50064F1A9 /* FirestoreActivityRoundsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61162F13FAA50064F1A9 /* FirestoreActivityRoundsService.swift */; };
 		966A611E2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A611C2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift */; };
-		966A611F2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A611D2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift */; };
 		966A61232F13FACF0064F1A9 /* ActivityRoundsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61202F13FACF0064F1A9 /* ActivityRoundsView.swift */; };
-		966A61242F13FACF0064F1A9 /* FollowingRoundsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61212F13FACF0064F1A9 /* FollowingRoundsView.swift */; };
 		966A61252F13FACF0064F1A9 /* NearbyRoundsContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61222F13FACF0064F1A9 /* NearbyRoundsContent.swift */; };
 		966A61292F1415570064F1A9 /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A61282F1415570064F1A9 /* ChatMessage.swift */; };
 		966A612B2F1415640064F1A9 /* ChatRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A612A2F1415640064F1A9 /* ChatRepository.swift */; };
@@ -231,6 +234,11 @@
 		965BCB022F21C2CB00063CD5 /* CommentComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentComposer.swift; sourceTree = "<group>"; };
 		965BCB042F21C44800063CD5 /* CommentRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentRowView.swift; sourceTree = "<group>"; };
 		965BCB062F21C47E00063CD5 /* RoundedCornerShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundedCornerShape.swift; sourceTree = "<group>"; };
+		965BCB082F2317D600063CD5 /* ActivityRoundsViewModelV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRoundsViewModelV2.swift; sourceTree = "<group>"; };
+		965BCB0A2F23183F00063CD5 /* ActivityTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTypes.swift; sourceTree = "<group>"; };
+		965BCB0C2F23185100063CD5 /* ActivityRoundsViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRoundsViewV2.swift; sourceTree = "<group>"; };
+		965BCB0E2F23185E00063CD5 /* ActivityFilterChips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityFilterChips.swift; sourceTree = "<group>"; };
+		965BCB0F2F23185E00063CD5 /* CollapsibleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapsibleSection.swift; sourceTree = "<group>"; };
 		966A5FC52F10EE420064F1A9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		966A60312F11330F0064F1A9 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		966A60332F11330F0064F1A9 /* FirestoreProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreProfileRepository.swift; sourceTree = "<group>"; };
@@ -328,9 +336,7 @@
 		966A61172F13FAA50064F1A9 /* FirestoreFollowingRoundsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreFollowingRoundsService.swift; sourceTree = "<group>"; };
 		966A61182F13FAA50064F1A9 /* FirestoreRoundDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreRoundDecoder.swift; sourceTree = "<group>"; };
 		966A611C2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRoundsViewModel.swift; sourceTree = "<group>"; };
-		966A611D2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowingRoundsViewModel.swift; sourceTree = "<group>"; };
 		966A61202F13FACF0064F1A9 /* ActivityRoundsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRoundsView.swift; sourceTree = "<group>"; };
-		966A61212F13FACF0064F1A9 /* FollowingRoundsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowingRoundsView.swift; sourceTree = "<group>"; };
 		966A61222F13FACF0064F1A9 /* NearbyRoundsContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyRoundsContent.swift; sourceTree = "<group>"; };
 		966A61282F1415570064F1A9 /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
 		966A612A2F1415640064F1A9 /* ChatRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRepository.swift; sourceTree = "<group>"; };
@@ -489,6 +495,7 @@
 		966A603E2F11330F0064F1A9 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				965BCB0A2F23183F00063CD5 /* ActivityTypes.swift */,
 				965BCAEC2F19F7B100063CD5 /* RoundFeedback.swift */,
 				965BCAD92F18642C00063CD5 /* Notification.swift */,
 				9604DC442F15BADC00C7D73F /* FeedCursor.swift */,
@@ -547,6 +554,8 @@
 		966A60472F11330F0064F1A9 /* UIComponents */ = {
 			isa = PBXGroup;
 			children = (
+				965BCB0E2F23185E00063CD5 /* ActivityFilterChips.swift */,
+				965BCB0F2F23185E00063CD5 /* CollapsibleSection.swift */,
 				965BCB022F21C2CB00063CD5 /* CommentComposer.swift */,
 				965BCB002F21A6CE00063CD5 /* AdvancedTextEditor.swift */,
 				965BCAE32F19A3A500063CD5 /* ShareSheet.swift */,
@@ -573,6 +582,7 @@
 		966A604B2F11330F0064F1A9 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				965BCB082F2317D600063CD5 /* ActivityRoundsViewModelV2.swift */,
 				965BCAF22F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift */,
 				965BCADF2F18743000063CD5 /* NotificationsViewModel.swift */,
 				965BCACF2F183F4D00063CD5 /* InvitedRoundsViewModel.swift */,
@@ -583,7 +593,6 @@
 				966A614A2F1466E70064F1A9 /* UserPostsViewModel.swift */,
 				966A612E2F1415810064F1A9 /* RoundChatViewModel.swift */,
 				966A611C2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift */,
-				966A611D2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift */,
 				966A60EC2F119C940064F1A9 /* EditRoundViewModel.swift */,
 				966A60E62F1199400064F1A9 /* OtherUserProfileViewModel.swift */,
 				966A60DE2F1180730064F1A9 /* RoundDetailViewModel.swift */,
@@ -654,11 +663,11 @@
 		966A60592F11330F0064F1A9 /* Rounds */ = {
 			isa = PBXGroup;
 			children = (
+				965BCB0C2F23185100063CD5 /* ActivityRoundsViewV2.swift */,
 				965BCAD32F183FAA00063CD5 /* ActivityRoundsViewRefactored.swift */,
 				965BCAD42F183FAA00063CD5 /* InviteUsersSheet.swift */,
 				966A61392F141C210064F1A9 /* RoundsFilterSections.swift */,
 				966A61202F13FACF0064F1A9 /* ActivityRoundsView.swift */,
-				966A61212F13FACF0064F1A9 /* FollowingRoundsView.swift */,
 				966A61222F13FACF0064F1A9 /* NearbyRoundsContent.swift */,
 				966A610E2F13EA340064F1A9 /* RoundsEmptyState.swift */,
 				966A61002F13CAF90064F1A9 /* RoundsFilterSheet.swift */,
@@ -865,7 +874,6 @@
 				965BCB072F21C47E00063CD5 /* RoundedCornerShape.swift in Sources */,
 				966A609D2F1146770064F1A9 /* AppBanners.swift in Sources */,
 				966A61232F13FACF0064F1A9 /* ActivityRoundsView.swift in Sources */,
-				966A61242F13FACF0064F1A9 /* FollowingRoundsView.swift in Sources */,
 				966A61252F13FACF0064F1A9 /* NearbyRoundsContent.swift in Sources */,
 				965BCAD12F183F4D00063CD5 /* InviteUsersViewModel.swift in Sources */,
 				965BCAD22F183F4D00063CD5 /* InvitedRoundsViewModel.swift in Sources */,
@@ -942,6 +950,7 @@
 				966A606C2F11330F0064F1A9 /* ProfileSetupViewModel.swift in Sources */,
 				966A606D2F11330F0064F1A9 /* Message.swift in Sources */,
 				9604DC5F2F15F8AC00C7D73F /* AboutMeEditSheet.swift in Sources */,
+				965BCB092F2317D600063CD5 /* ActivityRoundsViewModelV2.swift in Sources */,
 				965BCAFD2F1A016300063CD5 /* TestDataSection.swift in Sources */,
 				965BCAEF2F19F7BD00063CD5 /* TrustRepository.swift in Sources */,
 				9604DC602F15F8AC00C7D73F /* PhotoEditSheet.swift in Sources */,
@@ -951,7 +960,9 @@
 				966A61292F1415570064F1A9 /* ChatMessage.swift in Sources */,
 				966A60F02F119CB10064F1A9 /* EditRoundSections.swift in Sources */,
 				965BCAE72F19A3B600063CD5 /* DeepLinkCoordinator.swift in Sources */,
+				965BCB0D2F23185100063CD5 /* ActivityRoundsViewV2.swift in Sources */,
 				966A60F12F119CB10064F1A9 /* RoundDetailMembersSection.swift in Sources */,
+				965BCB0B2F23183F00063CD5 /* ActivityTypes.swift in Sources */,
 				965BCB012F21A6CE00063CD5 /* AdvancedTextEditor.swift in Sources */,
 				966A610F2F13EA340064F1A9 /* RoundsEmptyState.swift in Sources */,
 				965BCAF32F1A000B00063CD5 /* PostRoundFeedbackViewModel.swift in Sources */,
@@ -964,13 +975,14 @@
 				965BCAED2F19F7B100063CD5 /* RoundFeedback.swift in Sources */,
 				966A60EB2F1199770064F1A9 /* EditRoundView.swift in Sources */,
 				966A611E2F13FABB0064F1A9 /* ActivityRoundsViewModel.swift in Sources */,
-				966A611F2F13FABB0064F1A9 /* FollowingRoundsViewModel.swift in Sources */,
 				965BCAE02F18743000063CD5 /* NotificationsViewModel.swift in Sources */,
 				966A606E2F11330F0064F1A9 /* BlockedUser.swift in Sources */,
 				966A60A82F1151C80064F1A9 /* CitySearchSheet.swift in Sources */,
 				966A60A92F1151C80064F1A9 /* FormFieldRow.swift in Sources */,
 				966A60AA2F1151C80064F1A9 /* LocationFieldView.swift in Sources */,
 				966A60E92F1199550064F1A9 /* OtherUserProfileView.swift in Sources */,
+				965BCB102F23185E00063CD5 /* ActivityFilterChips.swift in Sources */,
+				965BCB112F23185E00063CD5 /* CollapsibleSection.swift in Sources */,
 				966A60F92F11A51F0064F1A9 /* EditRoundCourseDateSections.swift in Sources */,
 				966A606F2F11330F0064F1A9 /* Round.swift in Sources */,
 				965BCAE42F19A3A500063CD5 /* ShareSheet.swift in Sources */,
@@ -1151,7 +1163,7 @@
 				CODE_SIGN_ENTITLEMENTS = TeePals/TeePals.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = Y6F9X8K3XF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1184,7 +1196,7 @@
 				CODE_SIGN_ENTITLEMENTS = TeePals/TeePals.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = Y6F9X8K3XF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -14,11 +14,12 @@ struct RoundsFilterSheet: View {
     @State private var selectedDistance: DistanceSelection
     @State private var selectedDateRange: DateRangeOption
     @State private var selectedSort: RoundSortOption
+    @State private var selectedHostedBy: HostedByOption
     @State private var customStartDate: Date
     @State private var customEndDate: Date
     @State private var showCustomDatePicker = false
     @State private var showCitySearch = false
-    
+
     init(viewModel: RoundsListViewModel) {
         self.viewModel = viewModel
         _selectedCityLabel = State(initialValue: viewModel.filters.cityLabel)
@@ -27,6 +28,7 @@ struct RoundsFilterSheet: View {
         _selectedDistance = State(initialValue: viewModel.filters.distance)
         _selectedDateRange = State(initialValue: viewModel.filters.dateRange)
         _selectedSort = State(initialValue: viewModel.filters.sortBy)
+        _selectedHostedBy = State(initialValue: viewModel.filters.hostedBy)
         _customStartDate = State(initialValue: Date())
         _customEndDate = State(initialValue: Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date())
     }
@@ -34,11 +36,12 @@ struct RoundsFilterSheet: View {
     private var isAnywhereMode: Bool {
         selectedDistance == .anywhere
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
+                    hostedBySection
                     searchAreaSection
                     dateRangeSection
                     sortSection
@@ -54,7 +57,6 @@ struct RoundsFilterSheet: View {
                     Button("Reset") {
                         resetToDefaults()
                     }
-                    .foregroundColor(AppColors.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
@@ -66,7 +68,13 @@ struct RoundsFilterSheet: View {
         }
         .presentationDetents([.medium, .large])
     }
-    
+
+    // MARK: - Hosted By Section
+
+    private var hostedBySection: some View {
+        FilterHostedBySection(selectedHostedBy: $selectedHostedBy)
+    }
+
     // MARK: - Search Area Section (Location + Distance coupled)
     
     private var searchAreaSection: some View {
@@ -214,25 +222,27 @@ struct RoundsFilterSheet: View {
             cityLabel: cityLabel,
             distance: selectedDistance,
             dateRange: dateRange,
-            sortBy: finalSort
+            sortBy: finalSort,
+            hostedBy: selectedHostedBy
         )
-        
+
         // Reload rounds with new filters
         Task {
-            await viewModel.loadRounds()
+            await viewModel.refresh()
         }
-        
+
         dismiss()
     }
-    
+
     private func resetToDefaults() {
-        // Reset city to profile default
+        // Only reset local UI state (user must tap Apply to actually load)
         selectedCityLabel = viewModel.userProfile?.primaryCityLabel
         selectedCityLat = viewModel.userProfile?.primaryLocation.latitude
         selectedCityLng = viewModel.userProfile?.primaryLocation.longitude
         selectedDistance = RoundsListFilters.defaultDistance
         selectedDateRange = RoundsListFilters.defaultDateRange
         selectedSort = .date
+        selectedHostedBy = .everyone
         showCustomDatePicker = false
     }
 }

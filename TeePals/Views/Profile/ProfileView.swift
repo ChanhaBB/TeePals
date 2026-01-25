@@ -14,7 +14,6 @@ struct ProfileView: View {
     @State private var showingBioEdit = false
     @State private var showingAboutMeEdit = false
     @State private var showingGolfEdit = false
-    @State private var isBioExpanded = false
     @State private var showingPhotoViewer = false
     @State private var showingPhotoActions = false
     @State private var showingPhotoPicker = false
@@ -331,7 +330,7 @@ struct ProfileView: View {
     private func bioSection(profile: PublicProfile) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             if let bio = profile.bio, !bio.isEmpty {
-                // Show bio
+                // Show full bio with grey background
                 Button {
                     bioEditViewModel = container.makeProfileEditViewModel()
                     showingBioEdit = true
@@ -340,7 +339,6 @@ struct ProfileView: View {
                         Text(bio)
                             .font(AppTypography.bodyMedium)
                             .foregroundColor(AppColors.textPrimary)
-                            .lineLimit(isBioExpanded ? nil : 2)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -348,21 +346,11 @@ struct ProfileView: View {
                             .font(.caption)
                             .foregroundColor(AppColors.textTertiary)
                     }
+                    .padding(AppSpacing.md)
+                    .background(AppColors.backgroundSecondary)
+                    .cornerRadius(AppRadii.card)
                 }
                 .buttonStyle(.plain)
-
-                // More/Less button
-                if bioNeedsExpansion(bio) {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isBioExpanded.toggle()
-                        }
-                    } label: {
-                        Text(isBioExpanded ? "Show Less" : "Show More")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.primary)
-                    }
-                }
             } else {
                 // Empty state (tap to add)
                 Button {
@@ -387,10 +375,6 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, AppSpacing.sm)
-    }
-
-    private func bioNeedsExpansion(_ text: String) -> Bool {
-        return text.count > 100
     }
 
     private func buildPersonalInfo(profile: PublicProfile) -> String? {
