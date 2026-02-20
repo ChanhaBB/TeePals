@@ -7,33 +7,45 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeViewV3(
+                viewModel: container.makeHomeViewModel(),
+                activityViewModel: container.sharedActivityViewModel,
+                selectedTab: $selectedTab
+            )
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
-            
+                .environmentObject(container)
+
             RoundsView(
                 nearbyViewModel: container.makeRoundsListViewModel(),
-                activityViewModel: container.makeActivityRoundsViewModelV2()
+                activityViewModel: container.sharedActivityViewModel
             )
                 .tabItem {
                     Label("Rounds", systemImage: "figure.golf")
                 }
                 .tag(1)
-            
+
+            FeedView(viewModel: container.makeFeedViewModel())
+                .tabItem {
+                    Label("Feed", systemImage: "newspaper.fill")
+                }
+                .tag(2)
+                .environmentObject(container)
+
             NotificationsView(viewModel: container.makeNotificationsViewModel())
                 .tabItem {
                     Label("Notifications", systemImage: "bell.fill")
                 }
                 .badge(container.notificationsViewModel?.unreadCount ?? 0)
-                .tag(2)
-            
+                .tag(3)
+
             ProfileView(viewModel: container.makeProfileViewModel())
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
-                .tag(3)
+                .tag(4)
         }
         .tint(AppColors.primary)
         .onAppear {
@@ -48,18 +60,7 @@ struct MainTabView: View {
         }
         .tier2Gated(
             coordinator: container.profileGateCoordinator,
-            profileEditView: {
-                AnyView(
-                    PhotoEditSheet(
-                        viewModel: container.makeProfileEditViewModel(),
-                        onSave: {
-                            Task {
-                                await container.profileGateCoordinator.profileEditDismissed()
-                            }
-                        }
-                    )
-                )
-            }
+            selectedTab: $selectedTab
         )
         .task {
             // Initialize gate coordinator status on app launch

@@ -2,8 +2,12 @@ import Foundation
 
 struct PublicProfile: Codable, Identifiable {
     var id: String?
-    
-    let nickname: String
+
+    // Name fields (V2: firstName + lastName for trust)
+    var firstName: String?  // Required for new signups (Tier 1)
+    var lastName: String?   // Required for new signups (Tier 1)
+    let nickname: String    // Legacy/backward compatibility (auto-generated from firstName for new users)
+
     var photoUrls: [String]  // 0-5 photos; Tier 2 requires >= 1
     var gender: Gender?
     var occupation: String?
@@ -51,6 +55,8 @@ struct PublicProfile: Codable, Identifiable {
     
     init(
         id: String? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
         nickname: String,
         photoUrls: [String] = [],
         gender: Gender? = nil,
@@ -85,6 +91,8 @@ struct PublicProfile: Codable, Identifiable {
         updatedAt: Date = Date()
     ) {
         self.id = id
+        self.firstName = firstName
+        self.lastName = lastName
         self.nickname = nickname
         self.photoUrls = photoUrls
         self.gender = gender
@@ -119,6 +127,31 @@ struct PublicProfile: Codable, Identifiable {
         self.updatedAt = updatedAt
     }
     
+    /// Display name: "John D." format (first name + last initial)
+    /// Falls back to nickname for legacy profiles
+    var displayName: String {
+        if let firstName = firstName, let lastName = lastName, !firstName.isEmpty, !lastName.isEmpty {
+            let lastInitial = lastName.prefix(1).uppercased()
+            return "\(firstName) \(lastInitial)."
+        } else if let firstName = firstName, !firstName.isEmpty {
+            return firstName
+        } else {
+            return nickname
+        }
+    }
+
+    /// Full name: "John Doe" format
+    /// Falls back to nickname for legacy profiles
+    var fullName: String {
+        if let firstName = firstName, let lastName = lastName, !firstName.isEmpty, !lastName.isEmpty {
+            return "\(firstName) \(lastName)"
+        } else if let firstName = firstName, !firstName.isEmpty {
+            return firstName
+        } else {
+            return nickname
+        }
+    }
+
     /// Whether this profile meets Tier 2 requirements (has at least 1 photo)
     var isTier2Complete: Bool {
         !photoUrls.isEmpty

@@ -1,9 +1,20 @@
 import Foundation
 import CryptoKit
 
-/// Service for feed ranking, scoring, and mixing.
+/// Protocol for feed ranking, scoring, and mixing.
+protocol FeedRankingServiceProtocol {
+    func computeScore(viewerContext: ViewerContext, post: Post, postStats: PostStats, authorStats: UserStats, isFriendsFeed: Bool) -> FeedScore
+    func sortByScore(_ scoredPosts: [ScoredPost]) -> [ScoredPost]
+    func enforceDiversity(_ scoredPosts: [ScoredPost]) -> [ScoredPost]
+    func interleaveBuckets(recent: [ScoredPost], trending: [ScoredPost], newCreators: [ScoredPost], seed: Int, count: Int) -> [ScoredPost]
+    func generateSeed(viewerId: String, dateKey: String) -> Int
+    func deduplicate(_ posts: [Post], seen: Set<String>) -> [Post]
+    func deduplicateById(_ posts: [Post]) -> [Post]
+}
+
+/// Concrete implementation of feed ranking.
 /// Implements client-side deterministic ranking algorithm.
-final class FeedRankingService {
+final class FeedRankingService: FeedRankingServiceProtocol {
 
     private let config: FeedRankingConfig
 

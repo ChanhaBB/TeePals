@@ -6,6 +6,15 @@
     <string>TeePals needs your location to find golf rounds near you and set your home location.</string>
     <key>CFBundleDisplayName</key>
     <string>TeePals</string>
+    <key>GooglePlacesAPIKey</key>
+    <string>AIzaSyCmfw86N2pgolIlnPdx3zzXt5AU61Lfj24</string>
+    <key>UIAppFonts</key>
+    <array>
+      <string>Inter-VariableFont_opsz,wght.ttf</string>
+      <string>Inter-Italic-VariableFont_opsz,wght.ttf</string>
+      <string>PlayfairDisplay-VariableFont_wght.ttf</string>
+      <string>PlayfairDisplay-Italic-VariableFont_wght.ttf</string>
+    </array>
 </dict>
 </plist>
 

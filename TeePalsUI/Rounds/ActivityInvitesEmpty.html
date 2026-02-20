@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Rounds Activity</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col overflow-hidden">
+<header class="sticky top-0 z-50 bg-[var(--bg-neutral)]/90 backdrop-blur-lg px-6 pt-14 pb-4 border-b border-[var(--border-light)]">
+<div class="flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h1 class="text-[var(--forest-green)] text-2xl font-serif italic font-bold leading-none tracking-tight">Rounds</h1>
+<div class="w-8 h-8 rounded-full border border-[var(--forest-green)]/10 p-0.5 overflow-hidden">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYS35DYb0TdFxuT4vpRW3hobiy0r1G03is_gKt5KsTfZn-eoLPQ8EmqWFDWcJdGz4FJllAH-X5geFKxu-xPLUDWPAS1wfeDKOI_4yqSWpZcRmgSpBetgEabMqpwA4nant2UcCogcyIACqGwmwbn4bihhzHKKpi6p-apr-QJ0JolrGUyUVzyocXBMtOd_kNKnFkmQejUkI9eymdaE9Uq0UbyUa5yWNBMv8CpVsYxzGQU3Tr12T2roWZpL9Sz5jQwVckyVYhZBV"/>
+</div>
+</div>
+<div class="bg-neutral-100 p-1 rounded-xl flex">
+<button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Nearby</button>
+<button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--forest-green)] bg-white rounded-lg shadow-sm">Activity</button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col px-6 overflow-hidden">
+<div class="flex gap-2 py-6 overflow-x-auto no-scrollbar flex-shrink-0">
+<button class="px-5 py-2.5 bg-white border border-[var(--border-light)] text-[var(--text-secondary)] rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+            Schedule
+        </button>
+<button class="px-5 py-2.5 bg-[var(--forest-green)] text-white rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+            Invites
+        </button>
+<button class="px-5 py-2.5 bg-white border border-[var(--border-light)] text-[var(--text-secondary)] rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+            Past
+        </button>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center -mt-20">
+<div class="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-[40px] text-neutral-300 font-light">mail</span>
+</div>
+<h2 class="font-serif text-2xl font-bold text-[var(--text-primary)] mb-2">No pending invites</h2>
+<p class="text-[var(--text-secondary)] text-sm text-center max-w-[240px] leading-relaxed">
+            When someone invites you to a round, you'll see it here.
+        </p>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-[var(--border-light)] pb-8 pt-4 px-6 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">home</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--forest-green)] w-14" href="#">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1">calendar_today</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Rounds</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">rss_feed</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Feed</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px] relative">
+                notifications
+                <span class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-[var(--forest-green)] rounded-full border border-white"></span>
+</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Alerts</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Profile</span>
+</a>
+</div>
+</nav>
+
+</body></html>

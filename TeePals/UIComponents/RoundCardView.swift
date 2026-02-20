@@ -15,212 +15,213 @@ struct RoundCardView: View {
     var context: RoundCardContext = .nearby
     var onTap: (() -> Void)?
 
+    @EnvironmentObject var container: AppContainer
+    @State private var coursePhotoURL: URL?
+    @State private var isLoadingPhoto = false
+
+    // MARK: - Constants
+
+    private enum Layout {
+        static let cardHeight: CGFloat = 110
+        static let photoWidth: CGFloat = 100
+        static let hostAvatarSize: CGFloat = 20
+    }
+
+    // MARK: - Body
+
     var body: some View {
         Button {
             onTap?()
         } label: {
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                // Header: Title + Badges
-                HStack(alignment: .top) {
-                    Text(round.displayTitle)
-                        .font(AppTypography.headlineSmall)
-                        .fontWeight(.medium)
-                        .foregroundColor(AppColors.textPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
+            HStack(alignment: .top, spacing: 0) {
+                // Course photo with badge (left side)
+                coursePhotoSection
 
-                    Spacer()
-
-                    HStack(spacing: 4) {
-                        // Visibility badge for friends-only rounds
-                        if round.visibility == .friends, badge == .hosting {
-                            visibilityBadge
-                        }
-                        // Context badge (Hosting, Pending, etc.)
-                        if let badge = badge {
-                            badgeView(for: badge)
-                        } else {
-                            spotsBadge
-                        }
-                    }
-                }
-
-                // Date/Time (priority detail)
-                if let dateText = round.displayDateTime {
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                            .foregroundColor(AppColors.iconAccent)
-                        Text(dateText)
-                            .font(AppTypography.bodySmall)
-                            .foregroundColor(AppColors.textPrimary)
-                    }
-                }
-
-                // Location
-                if let location = round.displayLocationString {
-                    HStack(spacing: 6) {
-                        Image(systemName: "mappin")
-                            .font(.caption)
-                            .foregroundColor(AppColors.iconAccent)
-                        Text(location)
-                            .font(AppTypography.bodySmall)
-                            .foregroundColor(AppColors.textPrimary)
-                    }
-                }
-
-                // Host info (bottom row with chevron)
-                HStack {
-                    hostRow
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(AppColors.textTertiary)
-                }
+                // Content section (right side)
+                contentSection
             }
-            .padding(AppSpacing.md)
-            .background(AppColors.backgroundPrimary)
-            .cornerRadius(AppSpacing.radiusMedium)
-            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .frame(minHeight: Layout.cardHeight)
+            .background(AppColorsV3.surfaceWhite)
+            .cornerRadius(12)
+            .shadow(color: Color(red: 11/255, green: 61/255, blue: 46/255).opacity(0.08), radius: 10, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+        .task {
+            await loadCoursePhoto()
+        }
+    }
+
+    // MARK: - Course Photo Section (Left Side)
+
+    @ViewBuilder
+    private var coursePhotoSection: some View {
+        ZStack(alignment: .topLeading) {
+            // Background photo
+            photoBackground
+
+            // Spots badge overlay (top-left)
+            spotsBadgeOverlay
+                .padding(8)
+        }
+        .frame(width: Layout.photoWidth)
+        .clipped()
+    }
+
+    @ViewBuilder
+    private var photoBackground: some View {
+        if let photoURL = coursePhotoURL {
+            AsyncImage(url: photoURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: Layout.photoWidth)
+                        .frame(minHeight: Layout.cardHeight)
+                        .clipped()
+                case .empty:
+                    photoLoadingState
+                case .failure:
+                    photoFallbackGradient
+                @unknown default:
+                    photoFallbackGradient
+                }
+            }
+        } else {
+            photoLoadingState
+        }
+    }
+
+    private var photoLoadingState: some View {
+        Rectangle()
+            .fill(AppColorsV3.bgNeutral)
+            .frame(width: Layout.photoWidth)
+            .frame(minHeight: Layout.cardHeight)
+            .overlay {
+                if isLoadingPhoto {
+                    ProgressView()
+                        .tint(AppColorsV3.forestGreen)
+                }
+            }
+    }
+
+    private var photoFallbackGradient: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        AppColorsV3.forestGreen.opacity(0.3),
+                        AppColorsV3.forestGreen.opacity(0.1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: Layout.photoWidth)
+            .frame(minHeight: Layout.cardHeight)
+    }
+
+    // MARK: - Content Section (Right Side)
+
+    private var contentSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Course name
+            Text(round.displayCourseName)
+                .font(AppTypographyV3.roundCardTitle)
+                .foregroundColor(AppColorsV3.textPrimary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 4)
+
+            // Date/time + distance
+            if let dateTimeAndDistance = dateTimeDistanceText {
+                Text(dateTimeAndDistance)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppColorsV3.textSecondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            // Host row
+            hostRow
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var dateTimeDistanceText: String? {
+        var components: [String] = []
+
+        if let dateText = round.displayDateTime {
+            components.append(dateText)
+        }
+
+        if let distance = formattedDistance {
+            components.append(distance)
+        }
+
+        return components.isEmpty ? nil : components.joined(separator: " • ")
     }
 
     // MARK: - Badges
 
-    private var visibilityBadge: some View {
-        HStack(spacing: 2) {
-            Image(systemName: "person.2.fill")
-                .font(.system(size: 8))
-            Text("Friends")
-                .font(.caption2)
-                .fontWeight(.medium)
-        }
-        .foregroundColor(AppColors.primary)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
-        .background(AppColors.primary.opacity(0.15))
-        .cornerRadius(AppSpacing.radiusSmall)
-    }
-
-    @ViewBuilder
-    private func badgeView(for badge: RoundCardBadge) -> some View {
-        switch badge {
-        case .hosting:
-            Text("HOSTING")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.primary)
-                .cornerRadius(AppSpacing.radiusSmall)
-
-        case .requested:
-            Text("REQUESTED")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(AppColors.warning)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.warning.opacity(0.15))
-                .cornerRadius(AppSpacing.radiusSmall)
-
-        case .confirmed:
-            Text("CONFIRMED")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(AppColors.success)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.success.opacity(0.15))
-                .cornerRadius(AppSpacing.radiusSmall)
-
-        case .played:
-            Text("PLAYED")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(AppColors.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.backgroundSecondary)
-                .cornerRadius(AppSpacing.radiusSmall)
-
-        case .declined:
-            Text("DECLINED")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(AppColors.error)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.error.opacity(0.15))
-                .cornerRadius(AppSpacing.radiusSmall)
-
-        case .invited:
-            Text("INVITED")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(AppColors.info)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(AppColors.info.opacity(0.15))
-                .cornerRadius(AppSpacing.radiusSmall)
-        }
-    }
-
-    private var spotsBadge: some View {
+    private var spotsBadgeOverlay: some View {
         let remaining = round.spotsRemaining
-        let color: Color = remaining > 0 ? AppColors.primary : AppColors.textSecondary
+        let total = round.maxPlayers
 
-        return Text("\(remaining) open")
-            .font(.caption2)
-            .fontWeight(.regular)
-            .foregroundColor(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.15))
-            .cornerRadius(AppSpacing.radiusSmall)
+        return Text("\(remaining)/\(total) OPEN")
+            .font(.system(size: 9, weight: .bold))
+            .tracking(0.5)
+            .foregroundColor(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.black.opacity(0.6))
+            .cornerRadius(4)
     }
 
     // MARK: - Host Row
 
     private var hostRow: some View {
-        HStack(spacing: 8) {
-            // Host profile photo
-            Group {
-                if let host = hostProfile, let photoUrlString = host.photoUrls.first, let photoUrl = URL(string: photoUrlString) {
-                    CachedAsyncImage(url: photoUrl) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .foregroundColor(AppColors.textTertiary)
-                    }
-                } else {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .foregroundColor(AppColors.textTertiary)
-                }
-            }
-            .frame(width: 24, height: 24)
-            .clipShape(Circle())
+        HStack(spacing: 6) {
+            // Host avatar
+            ProfileAvatarView(
+                url: hostProfile?.photoUrls.first,
+                size: Layout.hostAvatarSize
+            )
 
             if let host = hostProfile {
-                Text("hosted by \(host.nickname)")
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                Text("Hosted by \(host.displayName)")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(AppColorsV3.textSecondary)
             } else {
-                // Reserve space to prevent layout shift
                 Text("Loading host...")
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textTertiary)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(AppColorsV3.textSecondary)
                     .redacted(reason: .placeholder)
             }
         }
+    }
+
+    // MARK: - Computed Properties
+
+    private var formattedDistance: String? {
+        guard let distance = round.distanceMiles else { return nil }
+        return String(format: "%.1f mi", distance)
+    }
+
+    // MARK: - Photo Loading
+
+    private func loadCoursePhoto() async {
+        guard let course = round.chosenCourse ?? round.courseCandidates.first else {
+            return
+        }
+
+        guard !isLoadingPhoto else { return }
+        isLoadingPhoto = true
+
+        coursePhotoURL = await container.coursePhotoService.fetchPhotoURL(for: course)
+        isLoadingPhoto = false
     }
 }
 
@@ -228,9 +229,9 @@ struct RoundCardView: View {
 
 enum RoundCardBadge: Equatable {
     case hosting
-    case requested    // User requested to join (was "pending")
-    case confirmed    // Approved to join - future rounds (was "approved")
+    case requested    // User requested to join
+    case confirmed    // Approved to join - future rounds
     case played       // Approved - past rounds
     case invited      // User needs to accept/decline
-    case declined     // Not shown in Activity (kept for compatibility)
+    case declined     // Not shown in Activity
 }

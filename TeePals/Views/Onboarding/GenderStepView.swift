@@ -1,112 +1,89 @@
 import SwiftUI
 
-/// Step 4: Gender selection for Tier 1 onboarding.
+/// Step 4: Gender selection for Tier 1 onboarding (V3 Design)
 struct GenderStepView: View {
     @ObservedObject var viewModel: Tier1OnboardingViewModel
-    
+
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
-            
-            // Icon
-            Image(systemName: "person.2.circle.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(Color(red: 0.1, green: 0.45, blue: 0.25))
-            
-            // Title & Subtitle
-            VStack(spacing: 8) {
-                Text(viewModel.currentStep.title)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text(viewModel.currentStep.subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+        VStack(spacing: 0) {
+            // Title and subtitle
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How do you identify?")
+                    .font(AppTypographyV3.onboardingTitle)
+                    .foregroundColor(AppColorsV3.forestGreen)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("This helps build diverse groups")
+                    .font(AppTypographyV3.onboardingSubtitle)
+                    .foregroundColor(AppColorsV3.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
+            .padding(.bottom, 40)
+
             // Gender Options
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 ForEach(Gender.allCases, id: \.self) { gender in
-                    GenderOptionButton(
+                    GenderOptionCardV3(
                         gender: gender,
                         isSelected: viewModel.gender == gender,
                         action: { viewModel.gender = gender }
                     )
                 }
             }
-            .padding(.horizontal)
-            
-            // Privacy note
-            HStack(spacing: 6) {
-                Image(systemName: "eye.slash.fill")
-                    .font(.caption)
-                Text("Only shown when relevant to round preferences")
-                    .font(.caption)
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal)
-            
-            Spacer()
+
             Spacer()
         }
+        .padding(.horizontal, 32)
     }
 }
 
-// MARK: - Gender Option Button
+// MARK: - Gender Option Card (V3 Design)
 
-struct GenderOptionButton: View {
+private struct GenderOptionCardV3: View {
     let gender: Gender
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                // Icon
-                Image(systemName: iconName)
-                    .font(.title2)
-                    .frame(width: 32)
-                
+            HStack {
                 // Label
                 Text(gender.displayText)
-                    .font(.body)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(AppColorsV3.textPrimary)
+
                 Spacer()
-                
-                // Selection indicator
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color(red: 0.1, green: 0.45, blue: 0.25))
-                        .font(.title2)
-                } else {
-                    Image(systemName: "circle")
-                        .foregroundStyle(.secondary)
-                        .font(.title2)
+
+                // Radio circle
+                ZStack {
+                    Circle()
+                        .strokeBorder(
+                            isSelected ? AppColorsV3.forestGreen : Color.gray.opacity(0.3),
+                            lineWidth: 2
+                        )
+                        .frame(width: 24, height: 24)
+
+                    if isSelected {
+                        Circle()
+                            .fill(AppColorsV3.forestGreen)
+                            .frame(width: 12, height: 12)
+                    }
                 }
             }
-            .padding()
+            .padding(20)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color(red: 0.1, green: 0.45, blue: 0.25).opacity(0.1) : Color(.secondarySystemBackground))
+                    .fill(isSelected ? AppColorsV3.forestGreen.opacity(0.05) : AppColorsV3.surfaceWhite)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color(red: 0.1, green: 0.45, blue: 0.25) : Color.clear, lineWidth: 2)
+                    .strokeBorder(
+                        isSelected ? AppColorsV3.forestGreen : Color.gray.opacity(0.2),
+                        lineWidth: isSelected ? 1 : 1
+                    )
             )
         }
         .buttonStyle(.plain)
-        .foregroundColor(.primary)
-    }
-    
-    private var iconName: String {
-        switch gender {
-        case .male: return "figure.stand"
-        case .female: return "figure.stand.dress"
-        case .nonbinary: return "figure.2"
-        case .preferNot: return "hand.raised.fill"
-        }
     }
 }
 

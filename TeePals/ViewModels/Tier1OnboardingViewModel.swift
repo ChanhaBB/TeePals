@@ -13,14 +13,15 @@ final class Tier1OnboardingViewModel: ObservableObject {
     
     // MARK: - Navigation State
     
-    @Published var currentStep: OnboardingStep = .nickname
+    @Published var currentStep: OnboardingStep = .name
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isComplete = false
     
     // MARK: - Draft State (in-memory only until completion)
-    
-    @Published var nickname = ""
+
+    @Published var firstName = ""
+    @Published var lastName = ""
     @Published var birthDate: Date?
     @Published var primaryCityLabel = ""
     @Published var primaryLocation: GeoLocation?
@@ -29,23 +30,23 @@ final class Tier1OnboardingViewModel: ObservableObject {
     // MARK: - Step Enum
     
     enum OnboardingStep: Int, CaseIterable {
-        case nickname = 0
+        case name = 0
         case birthdate = 1
         case location = 2
         case gender = 3
-        
+
         var title: String {
             switch self {
-            case .nickname: return "What should we call you?"
+            case .name: return "What's your name?"
             case .birthdate: return "When were you born?"
             case .location: return "Where do you play?"
             case .gender: return "How do you identify?"
             }
         }
-        
+
         var subtitle: String {
             switch self {
-            case .nickname: return "This is how other golfers will see you"
+            case .name: return "We use real names to build trust"
             case .birthdate: return "We use this to match you with compatible groups"
             case .location: return "We'll show you rounds nearby"
             case .gender: return "Helps with round preferences"
@@ -67,14 +68,27 @@ final class Tier1OnboardingViewModel: ObservableObject {
     }
     
     // MARK: - Validation
-    
-    var trimmedNickname: String {
-        nickname.trimmingCharacters(in: .whitespaces)
+
+    var trimmedFirstName: String {
+        firstName.trimmingCharacters(in: .whitespaces)
     }
-    
-    var isNicknameValid: Bool {
-        let length = trimmedNickname.count
-        return length >= 2 && length <= 20
+
+    var trimmedLastName: String {
+        lastName.trimmingCharacters(in: .whitespaces)
+    }
+
+    var isFirstNameValid: Bool {
+        let length = trimmedFirstName.count
+        return length >= 2 && length <= 30
+    }
+
+    var isLastNameValid: Bool {
+        let length = trimmedLastName.count
+        return length >= 2 && length <= 30
+    }
+
+    var isNameValid: Bool {
+        isFirstNameValid && isLastNameValid
     }
     
     var isBirthdateValid: Bool {
@@ -93,7 +107,7 @@ final class Tier1OnboardingViewModel: ObservableObject {
     
     var isCurrentStepValid: Bool {
         switch currentStep {
-        case .nickname: return isNicknameValid
+        case .name: return isNameValid
         case .birthdate: return isBirthdateValid
         case .location: return isLocationValid
         case .gender: return isGenderValid
@@ -121,7 +135,7 @@ final class Tier1OnboardingViewModel: ObservableObject {
         }
     }
     
-    func goBack() {
+    func goBack() async {
         guard canGoBack else { return }
         if let prevStep = OnboardingStep(rawValue: currentStep.rawValue - 1) {
             currentStep = prevStep
@@ -156,9 +170,14 @@ final class Tier1OnboardingViewModel: ObservableObject {
             try await profileRepository.upsertPrivateProfile(privateProfile)
             
             // Save public profile (this makes the user "authenticated")
+            // Auto-generate nickname from firstName for backward compatibility
+            let autoNickname = trimmedFirstName
+
             let publicProfile = PublicProfile(
                 id: uid,
-                nickname: trimmedNickname,
+                firstName: trimmedFirstName,
+                lastName: trimmedLastName,
+                nickname: autoNickname,
                 gender: gender,
                 primaryCityLabel: primaryCityLabel,
                 primaryLocation: location,

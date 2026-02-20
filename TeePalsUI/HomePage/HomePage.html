@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning Home Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .premium-shadow {
+            box-shadow: 0 4px 20px -2px rgba(11, 61, 46, 0.05);
+        }
+        .card-gradient {
+            background: linear-gradient(180deg, rgba(11, 61, 46, 0) 0%, rgba(11, 61, 46, 0.3) 50%, rgba(11, 61, 46, 0.85) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col overflow-hidden">
+<header class="sticky top-0 z-50 bg-[var(--bg-neutral)]/90 backdrop-blur-lg px-6 pt-14 pb-4">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-[var(--text-secondary)] text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Thursday, Feb 13</p>
+<h1 class="text-[var(--forest-green)] text-3xl font-serif italic font-bold leading-none tracking-tight">Sunday Morning</h1>
+</div>
+<div class="relative">
+<div class="w-10 h-10 rounded-full border-2 border-[var(--forest-green)]/10 p-0.5 overflow-hidden">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYS35DYb0TdFxuT4vpRW3hobiy0r1G03is_gKt5KsTfZn-eoLPQ8EmqWFDWcJdGz4FJllAH-X5geFKxu-xPLUDWPAS1wfeDKOI_4yqSWpZcRmgSpBetgEabMqpwA4nant2UcCogcyIACqGwmwbn4bihhzHKKpi6p-apr-QJ0JolrGUyUVzyocXBMtOd_kNKnFkmQejUkI9eymdaE9Uq0UbyUa5yWNBMv8CpVsYxzGQU3Tr12T2roWZpL9Sz5jQwVckyVYhZBV"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar px-6 pb-32 space-y-8">
+<section class="pt-4">
+<h2 class="text-[var(--text-secondary)] text-sm font-medium">Welcome back, <span class="text-[var(--text-primary)] font-semibold">Alex</span>.</h2>
+</section>
+<section>
+<div class="relative w-full aspect-[4/3] rounded-3xl overflow-hidden premium-shadow group">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAeU1QUhmUFIIlkUHMFbSoHu4OXA1zeCE94QhMnhcx0HuOXTtIMcD-VceyygxwewfkXHwHhcTR9CxPwQTsRZDx83rywI_8nNb7piES6unRpqCEFkb7bIwaYquhcp_cpJ1mA0oXps2ixwPCPyQlU5SsQHrkSumuCYyGW-11ECLGyH5KGW7bkuta4xnEbdXg_wTr4Ty-JiVgUozSw36sy52l0Pm1KMPfey6DGtrsbTOhFLTZGlGurYvc5Bxb4SgMwJx46N16OsQ1n');"></div>
+<div class="absolute inset-0 card-gradient"></div>
+<div class="absolute inset-0 p-6 flex flex-col justify-between">
+<div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[9px] font-bold tracking-widest uppercase">
+                            Upcoming Round
+                        </span>
+</div>
+<div class="space-y-4">
+<div class="text-white">
+<h3 class="text-2xl font-serif font-bold mb-1 drop-shadow-md">Torrey Pines South</h3>
+<div class="flex items-center gap-4 text-white/95 text-xs font-medium">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                                    Sun, Feb 16
+                                </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    07:30 AM
+                                </span>
+</div>
+</div>
+<button class="w-full py-3.5 bg-[var(--forest-green)] text-white rounded-xl text-[11px] font-bold tracking-widest uppercase transition-all hover:bg-[#082b20] active:scale-[0.97] shadow-xl border border-white/10">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-2 gap-4">
+<button class="bg-[var(--surface-white)] p-5 rounded-2xl premium-shadow border border-[var(--border-light)] flex flex-row items-center justify-between transition-all active:scale-[0.98]">
+<div class="flex flex-col items-start gap-1">
+<span class="text-3xl font-serif font-bold text-[var(--forest-green)]">2</span>
+<p class="text-[var(--text-secondary)] text-[10px] font-bold uppercase tracking-wider">Invites</p>
+</div>
+<div class="relative w-10 h-10 rounded-full bg-[var(--forest-green)]/5 flex items-center justify-center text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[24px]">mail</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+</div>
+</button>
+<button class="bg-[var(--surface-white)] p-5 rounded-2xl premium-shadow border border-[var(--border-light)] flex flex-row items-center justify-between transition-all active:scale-[0.98]">
+<div class="flex flex-col items-start gap-1">
+<span class="text-3xl font-serif font-bold text-[var(--forest-green)]">1</span>
+<p class="text-[var(--text-secondary)] text-[10px] font-bold uppercase tracking-wider">Pending</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-[var(--forest-green)]/5 flex items-center justify-center text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[24px]">hourglass_top</span>
+</div>
+</button>
+</section>
+<section class="space-y-4">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-xl font-serif font-bold text-[var(--text-primary)]">My Schedule</h3>
+<a class="text-[var(--forest-green)] text-[11px] font-bold tracking-wider uppercase border-b border-[var(--forest-green)]/20 pb-0.5" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<div class="bg-[var(--surface-white)] border border-[var(--border-light)] p-4 rounded-2xl flex items-center gap-4 transition-all hover:border-[var(--forest-green)]/30 cursor-pointer premium-shadow relative overflow-hidden">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--forest-green)] border border-[var(--forest-green)] flex flex-col items-center justify-center text-white">
+<span class="text-[9px] font-bold uppercase tracking-tighter opacity-80">Feb</span>
+<span class="text-lg font-serif font-bold leading-none">16</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<h4 class="text-[var(--text-primary)] font-bold text-[15px] truncate">Torrey Pines South</h4>
+<span class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-[var(--forest-green)]/10 text-[var(--forest-green)] tracking-tight">You're In</span>
+</div>
+<div class="flex items-center gap-2">
+<img alt="Alex" class="w-4 h-4 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9CLXkBgKHrbi19KA3Gp93_FA7iGvPk9PAwYUnOPejUu-AlNOhhD1Fs_4i5wEqGkWc_P-ZSpFrwRYW9eCWBy7VOMxDLX25P8tdNFGEmmVZTyshlhayPTmd5usOyd0q1Sb4U3AuLuNCqAzQ1cKYQn8ERXINusCf0weDaLkU6tkkR8_m-XPtrkOfU8sWvAmYAoz8uhePEOEJK8TT4TmflYfzP7H-0zUkmWFiBtsInjQj7SB7BBVomVkGPxnubr7wdDpUouqSncnr"/>
+<p class="text-[var(--text-secondary)] text-[11px] font-medium">Alex P. • 18.6mi</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex gap-0.5 text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+</div>
+</div>
+</div>
+<div class="bg-[var(--surface-white)] border border-[var(--border-light)] p-4 rounded-2xl flex items-center gap-4 transition-all hover:border-[var(--forest-green)]/30 cursor-pointer premium-shadow relative overflow-hidden">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--forest-green)] border border-[var(--forest-green)] flex flex-col items-center justify-center text-white">
+<span class="text-[9px] font-bold uppercase tracking-tighter opacity-80">Feb</span>
+<span class="text-lg font-serif font-bold leading-none">23</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<h4 class="text-[var(--text-primary)] font-bold text-[15px] truncate">Aviara Golf Club</h4>
+<span class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-[var(--forest-green)]/10 text-[var(--forest-green)] tracking-tight">You're In</span>
+</div>
+<div class="flex items-center gap-2">
+<img alt="Mike" class="w-4 h-4 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjMVOjeDqdvl44w4pvT_BR8UeLP0kcsdab-u3pLvY0DQW8K-ezBtUJpIqgDfVVUc8EuufTW4WBDRZl3_6yzTPPn2btsp4UXpmS0Cvr_2GL3zEgMIT8rol7IAIwe8PvNUz2F0OKluGCW62Wy5LzXmbeSN_lNyGaPuytOQt88hyp2OqEI5jal-scNjBf0gR_gu4_vpcKHUVfocwNGj8Ii9HNRWnlUToy_5wAMjjx3a15ynKH9dj3t_c0n0WZen3H4Qab7yurI-XF"/>
+<p class="text-[var(--text-secondary)] text-[11px] font-medium">Mike D. • 22.4mi</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex gap-0.5 text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px] text-neutral-200">person</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="space-y-4">
+<div class="flex items-center justify-between px-1">
+<div class="flex flex-col">
+<h3 class="text-xl font-serif font-bold text-[var(--text-primary)]">Discover Rounds</h3>
+</div>
+<a class="text-[var(--forest-green)] text-[11px] font-bold tracking-wider uppercase border-b border-[var(--forest-green)]/20 pb-0.5" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<div class="bg-[var(--surface-white)] border border-[var(--border-light)] p-4 rounded-2xl flex items-center gap-4 transition-all hover:border-[var(--forest-green)]/30 cursor-pointer premium-shadow">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-neutral-50 border border-[var(--border-light)] flex flex-col items-center justify-center text-[var(--forest-green)]">
+<span class="text-[9px] font-bold uppercase tracking-tighter text-[var(--text-secondary)]">Feb</span>
+<span class="text-lg font-serif font-bold leading-none">15</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-[var(--text-primary)] font-bold text-[15px] truncate mb-0.5">Riverwalk Golf Club</h4>
+<div class="flex items-center gap-2">
+<img alt="Sarah" class="w-4 h-4 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9CLXkBgKHrbi19KA3Gp93_FA7iGvPk9PAwYUnOPejUu-AlNOhhD1Fs_4i5wEqGkWc_P-ZSpFrwRYW9eCWBy7VOMxDLX25P8tdNFGEmmVZTyshlhayPTmd5usOyd0q1Sb4U3AuLuNCqAzQ1cKYQn8ERXINusCf0weDaLkU6tkkR8_m-XPtrkOfU8sWvAmYAoz8uhePEOEJK8TT4TmflYfzP7H-0zUkmWFiBtsInjQj7SB7BBVomVkGPxnubr7wdDpUouqSncnr"/>
+<p class="text-[var(--text-secondary)] text-[11px] font-medium">Sarah M. • 5.2mi</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex gap-0.5 text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px] text-neutral-200">person</span>
+</div>
+</div>
+</div>
+<div class="bg-[var(--surface-white)] border border-[var(--border-light)] p-4 rounded-2xl flex items-center gap-4 transition-all hover:border-[var(--forest-green)]/30 cursor-pointer premium-shadow">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-neutral-50 border border-[var(--border-light)] flex flex-col items-center justify-center text-[var(--forest-green)]">
+<span class="text-[9px] font-bold uppercase tracking-tighter text-[var(--text-secondary)]">Feb</span>
+<span class="text-lg font-serif font-bold leading-none">16</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-[var(--text-primary)] font-bold text-[15px] truncate mb-0.5">Mission Bay Course</h4>
+<div class="flex items-center gap-2">
+<img alt="Mike" class="w-4 h-4 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjMVOjeDqdvl44w4pvT_BR8UeLP0kcsdab-u3pLvY0DQW8K-ezBtUJpIqgDfVVUc8EuufTW4WBDRZl3_6yzTPPn2btsp4UXpmS0Cvr_2GL3zEgMIT8rol7IAIwe8PvNUz2F0OKluGCW62Wy5LzXmbeSN_lNyGaPuytOQt88hyp2OqEI5jal-scNjBf0gR_gu4_vpcKHUVfocwNGj8Ii9HNRWnlUToy_5wAMjjx3a15ynKH9dj3t_c0n0WZen3H4Qab7yurI-XF"/>
+<p class="text-[var(--text-secondary)] text-[11px] font-medium">Mike D. • 1.8mi</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex gap-0.5 text-[var(--forest-green)]">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="material-symbols-outlined text-[16px] text-neutral-200">person</span>
+<span class="material-symbols-outlined text-[16px] text-neutral-200">person</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-[var(--border-light)] pb-8 pt-4 px-6 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1.5 text-[var(--forest-green)] w-14" href="#">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1">home</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">calendar_today</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Rounds</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">rss_feed</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Feed</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px] relative">
+                    notifications
+                    <span class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-[var(--forest-green)] rounded-full border border-white"></span>
+</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Alerts</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

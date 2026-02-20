@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning Home Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .premium-shadow {
+            box-shadow: 0 4px 20px -2px rgba(11, 61, 46, 0.05);
+        }
+        .card-gradient {
+            background: linear-gradient(180deg, rgba(11, 61, 46, 0) 0%, rgba(11, 61, 46, 0.3) 50%, rgba(11, 61, 46, 0.85) 100%);
+        }.bottom-sheet {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col overflow-hidden relative">
+<div aria-hidden="true" class="flex-1 flex flex-col overflow-hidden opacity-30 pointer-events-none">
+<header class="sticky top-0 z-50 bg-[var(--bg-neutral)]/90 backdrop-blur-lg px-6 pt-14 pb-4">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-[var(--text-secondary)] text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Thursday, Feb 13</p>
+<h1 class="text-[var(--forest-green)] text-3xl font-serif italic font-bold leading-none tracking-tight">Sunday Morning</h1>
+</div>
+<div class="relative">
+<div class="w-10 h-10 rounded-full border-2 border-[var(--forest-green)]/10 p-0.5 overflow-hidden">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYS35DYb0TdFxuT4vpRW3hobiy0r1G03is_gKt5KsTfZn-eoLPQ8EmqWFDWcJdGz4FJllAH-X5geFKxu-xPLUDWPAS1wfeDKOI_4yqSWpZcRmgSpBetgEabMqpwA4nant2UcCogcyIACqGwmwbn4bihhzHKKpi6p-apr-QJ0JolrGUyUVzyocXBMtOd_kNKnFkmQejUkI9eymdaE9Uq0UbyUa5yWNBMv8CpVsYxzGQU3Tr12T2roWZpL9Sz5jQwVckyVYhZBV"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar px-6 pb-32 space-y-8">
+<section class="pt-4">
+<h2 class="text-[var(--text-secondary)] text-sm font-medium">Welcome back, <span class="text-[var(--text-primary)] font-semibold">Alex</span>.</h2>
+</section>
+</main>
+</div>
+<div class="fixed inset-0 z-[100] flex flex-col justify-end">
+<div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+<div class="bottom-sheet relative bg-[var(--surface-white)] rounded-t-[32px] overflow-hidden flex flex-col max-h-[90vh] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[var(--border-light)] bg-white sticky top-0 z-10">
+<button class="text-[var(--text-secondary)] text-sm font-medium hover:text-[var(--text-primary)] transition-colors">Reset</button>
+<div class="w-12 h-1 bg-gray-200 rounded-full absolute left-1/2 -translate-x-1/2 top-3"></div> 
+<button class="text-[var(--forest-green)] text-sm font-bold hover:opacity-80 transition-opacity">Apply</button>
+</div>
+<div class="overflow-y-auto no-scrollbar p-6 space-y-8 pb-10">
+<section class="space-y-3">
+<h3 class="text-[10px] font-bold tracking-[0.15em] text-[var(--text-secondary)] uppercase font-sans">Hosted By</h3>
+<div class="flex gap-3">
+<button class="flex-1 py-3 px-4 rounded-xl bg-[var(--forest-green)] text-white text-xs font-semibold tracking-wide text-center shadow-md shadow-[var(--forest-green)]/20 transition-transform active:scale-[0.98]">
+                            Everyone
+                        </button>
+<button class="flex-1 py-3 px-4 rounded-xl bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-xs font-semibold tracking-wide text-center hover:bg-gray-100 transition-colors">
+                            Following
+                        </button>
+</div>
+</section>
+<div class="h-px bg-[var(--border-light)] w-full"></div>
+<section class="space-y-4">
+<h3 class="text-[10px] font-bold tracking-[0.15em] text-[var(--text-secondary)] uppercase font-sans">Search Area</h3>
+<div class="flex items-center gap-2 text-[var(--forest-green)] mb-1">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+<span class="text-sm font-bold font-serif italic text-lg text-[var(--text-primary)]">San Diego, CA</span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<button class="py-2.5 px-2 rounded-lg bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-[11px] font-semibold text-center hover:bg-gray-100">
+                            5 mi
+                        </button>
+<button class="py-2.5 px-2 rounded-lg bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-[11px] font-semibold text-center hover:bg-gray-100">
+                            10 mi
+                        </button>
+<button class="py-2.5 px-2 rounded-lg bg-[var(--forest-green)] text-white text-[11px] font-semibold text-center shadow-sm">
+                            25 mi
+                        </button>
+<button class="py-2.5 px-2 rounded-lg bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-[11px] font-semibold text-center hover:bg-gray-100">
+                            50 mi
+                        </button>
+<button class="py-2.5 px-2 rounded-lg bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-[11px] font-semibold text-center hover:bg-gray-100">
+                            100 mi
+                        </button>
+<button class="py-2.5 px-2 rounded-lg bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-[11px] font-semibold text-center hover:bg-gray-100">
+                            Anywhere
+                        </button>
+</div>
+<p class="text-[11px] text-[var(--text-secondary)] font-medium bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
+                        Searching within <span class="text-[var(--forest-green)] font-bold">25 miles</span> of San Diego
+                    </p>
+</section>
+<div class="h-px bg-[var(--border-light)] w-full"></div>
+<section class="space-y-4">
+<h3 class="text-[10px] font-bold tracking-[0.15em] text-[var(--text-secondary)] uppercase font-sans">Date Range</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-3 px-4 rounded-xl bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-xs font-semibold text-center hover:bg-gray-100">
+                            Today
+                        </button>
+<button class="py-3 px-4 rounded-xl bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-xs font-semibold text-center hover:bg-gray-100">
+                            This Weekend
+                        </button>
+<button class="py-3 px-4 rounded-xl bg-[var(--forest-green)]/10 border border-[var(--forest-green)]/20 text-[var(--forest-green)] text-xs font-bold text-center">
+                            Next 7 Days
+                        </button>
+<button class="py-3 px-4 rounded-xl bg-gray-50 border border-gray-100 text-[var(--text-secondary)] text-xs font-semibold text-center hover:bg-gray-100">
+                            Next 30 Days
+                        </button>
+</div>
+</section>
+<div class="h-px bg-[var(--border-light)] w-full"></div>
+<section class="space-y-1">
+<h3 class="text-[10px] font-bold tracking-[0.15em] text-[var(--text-secondary)] uppercase font-sans mb-3">Sort By</h3>
+<button class="w-full flex items-center justify-between py-3 group">
+<span class="text-[15px] font-medium text-[var(--forest-green)] font-serif italic font-bold">Soonest</span>
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">check</span>
+</button>
+<div class="h-px bg-gray-50 w-full"></div>
+<button class="w-full flex items-center justify-between py-3 group">
+<span class="text-[15px] font-medium text-[var(--text-primary)] group-hover:text-[var(--forest-green)] transition-colors">Nearest</span>
+</button>
+<div class="h-px bg-gray-50 w-full"></div>
+<button class="w-full flex items-center justify-between py-3 group">
+<span class="text-[15px] font-medium text-[var(--text-primary)] group-hover:text-[var(--forest-green)] transition-colors">Newest</span>
+</button>
+</section>
+</div>
+</div>
+</div>
+
+</body></html>

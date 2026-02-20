@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Rounds Activity</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .premium-shadow {
+            box-shadow: 0 4px 20px -2px rgba(11, 61, 46, 0.05);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col overflow-hidden">
+<header class="sticky top-0 z-50 bg-[var(--bg-neutral)]/90 backdrop-blur-lg px-6 pt-14 pb-4 border-b border-[var(--border-light)]">
+<div class="flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h1 class="text-[var(--forest-green)] text-2xl font-serif italic font-bold leading-none tracking-tight">Rounds</h1>
+<div class="w-8 h-8 rounded-full border border-[var(--forest-green)]/10 p-0.5 overflow-hidden">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYS35DYb0TdFxuT4vpRW3hobiy0r1G03is_gKt5KsTfZn-eoLPQ8EmqWFDWcJdGz4FJllAH-X5geFKxu-xPLUDWPAS1wfeDKOI_4yqSWpZcRmgSpBetgEabMqpwA4nant2UcCogcyIACqGwmwbn4bihhzHKKpi6p-apr-QJ0JolrGUyUVzyocXBMtOd_kNKnFkmQejUkI9eymdaE9Uq0UbyUa5yWNBMv8CpVsYxzGQU3Tr12T2roWZpL9Sz5jQwVckyVYhZBV"/>
+</div>
+</div>
+<div class="bg-neutral-100 p-1 rounded-xl flex">
+<button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Nearby</button>
+<button class="flex-1 py-2 text-[11px] font-bold uppercase tracking-wider text-[var(--forest-green)] bg-white rounded-lg shadow-sm">Activity</button>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar px-6 flex flex-col">
+<div class="flex gap-2 py-6 overflow-x-auto no-scrollbar shrink-0">
+<button class="px-5 py-2.5 bg-[var(--forest-green)] text-white rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                Schedule
+            </button>
+<button class="px-5 py-2.5 bg-white border border-[var(--border-light)] text-[var(--text-secondary)] rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                Invites
+            </button>
+<button class="px-5 py-2.5 bg-white border border-[var(--border-light)] text-[var(--text-secondary)] rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                Past
+            </button>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-center pb-20 px-4">
+<div class="mb-8 relative">
+<div class="w-24 h-24 rounded-full bg-[var(--forest-green)]/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-4xl opacity-40">calendar_today</span>
+</div>
+<div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-white border border-[var(--border-light)] flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-xl">event_busy</span>
+</div>
+</div>
+<h2 class="text-2xl font-serif font-bold text-[var(--forest-green)] mb-3">No upcoming rounds</h2>
+<p class="text-[var(--text-secondary)] text-sm max-w-[240px] leading-relaxed mb-10">
+                Host a round or find one nearby to get started.
+            </p>
+<button class="w-full max-w-[280px] bg-[var(--forest-green)] text-white py-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] shadow-lg shadow-[var(--forest-green)]/20 mb-6">
+                Find a Round
+            </button>
+<button class="text-[var(--forest-green)] text-[13px] font-semibold tracking-wide border-b border-transparent hover:border-[var(--forest-green)] transition-all">
+                Host a Round
+            </button>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-[var(--border-light)] pb-8 pt-4 px-6 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">home</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--forest-green)] w-14" href="#">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1">calendar_today</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Rounds</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">rss_feed</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Feed</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px] relative">
+                    notifications
+                </span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Alerts</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[9px] font-bold tracking-widest uppercase">Profile</span>
+</a>
+</div>
+</nav>
+
+</body></html>

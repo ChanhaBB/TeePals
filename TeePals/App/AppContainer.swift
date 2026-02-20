@@ -73,6 +73,14 @@ final class AppContainer: ObservableObject {
         ShareLinkService()
     }()
 
+    private(set) lazy var coursePhotoService: CoursePhotoService = {
+        // TODO: Add GooglePlacesAPIKey to Info.plist
+        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "GooglePlacesAPIKey") as? String else {
+            fatalError("GooglePlacesAPIKey not found in Info.plist. Please add your Google Places API key.")
+        }
+        return CoursePhotoService(googleAPIKey: apiKey)
+    }()
+
     // MARK: - Coordinators (Singletons - shared across app)
 
     private(set) lazy var profileGateCoordinator: ProfileGateCoordinator = {
@@ -107,9 +115,8 @@ final class AppContainer: ObservableObject {
     }
 
     // Rounds tab ViewModels (singletons to preserve state across tab switches)
-    @Published var roundsListViewModel: RoundsListViewModel?
-    @Published var activityRoundsViewModel: ActivityRoundsViewModel?
-    @Published var activityRoundsViewModelV2: ActivityRoundsViewModelV2?
+    private var _roundsListViewModel: RoundsListViewModel?
+    private var _activityRoundsViewModelV2: ActivityRoundsViewModelV2?
 
     private var cancellables = Set<AnyCancellable>()
     
@@ -184,7 +191,7 @@ final class AppContainer: ObservableObject {
     }
     
     func makeRoundsListViewModel() -> RoundsListViewModel {
-        if let existing = roundsListViewModel {
+        if let existing = _roundsListViewModel {
             return existing
         }
         let vm = RoundsListViewModel(
@@ -194,9 +201,7 @@ final class AppContainer: ObservableObject {
             socialRepository: socialRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
-        Task { @MainActor in
-            roundsListViewModel = vm
-        }
+        _roundsListViewModel = vm
         return vm
     }
     
@@ -220,24 +225,9 @@ final class AppContainer: ObservableObject {
         )
     }
     
-    func makeActivityRoundsViewModel() -> ActivityRoundsViewModel {
-        if let existing = activityRoundsViewModel {
-            return existing
-        }
-        let vm = ActivityRoundsViewModel(
-            activityService: activityRoundsService,
-            roundsRepository: roundsRepository,
-            profileRepository: profileRepository,
-            currentUid: { [weak self] in self?.currentUid }
-        )
-        Task { @MainActor in
-            activityRoundsViewModel = vm
-        }
-        return vm
-    }
-
-    func makeActivityRoundsViewModelV2() -> ActivityRoundsViewModelV2 {
-        if let existing = activityRoundsViewModelV2 {
+    /// Shared singleton — used by both Home and Rounds tabs.
+    var sharedActivityViewModel: ActivityRoundsViewModelV2 {
+        if let existing = _activityRoundsViewModelV2 {
             return existing
         }
         let vm = ActivityRoundsViewModelV2(
@@ -246,10 +236,17 @@ final class AppContainer: ObservableObject {
             profileRepository: profileRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
-        Task { @MainActor in
-            activityRoundsViewModelV2 = vm
-        }
+        _activityRoundsViewModelV2 = vm
         return vm
+    }
+
+    func makeHomeViewModel() -> HomeViewModel {
+        HomeViewModel(
+            roundsSearchService: roundsSearchService,
+            profileRepository: profileRepository,
+            coursePhotoService: coursePhotoService,
+            currentUid: { [weak self] in self?.currentUid }
+        )
     }
 
     func makeRoundChatViewModel(roundId: String) -> RoundChatViewModel {

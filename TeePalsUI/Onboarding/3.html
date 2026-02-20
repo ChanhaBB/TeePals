@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning Onboarding - Location</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col px-6 py-8">
+<div class="flex-none pt-8 mb-8">
+<div class="flex justify-between items-center mb-6">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-[var(--forest-green)]">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<span class="text-[var(--text-secondary)] font-bold text-xs tracking-widest">3/4</span>
+<div class="w-10"></div>
+</div>
+<div class="space-y-3">
+<h1 class="text-4xl font-serif font-bold text-[var(--text-primary)] leading-tight">Where do you usually golf?</h1>
+<p class="text-[var(--text-secondary)] text-sm font-medium">We'll show you rounds nearby.</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-6">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[var(--text-secondary)] group-focus-within:text-[var(--forest-green)] transition-colors">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-[var(--surface-white)] border border-[var(--border-light)] rounded-xl text-base placeholder:text-gray-400 focus:ring-1 focus:ring-[var(--forest-green)] focus:border-[var(--forest-green)] shadow-sm transition-all outline-none" placeholder="Search City" type="text" value="San Diego"/>
+</div>
+<div class="flex flex-col space-y-1">
+<button class="flex items-center gap-3 p-4 rounded-xl bg-[var(--surface-white)] border border-[var(--forest-green)]/20 shadow-sm">
+<span class="material-symbols-outlined text-[var(--forest-green)]">location_on</span>
+<div class="flex flex-col items-start">
+<span class="font-semibold text-[var(--text-primary)]">San Diego, CA</span>
+<span class="text-xs text-[var(--text-secondary)]">United States</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-[var(--forest-green)] text-sm">check</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent">
+<span class="material-symbols-outlined text-gray-400">location_on</span>
+<div class="flex flex-col items-start">
+<span class="font-medium text-[var(--text-primary)]">San Diego County, CA</span>
+<span class="text-xs text-[var(--text-secondary)]">United States</span>
+</div>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent">
+<span class="material-symbols-outlined text-gray-400">location_on</span>
+<div class="flex flex-col items-start">
+<span class="font-medium text-[var(--text-primary)]">San Dimas, CA</span>
+<span class="text-xs text-[var(--text-secondary)]">United States</span>
+</div>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent">
+<span class="material-symbols-outlined text-gray-400">location_on</span>
+<div class="flex flex-col items-start">
+<span class="font-medium text-[var(--text-primary)]">Santa Monica, CA</span>
+<span class="text-xs text-[var(--text-secondary)]">United States</span>
+</div>
+</button>
+</div>
+</div>
+<div class="flex-none pt-4 pb-6">
+<button class="w-full py-4 bg-[var(--forest-green)] text-white rounded-2xl text-sm font-bold tracking-widest uppercase shadow-lg shadow-[var(--forest-green)]/20 active:scale-[0.98] transition-transform">
+            Continue
+        </button>
+</div>
+
+</body></html>

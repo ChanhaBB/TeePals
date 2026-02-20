@@ -12,7 +12,7 @@ final class FeedViewModel: ObservableObject {
     private let profileRepository: ProfileRepository
     private let roundsRepository: RoundsRepository
     private let currentUid: () -> String?
-    private let rankingService: FeedRankingService
+    private let rankingService: FeedRankingServiceProtocol
     private let config: FeedRankingConfig
     
     // MARK: - State
@@ -44,7 +44,7 @@ final class FeedViewModel: ObservableObject {
         profileRepository: ProfileRepository,
         roundsRepository: RoundsRepository,
         currentUid: @escaping () -> String?,
-        rankingService: FeedRankingService = FeedRankingService(),
+        rankingService: FeedRankingServiceProtocol = FeedRankingService(),
         config: FeedRankingConfig = .shared
     ) {
         self.postsRepository = postsRepository

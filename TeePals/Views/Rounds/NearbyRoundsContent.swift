@@ -25,12 +25,12 @@ struct NearbyRoundsContent: View {
     // MARK: - Loading State
 
     private var loadingState: some View {
-        VStack(spacing: AppSpacing.md) {
+        VStack(spacing: AppSpacingV3.md) {
             ForEach(0..<4, id: \.self) { _ in
                 SkeletonCard(style: .roundCard)
             }
         }
-        .padding(AppSpacing.contentPadding)
+        .padding(AppSpacingV3.contentPadding)
         .padding(.bottom, 100)
     }
     
@@ -47,13 +47,13 @@ struct NearbyRoundsContent: View {
 
     private func errorStateContent(_ message: String) -> some View {
         VStack {
-            Spacer(minLength: AppSpacing.xxl)
+            Spacer(minLength: AppSpacingV3.sectionSpacing)
 
             InlineErrorBanner(message, actionTitle: "Retry") {
                 viewModel.errorMessage = nil
                 Task { await viewModel.loadRounds() }
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.horizontal, AppSpacingV3.contentPadding)
 
             Spacer()
         }
@@ -62,7 +62,7 @@ struct NearbyRoundsContent: View {
     // MARK: - Rounds List
 
     private var roundsListContent: some View {
-        LazyVStack(spacing: AppSpacing.md) {
+        LazyVStack(spacing: AppSpacingV3.md) {
             ForEach(viewModel.rounds) { round in
                 RoundCardView(
                     round: round,
@@ -82,7 +82,8 @@ struct NearbyRoundsContent: View {
                     .padding()
             }
         }
-        .padding(AppSpacing.contentPadding)
+        .padding(.horizontal, AppSpacingV3.contentPadding)
+        .padding(.top, AppSpacingV3.md)
         .padding(.bottom, 100)
     }
 }

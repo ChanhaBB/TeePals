@@ -9,6 +9,11 @@ struct TeePalsApp: App {
 
     init() {
         FirebaseApp.configure()
+
+        // Verify V3 fonts are loaded
+        #if DEBUG
+        verifyCustomFonts()
+        #endif
     }
 
     var body: some Scene {

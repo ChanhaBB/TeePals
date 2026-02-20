@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Nearby Rounds</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --surface-light: #F9FAFB;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+            --badge-bg: #E8F5E9;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .premium-shadow {
+            box-shadow: 0 4px 20px -2px rgba(11, 61, 46, 0.08);
+        }
+        .ios-segmented-control {
+            background-color: #F1F1F1;
+            padding: 2px;
+            border-radius: 9px;
+        }
+        .ios-segmented-item {
+            padding: 8px 0;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 7px;
+            transition: all 0.2s ease;
+        }
+        .ios-segmented-item.active {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            color: var(--forest-green);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col overflow-hidden bg-gray-50">
+<header class="sticky top-0 z-50 bg-[var(--bg-neutral)]/95 backdrop-blur-lg px-6 pt-14 pb-4 border-b border-[var(--border-light)]">
+<div class="max-w-md mx-auto space-y-4">
+<div class="ios-segmented-control flex">
+<div class="ios-segmented-item active flex-1 cursor-pointer">Nearby</div>
+<div class="ios-segmented-item flex-1 cursor-pointer text-gray-500">My Activity</div>
+</div>
+<div class="flex justify-between items-center px-1">
+<p class="text-[var(--text-secondary)] text-[13px] font-medium leading-tight">
+                Within <span class="text-[var(--forest-green)] font-semibold">10 miles</span> • <span class="text-[var(--forest-green)] font-semibold">This Weekend</span>
+</p>
+<button class="flex-shrink-0 text-[var(--forest-green)] hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar px-5 pt-5 pb-32">
+<div class="max-w-md mx-auto space-y-4">
+<div class="rounded-xl premium-shadow bg-white overflow-hidden flex h-[110px]">
+<div class="w-[100px] h-full flex-shrink-0 relative">
+<img alt="Golf Course" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBdUnBUlPhHuXo2_R1MvgVsCzGhXULjC2kjHMDb8lcYviRZyVp4opjuk9xKeYNZJPeREaNOsHOXBaGQBASSv0IeSFty2LvH1oA-KtxebcsDpIEbUbPtVFBCSC-VKUmZIUsk-mc9-yCt7G08eRNsOPnhteqml35kvn51rjP_Y-Oj_WXh8mNA2VDeuKLO6cQI8n2G4OOkj6aUlVWvw7PR_3yGBRm0MLuqqxfDSvCor19p2ehWxzVdvH9b61zlY0Qp9hDNyVgOO5s"/>
+<div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center">
+<span class="text-[9px] font-bold text-white tracking-wide whitespace-nowrap">2/4 OPEN</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col p-3 relative h-full justify-between">
+<div class="flex flex-col">
+<h3 class="text-[15px] font-serif font-bold text-[var(--forest-green)] leading-tight line-clamp-2 w-full mb-1">Torrey Pines South Golf Course</h3>
+<div class="text-[var(--text-secondary)] text-[12px] font-medium">
+                        Tomorrow, 2:00 PM • 3.2 mi
+                    </div>
+</div>
+<div class="flex items-center gap-1.5 mt-auto">
+<img alt="Host" class="w-5 h-5 rounded-full object-cover border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfqioSnIA1hRc9NxO9J5mpqd4JRoFbt6oHWPW_y8i25SUAL6yFy6zqhN8qtvbZ0wG2L47Nl0EzwlmRHPztIt5GGfJnDGOqvcYTLqML93_Edf1P_GYhWaj2T79S02fnOnQOnC78KBz_eCtmtSck6opGT5HCirf9Ij4Ml2dyAXW9QCAHbyehMVLvNvATkMo4mlNn6Wm5KigjgajzQLVvYWnbe7rx_4N0ufa6pSwMuHPGtrWlOSYMGgNYE8OwsHQ0tVbdXPFYcHXh"/>
+<span class="text-[11px] text-[var(--text-secondary)] font-medium">Hosted by Michael S.</span>
+</div>
+</div>
+</div>
+<div class="rounded-xl premium-shadow bg-white overflow-hidden flex h-[110px]">
+<div class="w-[100px] h-full flex-shrink-0 relative">
+<img alt="Golf Course" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAG7ZXD8WEjdbAzr_nI5pFb8AJE_X9jLH_ytH9A2Ibd8pMyN1ZKMUbUeMlB07dyJYSp4DlWrqcXSqwJxIun6QI4uENolWueUxlyXRmylFFb9XVaHi4JTgGf90OATmxz77TCVJcZc9rkeh5YOupm4E-BS64xEJ6ZqMN2jX19ixXnF_6c6wggzA6abW7UYfGWsE0kn6_ugzlXaG1TjymPcdU3fSH2ORj4ADmtUvBHui2tF6cqICyFLqby8mwJBN155akH0kVXF8wk"/>
+<div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center">
+<span class="text-[9px] font-bold text-white tracking-wide whitespace-nowrap">3/4 OPEN</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col p-3 relative h-full justify-between">
+<div class="flex flex-col">
+<h3 class="text-[15px] font-serif font-bold text-[var(--forest-green)] leading-tight line-clamp-2 w-full mb-1">Encinitas Ranch Golf Course</h3>
+<div class="text-[var(--text-secondary)] text-[12px] font-medium">
+                        Sat, 8:30 AM • 1.8 mi
+                    </div>
+</div>
+<div class="flex items-center gap-1.5 mt-auto">
+<img alt="Host" class="w-5 h-5 rounded-full object-cover border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7HMP3v_oJGBtY_kBY-vkRwge4WNsszL2JM-ygdImPcrux9rZIbQGkC0TD5a_oeh9zj20Q8Wv1C1XNbkap07JrwdTl4eM4FinMLw6UFQIT2-OKKt64eWf3aL98R0o7GD7cX4zZAGWhB0qgPsvIzexGMz61I6JX_j1CgTPKJ7gGhUihAdeeqIsTW9HwdrmCefNijfZZeoNcJO23Tx1uvZwfPkGYIKEk94ACXMPm9G0hTJpMBmWq98IADtpVa3Ocj9gFQN9YGGWS"/>
+<span class="text-[11px] text-[var(--text-secondary)] font-medium">Hosted by David L.</span>
+</div>
+</div>
+</div>
+<div class="rounded-xl premium-shadow bg-white overflow-hidden flex h-[110px]">
+<div class="w-[100px] h-full flex-shrink-0 relative">
+<img alt="Golf Course" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7lyyMIZZy5dPiF6sdh1SL75prg3-NMMwvYmB_iLKHFVtX4IWb5muCjU2ev2HCE87b9Y6KrUypY2jssbxQx90h7sBxN1RM28frUD1lYriBKPeyOSOGnNTu8wA9RK57Wn-ApEAPMdbD78QmLE-Txf5Py_MTyijgPmNhENxxVdUylzwEdMFwq37vPGXfql7jik7QEbWvGHeocyLiYWGQCV5tpd1KYMcnegEwCf0YcyAlHSUKfCSqRPQDBfoJ_oz4LXMsq5l8SSph"/>
+<div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center">
+<span class="text-[9px] font-bold text-white tracking-wide whitespace-nowrap">1/4 OPEN</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col p-3 relative h-full justify-between">
+<div class="flex flex-col">
+<h3 class="text-[15px] font-serif font-bold text-[var(--forest-green)] leading-tight line-clamp-2 w-full mb-1">The Grand Golf Club at Fairmont</h3>
+<div class="text-[var(--text-secondary)] text-[12px] font-medium">
+                        Sun, 11:15 AM • 8.4 mi
+                    </div>
+</div>
+<div class="flex items-center gap-1.5 mt-auto">
+<img alt="Host" class="w-5 h-5 rounded-full object-cover border border-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA82TevuMLtwKZMDGfZvyJzFoNMow5NrZ2lli2Wu3tJ9kUKgofjnpIRkkMdmNcljUli1B62Kxny0jtiz-ZnY_DvUiWePXEL8PctjRSMwI_4fzSqXW4Cmw-eMYvEJ2Ho1eJ27X26qyIhdvCps94WnXRnAQhP-SIIpCUcfeqUIA15zBhqmyjr8p8LE_SR_gmzY7nLZzvOjCwCTOqhx7QkDz5b5iq7lj2vTpOkOZ6mJiQTH2ZvMUprXFULt-EV8HVQAUcctZtZceH"/>
+<span class="text-[11px] text-[var(--text-secondary)] font-medium">Hosted by Sarah J.</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-[var(--border-light)] pb-8 pt-3 px-6 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="text-[9px] font-semibold tracking-wide">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--forest-green)] w-14" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1">sports_golf</span>
+<span class="text-[9px] font-semibold tracking-wide">Rounds</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[24px]">rss_feed</span>
+<span class="text-[9px] font-semibold tracking-wide">Feed</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="text-[9px] font-semibold tracking-wide">Alerts</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-14" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[9px] font-semibold tracking-wide">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

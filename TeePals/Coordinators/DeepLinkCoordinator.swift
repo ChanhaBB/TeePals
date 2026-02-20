@@ -9,7 +9,8 @@ final class DeepLinkCoordinator: ObservableObject {
     // MARK: - State
 
     @Published var pendingDeepLink: PendingDeepLink?
-    @Published var navigationTrigger: String? // RoundId to navigate to
+    @Published var navigationTrigger: String?
+    @Published var activityTabTarget: ActivityTab?
 
     // MARK: - Methods
 
@@ -38,6 +39,18 @@ final class DeepLinkCoordinator: ObservableObject {
     /// Clear navigation trigger after handling
     func clearNavigationTrigger() {
         navigationTrigger = nil
+    }
+
+    /// Navigate to a specific Activity tab (from Home metric cards, etc.)
+    func navigateToActivityTab(_ tab: ActivityTab) {
+        activityTabTarget = tab
+    }
+
+    /// Consume the activity tab target after handling
+    func consumeActivityTabTarget() -> ActivityTab? {
+        let target = activityTabTarget
+        activityTabTarget = nil
+        return target
     }
 }
 

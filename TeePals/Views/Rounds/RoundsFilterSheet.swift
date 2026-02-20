@@ -1,13 +1,12 @@
 import SwiftUI
 
-/// Filter sheet for rounds list - allows users to customize search parameters.
+/// Filter sheet for rounds list — V3 bottom sheet design.
 struct RoundsFilterSheet: View {
-    
+
     @ObservedObject var viewModel: RoundsListViewModel
     @StateObject private var locationService = LocationService()
     @Environment(\.dismiss) private var dismiss
-    
-    // Local state for editing (applied on "Apply")
+
     @State private var selectedCityLabel: String?
     @State private var selectedCityLat: Double?
     @State private var selectedCityLng: Double?
@@ -32,102 +31,116 @@ struct RoundsFilterSheet: View {
         _customStartDate = State(initialValue: Date())
         _customEndDate = State(initialValue: Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date())
     }
-    
+
     private var isAnywhereMode: Bool {
         selectedDistance == .anywhere
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppSpacing.lg) {
-                    hostedBySection
-                    searchAreaSection
-                    dateRangeSection
-                    sortSection
-                }
-                .padding(AppSpacing.contentPadding)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .background(AppColors.backgroundGrouped.ignoresSafeArea())
-            .navigationTitle("Filter Rounds")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Reset") {
-                        resetToDefaults()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Apply") {
-                        applyFilters()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
+        VStack(spacing: 0) {
+            sheetHeader
+            sheetContent
         }
+        .background(AppColorsV3.surfaceWhite)
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(32)
     }
 
-    // MARK: - Hosted By Section
+    // MARK: - Header
 
-    private var hostedBySection: some View {
-        FilterHostedBySection(selectedHostedBy: $selectedHostedBy)
+    private var sheetHeader: some View {
+        HStack {
+            Button("Reset") { resetToDefaults() }
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppColorsV3.textSecondary)
+
+            Spacer()
+
+            Button("Apply") { applyFilters() }
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(AppColorsV3.forestGreen)
+        }
+        .padding(.horizontal, AppSpacingV3.contentPadding)
+        .padding(.vertical, 20)
+        .overlay(
+            Rectangle()
+                .fill(AppColorsV3.borderLight)
+                .frame(height: 1),
+            alignment: .bottom
+        )
     }
 
-    // MARK: - Search Area Section (Location + Distance coupled)
-    
-    private var searchAreaSection: some View {
-        SectionCard(title: "Search Area") {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                // Location row
-                locationRow
-                
-                // Distance chips
-                distanceChips
-                
-                // Helper text based on mode
-                helperText
+    // MARK: - Content
+
+    private var sheetContent: some View {
+        ScrollView {
+            VStack(spacing: AppSpacingV3.lg) {
+                FilterHostedBySection(selectedHostedBy: $selectedHostedBy)
+                sectionDivider
+                searchAreaSection
+                sectionDivider
+                FilterDateRangeSection(
+                    selectedDateRange: $selectedDateRange,
+                    showCustomDatePicker: $showCustomDatePicker,
+                    customStartDate: $customStartDate,
+                    customEndDate: $customEndDate
+                )
+                sectionDivider
+                FilterSortSection(selectedSort: $selectedSort, isAnywhereMode: isAnywhereMode)
             }
+            .padding(AppSpacingV3.contentPadding)
+            .padding(.bottom, 40)
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var sectionDivider: some View {
+        Rectangle()
+            .fill(AppColorsV3.borderLight)
+            .frame(height: 1)
+    }
+
+    // MARK: - Search Area
+
+    private var searchAreaSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacingV3.md) {
+            filterSectionHeader("Search Area")
+            locationRow
+            FilterDistanceChips(selectedDistance: $selectedDistance)
+            helperText
         }
     }
-    
+
     private var locationRow: some View {
         Button {
-            if !isAnywhereMode {
-                showCitySearch = true
-            }
+            if !isAnywhereMode { showCitySearch = true }
         } label: {
-            HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 Image(systemName: "location.fill")
-                    .foregroundColor(isAnywhereMode ? AppColors.textSecondary : AppColors.iconAccent)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(displayCityLabel)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(isAnywhereMode ? AppColors.textSecondary : AppColors.textPrimary)
-                }
-                
+                    .font(.system(size: 20))
+                    .foregroundColor(isAnywhereMode ? AppColorsV3.textSecondary : AppColorsV3.forestGreen)
+
+                Text(displayCityLabel)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(isAnywhereMode ? AppColorsV3.textSecondary : AppColorsV3.textPrimary)
+
                 Spacer()
-                
-                // "Not used" pill when Anywhere, else show chevron
+
                 if isAnywhereMode {
                     Text("Not used")
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppColorsV3.textSecondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(AppColors.backgroundSecondary)
-                        .cornerRadius(AppSpacing.radiusSmall)
+                        .background(Color.gray.opacity(0.08))
+                        .cornerRadius(6)
                 } else {
                     Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppColorsV3.textSecondary)
                 }
             }
-            .padding(AppSpacing.sm)
-            .background(isAnywhereMode ? Color.clear : AppColors.primary.opacity(0.08))
-            .cornerRadius(AppSpacing.radiusMedium)
             .opacity(isAnywhereMode ? 0.5 : 1.0)
         }
         .buttonStyle(.plain)
@@ -140,7 +153,7 @@ struct RoundsFilterSheet: View {
             }
         }
     }
-    
+
     private var displayCityLabel: String {
         if let cityLabel = selectedCityLabel, !cityLabel.isEmpty {
             return cityLabel
@@ -150,72 +163,63 @@ struct RoundsFilterSheet: View {
             return "Select location"
         }
     }
-    
-    private var distanceChips: some View {
-        FilterDistanceChips(selectedDistance: $selectedDistance)
-    }
-    
+
+    @ViewBuilder
     private var helperText: some View {
-        Group {
-            if isAnywhereMode {
+        if isAnywhereMode {
+            helperPill {
                 HStack(spacing: 4) {
                     Image(systemName: "globe")
-                        .font(.caption)
+                        .font(.system(size: 11))
                     Text("Shows rounds anywhere. Location is ignored.")
                 }
-                .font(AppTypography.caption)
-                .foregroundColor(AppColors.textSecondary)
-            } else if let radius = selectedDistance.intValue {
-                Text("Searching within \(radius) miles of \(displayCityLabel)")
-                    .font(AppTypography.caption)
-                    .foregroundColor(AppColors.textSecondary)
-            } else {
-                Text("Tap to change location")
-                    .font(AppTypography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+            }
+        } else if let radius = selectedDistance.intValue {
+            helperPill {
+                Text("Searching within ")
+                    .foregroundColor(AppColorsV3.textSecondary)
+                + Text("\(radius) miles")
+                    .foregroundColor(AppColorsV3.forestGreen)
+                    .font(.system(size: 11, weight: .bold))
+                + Text(" of \(displayCityLabel)")
+                    .foregroundColor(AppColorsV3.textSecondary)
             }
         }
     }
-    
-    // MARK: - Date Range Section
-    
-    private var dateRangeSection: some View {
-        FilterDateRangeSection(
-            selectedDateRange: $selectedDateRange,
-            showCustomDatePicker: $showCustomDatePicker,
-            customStartDate: $customStartDate,
-            customEndDate: $customEndDate
-        )
+
+    private func helperPill<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(AppColorsV3.textSecondary)
+            .padding(AppSpacingV3.xs)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.gray.opacity(0.04))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.gray.opacity(0.08), lineWidth: 1)
+            )
     }
-    
-    // MARK: - Sort Section
-    
-    private var sortSection: some View {
-        FilterSortSection(selectedSort: $selectedSort, isAnywhereMode: isAnywhereMode)
-    }
-    
+
     // MARK: - Actions
-    
+
     private func applyFilters() {
-        // Handle custom date range
         let dateRange: DateRangeOption
         if showCustomDatePicker {
             dateRange = .custom(start: customStartDate, end: customEndDate)
         } else {
             dateRange = selectedDateRange
         }
-        
-        // If switching to anywhere and sort was distance, reset to date
+
         var finalSort = selectedSort
         if selectedDistance == .anywhere && selectedSort == .distance {
             finalSort = .date
         }
-        
-        // Apply city if user selected one, otherwise use profile city
+
         let cityLat = selectedCityLat ?? viewModel.userProfile?.primaryLocation.latitude
         let cityLng = selectedCityLng ?? viewModel.userProfile?.primaryLocation.longitude
         let cityLabel = selectedCityLabel ?? viewModel.userProfile?.primaryCityLabel
-        
+
         viewModel.updateFilters(
             centerLat: cityLat,
             centerLng: cityLng,
@@ -226,16 +230,11 @@ struct RoundsFilterSheet: View {
             hostedBy: selectedHostedBy
         )
 
-        // Reload rounds with new filters
-        Task {
-            await viewModel.refresh()
-        }
-
+        Task { await viewModel.refresh() }
         dismiss()
     }
 
     private func resetToDefaults() {
-        // Only reset local UI state (user must tap Apply to actually load)
         selectedCityLabel = viewModel.userProfile?.primaryCityLabel
         selectedCityLat = viewModel.userProfile?.primaryLocation.latitude
         selectedCityLng = viewModel.userProfile?.primaryLocation.longitude
@@ -247,3 +246,12 @@ struct RoundsFilterSheet: View {
     }
 }
 
+// MARK: - Shared Section Header
+
+func filterSectionHeader(_ title: String) -> some View {
+    Text(title)
+        .font(.system(size: 10, weight: .bold))
+        .tracking(0.15 * 10)
+        .textCase(.uppercase)
+        .foregroundColor(AppColorsV3.textSecondary)
+}

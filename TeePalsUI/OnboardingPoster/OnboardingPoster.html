@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Premium Onboarding</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0b3d2e",
+                        "primary-dark": "#06291e",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#12201c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-serif-display {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Custom gradient for text legibility */
+        .scrim-gradient {
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.0) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark antialiased h-screen w-full overflow-hidden">
+<div class="relative w-full h-full flex flex-col justify-end">
+<!-- Background Image -->
+<div class="absolute inset-0 z-0">
+<img alt="Lush green golf course fairway with early morning sunlight" class="w-full h-full object-cover object-center" data-alt="Lush green golf course fairway with early morning sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFXNiD5-fvbpHtLZCdeoYt1Vo1fD7IuV8WgSYXiMbdVxVaHD8-PIk_9ZZ3jor3KsP9d1guw6--j3rSW42t01vSqkzqlFA_rWm_ALoV2o3UcIZx32kp085vTHUajF1sGM6wR5zV5k2zljHCsCgKAHsY8_fxt_t4POIVtVJJNrLdeUC9eihzubrFrYT0blJAJnpiiS_2pbH1P--eay1GEqx0e6CfHPHD15Vys-DiWoMfWgCuquv5OJKxsdGOsW1OJo9oXuWQJNrE"/>
+<!-- Scrim Overlay for Legibility -->
+<div class="absolute inset-0 bg-black/10 z-10"></div> <!-- Overall subtle dim -->
+<div class="absolute bottom-0 left-0 right-0 h-[60%] scrim-gradient z-10"></div> <!-- Bottom reading gradient -->
+</div>
+<!-- Content Area -->
+<div class="relative z-20 w-full px-6 pb-8 pt-12 flex flex-col items-center text-center">
+<!-- Headline Group -->
+<div class="mb-10 w-full max-w-md">
+<h1 class="font-serif-display text-white text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-4 drop-shadow-sm">
+                    Find Your <br/> Next Round
+                </h1>
+<p class="font-display text-gray-200 text-base md:text-lg font-normal leading-relaxed tracking-wide opacity-90 max-w-xs mx-auto">
+                    Discover local rounds and meet golfers who match your vibe.
+                </p>
+</div>
+<!-- Pagination Dots -->
+<div class="flex flex-row items-center justify-center gap-3 mb-8">
+<!-- Active Dot: Primary Brand Color (Lightened slightly for visibility on dark if needed, but per request keeping it deep green but with a white ring for contrast) -->
+<div class="relative flex items-center justify-center">
+<!-- Since deep green on black gradient might be hard to see, we add a subtle white glow or ring, or rely on the gradient not being pitch black at this height -->
+<div class="h-2.5 w-2.5 rounded-full bg-white"></div>
+</div>
+<div class="h-2.5 w-2.5 rounded-full bg-white/40"></div>
+<div class="h-2.5 w-2.5 rounded-full bg-white/40"></div>
+</div>
+<!-- Actions -->
+<div class="w-full max-w-sm space-y-4">
+<!-- Apple Button -->
+<button class="w-full flex items-center justify-center h-12 bg-white hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 rounded-lg text-black font-semibold text-[15px] tracking-wide shadow-lg group">
+<span class="mr-2.5 flex items-center justify-center text-black">
+<svg fill="currentColor" height="20" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M16.64 5.92c-.68 1.16-1.76 1.84-2.92 1.88-1.24.04-3.16-.76-3.96-.76-.84 0-2.6.8-3.32.8-3.24.12-6.28 4.36-4.92 8.76.64 2.16 2.08 4.88 3.88 4.84 1.48-.04 2.04-1.04 3.84-1.04 1.76 0 2.24 1.04 3.84 1.04 1.68-.04 2.8-2.32 3.6-4.04 1.12-2.4-.24-5.36-2.52-6.52.04-.12 2.16-1.12 2.48-5.36M11.96 4c.64-1.2 2.2-2.24 3.64-2 0 1.28-1.24 3.32-2.6 4-1.08.56-2.48.36-2.8-.2-.36-.6-.2-1.2 1.76-1.8z"></path>
+</svg>
+</span>
+                    Sign in with Apple
+                </button>
+<!-- Email Link -->
+<button class="w-full text-center py-2">
+<span class="text-white/90 font-medium text-sm hover:text-white transition-colors border-b border-transparent hover:border-white/50 pb-0.5">
+                        Continue with Email
+                    </span>
+</button>
+</div>
+<!-- Footer Legal -->
+<div class="mt-8 flex items-center justify-center gap-4 text-[11px] text-white/50 font-normal">
+<a class="hover:text-white transition-colors" href="#">Privacy Policy</a>
+<span class="w-[1px] h-3 bg-white/20"></span>
+<a class="hover:text-white transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</body></html>

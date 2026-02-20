@@ -26,21 +26,20 @@ struct RoundsView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                AppColors.backgroundGrouped.ignoresSafeArea()
-                
+                AppColorsV3.bgNeutral.ignoresSafeArea()
+
                 VStack(spacing: 0) {
-                    segmentedControl
-                    
-                    // Content area per segment (includes segment-specific header)
+                    // Header section (segmented control + filter summary)
+                    headerSection
+
+                    // Content area per segment
                     segmentContent
                 }
-                
+
                 // Floating action button (always visible)
                 floatingActionButton
             }
-            .navigationTitle("Rounds")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
+            .navigationBarHidden(true)
             .navigationDestination(item: $selectedRound) { round in
                 if let roundId = round.id {
                     RoundDetailView(viewModel: container.makeRoundDetailViewModel(roundId: roundId))
@@ -56,10 +55,10 @@ struct RoundsView: View {
                 RoundsFilterSheet(viewModel: nearbyViewModel)
             }
             .task {
-                // Load current segment
+                handlePendingActivityTarget()
+
                 await loadSegment(selectedSegment)
 
-                // Preload other segments in background to reduce lag
                 Task {
                     await preloadOtherSegments()
                 }
@@ -68,52 +67,71 @@ struct RoundsView: View {
                 Task { await loadSegment(newSegment) }
             }
             .onChange(of: deepLinkCoordinator.navigationTrigger) { _, roundId in
-                // Handle deep link navigation
                 if let roundId = roundId {
                     handleDeepLinkNavigation(roundId: roundId)
                 }
+            }
+            .onChange(of: deepLinkCoordinator.activityTabTarget) { _, _ in
+                handlePendingActivityTarget()
             }
             .animation(.none, value: selectedSegment)
         }
     }
     
-    // MARK: - Segmented Control
-    
-    private var segmentedControl: some View {
-        Picker("Segment", selection: $selectedSegment) {
-            ForEach(RoundsSegment.allCases) { segment in
-                Text(segment.title).tag(segment)
+    // MARK: - Header Section
+
+    private var headerSection: some View {
+        VStack(spacing: 16) {
+            // iOS-style segmented control
+            IOSSegmentedControl(
+                items: RoundsSegment.allCases,
+                itemTitle: { $0.title },
+                selection: $selectedSegment
+            )
+            .padding(.horizontal, AppSpacingV3.contentPadding)
+
+            // Sub-navigation per segment
+            if selectedSegment == .nearby {
+                FilterSummaryViewV3(
+                    filters: nearbyViewModel.filters,
+                    userProfile: nearbyViewModel.userProfile,
+                    onTap: { showingFilters = true }
+                )
+            } else if selectedSegment == .activity {
+                ActivityChipBar(
+                    selectedTab: $activityViewModel.selectedTab,
+                    inviteCount: activityViewModel.inviteCount
+                )
+                .padding(.horizontal, AppSpacingV3.contentPadding)
             }
         }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, AppSpacing.contentPadding)
-        .padding(.vertical, AppSpacing.sm)
-    }
-    
-    // MARK: - Filter Summary (Nearby only)
-    
-    private var filterSummaryRow: some View {
-        Button { showingFilters = true } label: {
-            FilterSummaryView(filters: nearbyViewModel.filters, userProfile: nearbyViewModel.userProfile)
-        }
-        .buttonStyle(.plain)
+        .padding(.top, AppSpacingV3.headerTop)
+        .padding(.bottom, selectedSegment == .activity ? AppSpacingV3.xs : 0)
+        .background(AppColorsV3.bgNeutral.opacity(0.95))
+        .overlay(
+            Group {
+                if selectedSegment == .nearby {
+                    Rectangle()
+                        .fill(AppColorsV3.borderLight)
+                        .frame(height: 1)
+                }
+            },
+            alignment: .bottom
+        )
     }
     
     // MARK: - Segment Content
-    
+
     @ViewBuilder
     private var segmentContent: some View {
         switch selectedSegment {
         case .nearby:
-            VStack(spacing: 0) {
-                filterSummaryRow
-                NearbyRoundsContent(
-                    viewModel: nearbyViewModel,
-                    onRoundTap: { selectedRound = $0 },
-                    onCreateRound: { attemptCreateRound() },
-                    onShowFilters: { showingFilters = true }
-                )
-            }
+            NearbyRoundsContent(
+                viewModel: nearbyViewModel,
+                onRoundTap: { selectedRound = $0 },
+                onCreateRound: { attemptCreateRound() },
+                onShowFilters: { showingFilters = true }
+            )
             .refreshable { await nearbyViewModel.refresh() }
 
         case .activity:
@@ -127,36 +145,8 @@ struct RoundsView: View {
         }
     }
     
-    // MARK: - Toolbar
-    
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            if selectedSegment == .nearby {
-                filterButton
-            }
-        }
-    }
-    
-    private var filterButton: some View {
-        Button { showingFilters = true } label: {
-            ZStack(alignment: .topTrailing) {
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                    .font(.title3)
-                    .foregroundColor(AppColors.primary)
-                
-                if nearbyViewModel.hasActiveFilters {
-                    Circle()
-                        .fill(AppColors.primary)
-                        .frame(width: 8, height: 8)
-                        .offset(x: 2, y: -2)
-                }
-            }
-        }
-    }
-    
     // MARK: - Floating Action Button
-    
+
     private var floatingActionButton: some View {
         Button { attemptCreateRound() } label: {
             Image(systemName: "plus")
@@ -164,12 +154,12 @@ struct RoundsView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(AppColors.primary)
+                .background(AppColorsV3.forestGreen)
                 .clipShape(Circle())
-                .shadow(color: AppColors.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: AppColorsV3.forestGreen.opacity(0.3), radius: 8, x: 0, y: 4)
         }
-        .padding(.trailing, AppSpacing.contentPadding)
-        .padding(.bottom, AppSpacing.lg)
+        .padding(.trailing, AppSpacingV3.contentPadding)
+        .padding(.bottom, AppSpacingV3.lg)
     }
     
     // MARK: - Actions
@@ -209,6 +199,15 @@ struct RoundsView: View {
         case .activity:
             // Preload Nearby
             await nearbyViewModel.loadRounds()
+        }
+    }
+
+    // MARK: - Activity Tab Deep Link
+
+    private func handlePendingActivityTarget() {
+        if let tab = deepLinkCoordinator.consumeActivityTabTarget() {
+            selectedSegment = .activity
+            activityViewModel.selectedTab = tab
         }
     }
 

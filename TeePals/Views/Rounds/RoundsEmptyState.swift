@@ -59,7 +59,54 @@ struct RoundsEmptyState: View {
     }
 }
 
-// MARK: - Preview
+// MARK: - Activity Empty State
+
+struct ActivityEmptyState: View {
+    let onCreateRound: () -> Void
+    let onBrowseNearby: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: AppSpacing.xl) {
+                Spacer(minLength: AppSpacing.xxl)
+
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 56))
+                    .foregroundStyle(AppColors.primary.opacity(0.4))
+
+                VStack(spacing: AppSpacing.sm) {
+                    Text("No Activity Yet")
+                        .font(AppTypography.headlineLarge)
+                        .foregroundColor(AppColors.textPrimary)
+
+                    Text("Rounds you host or request will appear here.")
+                        .font(AppTypography.bodyMedium)
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                VStack(spacing: AppSpacing.md) {
+                    PrimaryButton("Create Round", icon: "plus") {
+                        onCreateRound()
+                    }
+                    .frame(maxWidth: 200)
+
+                    Button("Browse Nearby") {
+                        onBrowseNearby()
+                    }
+                    .font(AppTypography.bodyMedium)
+                    .foregroundColor(AppColors.primary)
+                }
+
+                Spacer()
+            }
+            .padding(AppSpacing.xl)
+            .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+// MARK: - Previews
 
 #if DEBUG
 struct RoundsEmptyState_Previews: PreviewProvider {

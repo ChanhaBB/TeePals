@@ -1,47 +1,39 @@
 import SwiftUI
 
-/// Step 2: Birthdate entry for Tier 1 onboarding.
+/// Step 2: Birthdate entry for Tier 1 onboarding (V3 Design)
 struct BirthdateStepView: View {
     @ObservedObject var viewModel: Tier1OnboardingViewModel
-    
+
     /// Minimum date: 100 years ago
     private var minDate: Date {
         Calendar.current.date(byAdding: .year, value: -100, to: Date()) ?? Date()
     }
-    
+
     /// Maximum date: Must be 18+ years old
     private var maxDate: Date {
         Calendar.current.date(byAdding: .year, value: -18, to: Date()) ?? Date()
     }
-    
+
     /// Default selection: 25 years ago
     private var defaultDate: Date {
         Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     }
-    
+
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
-            
-            // Icon
-            Image(systemName: "calendar.circle.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(Color(red: 0.1, green: 0.45, blue: 0.25))
-            
-            // Title & Subtitle
-            VStack(spacing: 8) {
-                Text(viewModel.currentStep.title)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text(viewModel.currentStep.subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+        VStack(spacing: 0) {
+            // Title
+            VStack(alignment: .leading, spacing: 0) {
+                Text("When's your birthday?")
+                    .font(AppTypographyV3.onboardingTitle)
+                    .foregroundColor(AppColorsV3.forestGreen)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
-            // Date Picker
-            VStack(spacing: 16) {
+            .padding(.bottom, 48)
+
+            Spacer()
+
+            // Date Picker (centered vertically)
+            VStack(spacing: 32) {
                 DatePicker(
                     "Birth Date",
                     selection: birthDateBinding,
@@ -50,49 +42,26 @@ struct BirthdateStepView: View {
                 )
                 .datePickerStyle(.wheel)
                 .labelsHidden()
-                
-                // Age display
-                if let age = calculatedAge {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("You're \(age) years old")
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(.subheadline)
-                }
+
+                // Helper text
+                Text("We keep this private (age verification only)")
+                    .font(AppTypographyV3.onboardingSubtitle)
+                    .foregroundColor(AppColorsV3.textSecondary)
+                    .multilineTextAlignment(.center)
             }
-            .padding(.horizontal)
-            
-            // Privacy note
-            HStack(spacing: 6) {
-                Image(systemName: "lock.fill")
-                    .font(.caption)
-                Text("Your birth date is private and never shown to others")
-                    .font(.caption)
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal)
-            
-            Spacer()
+
             Spacer()
         }
+        .padding(.horizontal, 32)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var birthDateBinding: Binding<Date> {
         Binding(
             get: { viewModel.birthDate ?? defaultDate },
             set: { viewModel.birthDate = $0 }
         )
-    }
-    
-    private var calculatedAge: Int? {
-        guard let birthDate = viewModel.birthDate else { return nil }
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year], from: birthDate, to: Date())
-        return components.year
     }
 }
 
