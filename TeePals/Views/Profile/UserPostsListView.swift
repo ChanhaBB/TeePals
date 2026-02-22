@@ -144,16 +144,9 @@ struct CompactPostRow: View {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 // First photo thumbnail if available
                 if let firstPhoto = post.photoUrls.first, let url = URL(string: firstPhoto) {
-                    CachedAsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        Rectangle()
-                            .fill(AppColors.backgroundSecondary)
-                    }
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.xs))
+                    TPImage(url: url)
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.xs))
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {

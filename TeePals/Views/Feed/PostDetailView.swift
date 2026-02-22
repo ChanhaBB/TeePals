@@ -9,7 +9,7 @@ struct PostDetailView: View {
     @StateObject private var viewModel: PostDetailViewModel
 
     @State private var selectedAuthorUid: String?
-    @State private var selectedRoundId: String?
+    @State private var roundDetail: RoundDetailIdentifier?
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
     @State private var commentInputState: CommentInputState = .resting
@@ -159,15 +159,9 @@ struct PostDetailView: View {
                 }
             }
         }
-        .sheet(item: Binding(
-            get: { selectedRoundId.map { IdentifiableString(value: $0) } },
-            set: { selectedRoundId = $0?.value }
-        )) { wrapper in
-            NavigationStack {
-                RoundDetailView(
-                    viewModel: container.makeRoundDetailViewModel(roundId: wrapper.value)
-                )
-            }
+        .fullScreenCover(item: $roundDetail) { item in
+            RoundDetailCover(roundId: item.roundId)
+                .environmentObject(container)
         }
         .task {
             await viewModel.loadPost()
@@ -343,19 +337,10 @@ struct PostDetailView: View {
     }
     
     private func avatarView(_ post: Post) -> some View {
-        Group {
-            if let photoUrl = post.authorPhotoUrl, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    initialsView(post.authorNickname)
-                }
-            } else {
-                initialsView(post.authorNickname)
-            }
-        }
-        .frame(width: 44, height: 44)
-        .clipShape(Circle())
+        TPAvatar(
+            url: post.authorPhotoUrl.flatMap { URL(string: $0) },
+            size: 44
+        )
     }
     
     private func initialsView(_ nickname: String?) -> some View {
@@ -397,16 +382,9 @@ struct PostDetailView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: AppSpacing.sm) {
                 ForEach(Array(urls.enumerated()), id: \.element) { index, url in
-                    CachedAsyncImage(url: URL(string: url)) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        Rectangle()
-                            .fill(AppColors.backgroundSecondary)
-                    }
-                    .frame(width: 200, height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+                    TPImage(url: URL(string: url))
+                        .frame(width: 200, height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         selectedPhotoIndex = index
@@ -421,7 +399,7 @@ struct PostDetailView: View {
         Button {
             // Only navigate if round is active (open status)
             if round.status == .open, let roundId = round.id {
-                selectedRoundId = roundId
+                roundDetail = RoundDetailIdentifier(roundId: roundId)
             }
         } label: {
             VStack(alignment: .leading, spacing: 4) {

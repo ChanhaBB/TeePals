@@ -70,55 +70,18 @@ struct RoundCardView: View {
     @ViewBuilder
     private var photoBackground: some View {
         if let photoURL = coursePhotoURL {
-            AsyncImage(url: photoURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: Layout.photoWidth)
-                        .frame(minHeight: Layout.cardHeight)
-                        .clipped()
-                case .empty:
-                    photoLoadingState
-                case .failure:
-                    photoFallbackGradient
-                @unknown default:
-                    photoFallbackGradient
-                }
-            }
+            TPImage(url: photoURL)
+                .frame(width: Layout.photoWidth)
+                .frame(minHeight: Layout.cardHeight)
+                .clipped()
         } else {
-            photoLoadingState
+            Image("course-placeholder")
+                .resizable()
+                .scaledToFill()
+                .frame(width: Layout.photoWidth)
+                .frame(minHeight: Layout.cardHeight)
+                .clipped()
         }
-    }
-
-    private var photoLoadingState: some View {
-        Rectangle()
-            .fill(AppColorsV3.bgNeutral)
-            .frame(width: Layout.photoWidth)
-            .frame(minHeight: Layout.cardHeight)
-            .overlay {
-                if isLoadingPhoto {
-                    ProgressView()
-                        .tint(AppColorsV3.forestGreen)
-                }
-            }
-    }
-
-    private var photoFallbackGradient: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [
-                        AppColorsV3.forestGreen.opacity(0.3),
-                        AppColorsV3.forestGreen.opacity(0.1)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .frame(width: Layout.photoWidth)
-            .frame(minHeight: Layout.cardHeight)
     }
 
     // MARK: - Content Section (Right Side)
@@ -126,7 +89,7 @@ struct RoundCardView: View {
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Course name
-            Text(round.displayCourseName)
+            Text(round.displayCourseName.compactCourseName())
                 .font(AppTypographyV3.roundCardTitle)
                 .foregroundColor(AppColorsV3.textPrimary)
                 .lineLimit(2)

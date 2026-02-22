@@ -15,6 +15,7 @@ struct CompactRoundCard: View {
     let totalSlots: Int?
     let filledSlots: Int?
     let statusBadge: String?
+    let showNotificationDot: Bool
     let isUserRound: Bool
     let showSlots: Bool
     let action: () -> Void
@@ -29,6 +30,7 @@ struct CompactRoundCard: View {
         totalSlots: Int? = nil,
         filledSlots: Int? = nil,
         statusBadge: String? = nil,
+        showNotificationDot: Bool = false,
         isUserRound: Bool = false,
         showSlots: Bool = true,
         action: @escaping () -> Void
@@ -42,6 +44,7 @@ struct CompactRoundCard: View {
         self.totalSlots = totalSlots
         self.filledSlots = filledSlots
         self.statusBadge = statusBadge
+        self.showNotificationDot = showNotificationDot
         self.isUserRound = isUserRound
         self.showSlots = showSlots
         self.action = action
@@ -50,42 +53,16 @@ struct CompactRoundCard: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: AppSpacingV3.md) {
-                // Date badge
                 dateBadge
 
-                // Main content
                 VStack(alignment: .leading, spacing: 2) {
-                    // Course name + status badge
-                    HStack(spacing: AppSpacingV3.xs) {
-                        Text(courseName)
-                            .font(AppTypographyV3.roundCardTitle)
-                            .foregroundColor(AppColorsV3.textPrimary)
-                            .lineLimit(1)
+                    Text(courseName)
+                        .font(AppTypographyV3.roundCardTitle)
+                        .foregroundColor(AppColorsV3.textPrimary)
+                        .lineLimit(1)
 
-                        if let badge = statusBadge {
-                            statusBadgeView(text: badge)
-                        }
-                    }
-
-                    // Host info
                     HStack(spacing: AppSpacingV3.xs) {
-                        // Host avatar (always show, with placeholder if no URL)
-                        if let photoURL = hostPhotoURL {
-                            AsyncImage(url: photoURL) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            } placeholder: {
-                                Circle().fill(Color.gray.opacity(0.3))
-                            }
-                            .frame(width: 16, height: 16)
-                            .clipped()
-                            .clipShape(Circle())
-                        } else {
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 16, height: 16)
-                        }
+                        TPAvatar(url: hostPhotoURL, size: 16)
 
                         Text(hostInfoText)
                             .font(AppTypographyV3.bodySmall)
@@ -97,6 +74,8 @@ struct CompactRoundCard: View {
 
                 if showSlots, let totalSlots, let filledSlots {
                     slotsIndicator(total: totalSlots, filled: filledSlots)
+                } else if let badge = statusBadge {
+                    statusBadgeView(text: badge)
                 }
             }
             .padding(AppSpacingV3.md)
@@ -106,6 +85,14 @@ struct CompactRoundCard: View {
                 RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
                     .stroke(AppColorsV3.borderLight, lineWidth: 1)
             )
+            .overlay(alignment: .topTrailing) {
+                if showNotificationDot {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 10, height: 10)
+                        .offset(x: -8, y: 8)
+                }
+            }
             .premiumShadow()
         }
         .buttonStyle(.plain)
@@ -181,25 +168,22 @@ struct CompactRoundCard: View {
 struct CompactRoundCard_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 16) {
-            // User's round (filled date badge)
             CompactRoundCard(
                 dateMonth: "Feb",
                 dateDay: "16",
                 courseName: "Torrey Pines South",
                 hostName: "Alex P.",
                 distance: "18.6mi",
-                totalSlots: 4,
-                filledSlots: 4,
-                statusBadge: "You're In",
+                statusBadge: "Hosting",
+                showNotificationDot: true,
                 isUserRound: true,
                 action: {}
             )
 
-            // Discover round (outline date badge)
             CompactRoundCard(
                 dateMonth: "Feb",
                 dateDay: "15",
-                courseName: "Riverwalk Golf Club",
+                courseName: "Riverwalk GC",
                 hostName: "Sarah M.",
                 distance: "5.2mi",
                 totalSlots: 4,
@@ -208,15 +192,13 @@ struct CompactRoundCard_Previews: PreviewProvider {
                 action: {}
             )
 
-            // Partially filled
             CompactRoundCard(
                 dateMonth: "Feb",
                 dateDay: "23",
-                courseName: "Mission Bay Course",
+                courseName: "Mission Bay GC",
                 hostName: "Mike D.",
                 distance: "1.8mi",
-                totalSlots: 4,
-                filledSlots: 2,
+                statusBadge: "Awaiting Host",
                 isUserRound: false,
                 action: {}
             )

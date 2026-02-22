@@ -74,20 +74,7 @@ struct ActivityInviteCard: View {
                 .lineLimit(2)
 
             HStack(spacing: AppSpacingV3.xs) {
-                if let photoURL = inviterPhotoURL {
-                    AsyncImage(url: photoURL) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        Circle().fill(Color.gray.opacity(0.3))
-                    }
-                    .frame(width: 16, height: 16)
-                    .clipped()
-                    .clipShape(Circle())
-                } else {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 16, height: 16)
-                }
+                TPAvatar(url: inviterPhotoURL, size: 16)
 
                 Text("Invited by \(inviterName)")
                     .font(AppTypographyV3.bodySmall)

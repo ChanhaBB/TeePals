@@ -9,6 +9,7 @@ struct HomeViewV3: View {
     @EnvironmentObject var container: AppContainer
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @Binding var selectedTab: Int
+    @State private var roundDetail: RoundDetailIdentifier?
 
     init(viewModel: HomeViewModel, activityViewModel: ActivityRoundsViewModelV2, selectedTab: Binding<Int>) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -45,19 +46,26 @@ struct HomeViewV3: View {
             }
         }
         .task {
-            await viewModel.loadDashboard()
-            await activityViewModel.loadActivity()
+            async let dashboard: () = viewModel.loadDashboard()
+            async let activity: () = activityViewModel.loadActivity()
+            _ = await (dashboard, activity)
+
+            if let firstRound = activityViewModel.scheduleRounds.first {
+                await viewModel.loadCoursePhoto(for: firstRound.round)
+            }
         }
         .refreshable {
-            await viewModel.refresh()
-            await activityViewModel.refresh()
-        }
-        .onChange(of: activityViewModel.allRounds.count) { _, _ in
-            Task {
-                if let firstRound = activityViewModel.scheduleRounds.first {
-                    await viewModel.loadCoursePhoto(for: firstRound.round)
-                }
+            async let dashboard: () = viewModel.refresh()
+            async let activity: () = activityViewModel.refresh()
+            _ = await (dashboard, activity)
+
+            if let firstRound = activityViewModel.scheduleRounds.first {
+                await viewModel.loadCoursePhoto(for: firstRound.round)
             }
+        }
+        .fullScreenCover(item: $roundDetail) { item in
+            RoundDetailCover(roundId: item.roundId)
+                .environmentObject(container)
         }
     }
 
@@ -80,21 +88,12 @@ struct HomeViewV3: View {
 
             if let photoUrlString = viewModel.userProfile?.photoUrls.first,
                let photoUrl = URL(string: photoUrlString) {
-                AsyncImage(url: photoUrl) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    Circle().fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 40, height: 40)
-                .clipped()
-                .clipShape(Circle())
-                .overlay(
-                    Circle()
-                        .stroke(AppColorsV3.forestGreen.opacity(0.1), lineWidth: 2)
-                )
-                .padding(2)
+                TPAvatar(url: photoUrl, size: 40)
+                    .overlay(
+                        Circle()
+                            .stroke(AppColorsV3.forestGreen.opacity(0.1), lineWidth: 2)
+                    )
+                    .padding(2)
             }
         }
         .frame(maxWidth: .infinity)
@@ -132,12 +131,15 @@ struct HomeViewV3: View {
             if let firstSchedule = activityViewModel.scheduleRounds.first {
                 HeroCardV3(
                     backgroundImage: viewModel.nextRoundPhotoURL,
+                    assetImageName: viewModel.nextRoundPhotoURL == nil ? "course-placeholder" : nil,
                     badgeText: "Upcoming Round",
-                    title: firstSchedule.round.displayCourseName,
+                    title: firstSchedule.round.displayCourseName.compactCourseName(),
                     subtitle: firstSchedule.round.displayDateTime ?? "",
                     buttonTitle: "View Details",
                     action: {
-                        selectedTab = 1
+                        if let roundId = firstSchedule.round.id {
+                            navigateToRoundDetail(roundId)
+                        }
                     }
                 )
             } else {
@@ -165,7 +167,6 @@ struct HomeViewV3: View {
                 icon: "envelope.fill",
                 count: activityViewModel.inviteCount,
                 label: "Invites",
-                hasNotification: activityViewModel.inviteCount > 0,
                 action: {
                     deepLinkCoordinator.navigateToActivityTab(.invites)
                     selectedTab = 1
@@ -174,10 +175,10 @@ struct HomeViewV3: View {
 
             MetricCardV3(
                 icon: "hourglass",
-                count: pendingRequestCount,
+                count: activityViewModel.pendingCount,
                 label: "Pending",
                 action: {
-                    deepLinkCoordinator.navigateToActivityTab(.schedule)
+                    deepLinkCoordinator.navigateToActivityTab(.pending)
                     selectedTab = 1
                 }
             )
@@ -216,17 +217,19 @@ struct HomeViewV3: View {
                         CompactRoundCard(
                             dateMonth: monthAbbreviation(from: item.round.startTime),
                             dateDay: dayOfMonth(from: item.round.startTime),
-                            courseName: item.round.displayCourseName,
+                            courseName: item.round.displayCourseName.compactCourseName(),
                             hostName: item.hostProfile?.nickname ?? "Host",
                             hostPhotoURL: item.hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
                             distance: distanceToRound(item.round),
-                                    statusBadge: scheduleStatusBadge(for: item),
-                                    isUserRound: item.isConfirmedOrHosting,
-                                    showSlots: false,
-                                    action: {
-                                        deepLinkCoordinator.navigateToActivityTab(.schedule)
-                                        selectedTab = 1
-                                    }
+                            statusBadge: scheduleStatusBadge(for: item),
+                            showNotificationDot: showNotificationDot(for: item),
+                            isUserRound: item.isConfirmedOrHosting,
+                            showSlots: false,
+                            action: {
+                                if let roundId = item.round.id {
+                                    navigateToRoundDetail(roundId)
+                                }
+                            }
                         )
                     }
                 }
@@ -264,7 +267,7 @@ struct HomeViewV3: View {
                         CompactRoundCard(
                             dateMonth: monthAbbreviation(from: round.startTime),
                             dateDay: dayOfMonth(from: round.startTime),
-                            courseName: round.displayCourseName,
+                            courseName: round.displayCourseName.compactCourseName(),
                             hostName: hostProfile?.nickname ?? "Host",
                             hostPhotoURL: hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
                             distance: formatDistance(round.distanceMiles),
@@ -272,7 +275,9 @@ struct HomeViewV3: View {
                             filledSlots: round.acceptedCount,
                             isUserRound: false,
                             action: {
-                                selectedTab = 1
+                                if let roundId = round.id {
+                                    navigateToRoundDetail(roundId)
+                                }
                             }
                         )
                     }
@@ -282,23 +287,20 @@ struct HomeViewV3: View {
         }
     }
 
-    // MARK: - Shared Badge Logic (identical to ActivityRoundsViewV2)
+    // MARK: - Navigation
 
-    private func scheduleStatusBadge(for item: ActivityRoundItem) -> String? {
-        if item.role == .hosting && item.round.requestCount > 0 {
-            return "\(item.round.requestCount) Requests"
-        }
-        if item.isPending {
-            return "Awaiting Host"
-        }
-        if item.role == .hosting {
-            return "Hosting"
-        }
-        return nil
+    private func navigateToRoundDetail(_ roundId: String) {
+        roundDetail = RoundDetailIdentifier(roundId: roundId)
     }
 
-    private var pendingRequestCount: Int {
-        activityViewModel.scheduleRounds.filter { $0.isPending }.count
+    // MARK: - Schedule Badge Logic
+
+    private func scheduleStatusBadge(for item: ActivityRoundItem) -> String? {
+        item.role == .hosting ? "Hosting" : nil
+    }
+
+    private func showNotificationDot(for item: ActivityRoundItem) -> Bool {
+        item.role == .hosting && item.round.requestCount > 0
     }
 
     // MARK: - Computed Properties

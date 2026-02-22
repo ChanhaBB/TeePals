@@ -115,21 +115,10 @@ struct PhotoEditSheet: View {
     // MARK: - Photo Display
 
     private var photoDisplay: some View {
-        Group {
-            if let photoUrl = viewModel.photoUrls.first, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    photoPlaceholder
-                }
-            } else {
-                photoPlaceholder
-            }
-        }
-        .frame(width: 160, height: 160)
-        .clipShape(Circle())
+        TPAvatar(
+            url: viewModel.photoUrls.first.flatMap { URL(string: $0) },
+            size: 160
+        )
         .overlay(
             Circle()
                 .stroke(AppColors.border, lineWidth: 1)

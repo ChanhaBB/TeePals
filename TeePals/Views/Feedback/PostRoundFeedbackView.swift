@@ -270,19 +270,10 @@ private struct PlayerEndorsementCard: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: AppSpacing.md) {
-                // Profile photo
-                if let photoUrl = participant.photoUrls.first, let url = URL(string: photoUrl) {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        placeholderImage
-                    }
-                    .frame(width: 64, height: 64)
-                    .clipShape(Circle())
-                } else {
-                    placeholderImage
-                        .frame(width: 64, height: 64)
-                }
+                TPAvatar(
+                    url: participant.photoUrls.first.flatMap { URL(string: $0) },
+                    size: 64
+                )
 
                 // Name & location
                 VStack(alignment: .leading, spacing: 4) {
@@ -405,19 +396,10 @@ private struct IssueUserCard: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: AppSpacing.md) {
-                // Profile photo
-                if let photoUrl = participant.photoUrls.first, let url = URL(string: photoUrl) {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        placeholderImage
-                    }
-                    .frame(width: 64, height: 64)
-                    .clipShape(Circle())
-                } else {
-                    placeholderImage
-                        .frame(width: 64, height: 64)
-                }
+                TPAvatar(
+                    url: participant.photoUrls.first.flatMap { URL(string: $0) },
+                    size: 64
+                )
 
                 // Name & location
                 VStack(alignment: .leading, spacing: 4) {
@@ -537,18 +519,10 @@ private struct UserIssueSection: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             // User header
             HStack(spacing: AppSpacing.sm) {
-                if let photoUrl = participant.photoUrls.first, let url = URL(string: photoUrl) {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        placeholderImage
-                    }
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
-                } else {
-                    placeholderImage
-                        .frame(width: 40, height: 40)
-                }
+                TPAvatar(
+                    url: participant.photoUrls.first.flatMap { URL(string: $0) },
+                    size: 40
+                )
 
                 Text(participant.nickname)
                     .font(.system(size: 18, weight: .semibold))

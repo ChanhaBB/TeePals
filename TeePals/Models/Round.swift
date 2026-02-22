@@ -420,3 +420,10 @@ enum PriceTier: String, Codable, CaseIterable {
         rawValue
     }
 }
+
+// MARK: - Round Detail Identifier (for fullScreenCover presentations)
+
+struct RoundDetailIdentifier: Identifiable {
+    let roundId: String
+    var id: String { roundId }
+}

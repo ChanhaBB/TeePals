@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+import Nuke
 
 /// ViewModel for invited rounds (rounds where user received an invitation).
 @MainActor
@@ -159,7 +159,6 @@ final class InvitedRoundsViewModel: ObservableObject {
     }
 
     private func preloadProfileImages() async {
-        // Extract all photo URLs from inviter profiles
         let photoURLs = inviterProfiles.values.compactMap { profile -> URL? in
             guard let urlString = profile.photoUrls.first else { return nil }
             return URL(string: urlString)
@@ -167,24 +166,11 @@ final class InvitedRoundsViewModel: ObservableObject {
 
         guard !photoURLs.isEmpty else { return }
 
-        // Download all images in parallel and cache them
+        let pipeline = ImagePipeline.shared
         await withTaskGroup(of: Void.self) { group in
             for url in photoURLs {
                 group.addTask {
-                    // Check if already cached
-                    if ImageCache.shared.get(for: url) != nil {
-                        return
-                    }
-
-                    // Download and cache
-                    do {
-                        let (data, _) = try await URLSession.shared.data(from: url)
-                        if let image = UIImage(data: data) {
-                            ImageCache.shared.set(image, for: url)
-                        }
-                    } catch {
-                        // Silently fail - image will show placeholder
-                    }
+                    _ = try? await pipeline.image(for: url)
                 }
             }
         }

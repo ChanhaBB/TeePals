@@ -22,19 +22,7 @@ struct CommentInputBar: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
-            // Profile photo (bigger for prominence)
-            CachedAsyncImage(url: URL(string: userProfilePhotoUrl ?? "")) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Circle().fill(AppColors.textTertiary.opacity(0.3))
-                    .overlay {
-                        Image(systemName: "person.fill")
-                            .foregroundColor(AppColors.textTertiary.opacity(0.6))
-                            .font(.system(size: 20))
-                    }
-            }
-            .frame(width: 40, height: 40)
-            .clipShape(Circle())
+            TPAvatar(url: URL(string: userProfilePhotoUrl ?? ""), size: 40)
 
             // Oval text field capsule (grows with content)
             HStack(alignment: .bottom, spacing: 8) {

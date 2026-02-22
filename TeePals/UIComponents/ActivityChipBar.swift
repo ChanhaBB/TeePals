@@ -3,11 +3,12 @@ import SwiftUI
 /// Horizontal pill-shaped chip bar for Activity tab navigation.
 /// Selected = forest green fill + white text.
 /// Unselected = white + border + secondary text.
-/// Invites chip shows a badge count when not selected (neutral pill).
+/// Invites and Pending chips show badge counts when they have items.
 struct ActivityChipBar: View {
 
     @Binding var selectedTab: ActivityTab
     let inviteCount: Int
+    let pendingCount: Int
 
     var body: some View {
         HStack(spacing: AppSpacingV3.xs) {
@@ -17,18 +18,27 @@ struct ActivityChipBar: View {
         }
     }
 
+    private func badgeCount(for tab: ActivityTab) -> Int {
+        switch tab {
+        case .invites: return inviteCount
+        case .pending: return pendingCount
+        default: return 0
+        }
+    }
+
     private func chipButton(for tab: ActivityTab) -> some View {
         let isSelected = selectedTab == tab
+        let count = badgeCount(for: tab)
 
         return Button { selectedTab = tab } label: {
             HStack(spacing: 6) {
-                Text(chipText(for: tab, isSelected: isSelected))
+                Text(chipText(for: tab, isSelected: isSelected, count: count))
                     .font(.system(size: 11, weight: .bold))
                     .tracking(0.8)
                     .textCase(.uppercase)
 
-                if tab == .invites && inviteCount > 0 && !isSelected {
-                    Text("\(inviteCount)")
+                if count > 0 && !isSelected {
+                    Text("\(count)")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(Color.gray.opacity(0.6))
                         .padding(.horizontal, 6)
@@ -38,7 +48,7 @@ struct ActivityChipBar: View {
                 }
             }
             .foregroundColor(isSelected ? .white : AppColorsV3.textSecondary)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(isSelected ? AppColorsV3.forestGreen : .white)
             .overlay(
@@ -50,9 +60,9 @@ struct ActivityChipBar: View {
         .buttonStyle(.plain)
     }
 
-    private func chipText(for tab: ActivityTab, isSelected: Bool) -> String {
-        if tab == .invites && inviteCount > 0 && isSelected {
-            return "\(tab.title) (\(inviteCount))"
+    private func chipText(for tab: ActivityTab, isSelected: Bool, count: Int) -> String {
+        if count > 0 && isSelected {
+            return "\(tab.title) (\(count))"
         }
         return tab.title
     }

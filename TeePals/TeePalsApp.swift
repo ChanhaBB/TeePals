@@ -9,8 +9,8 @@ struct TeePalsApp: App {
 
     init() {
         FirebaseApp.configure()
+        TPImagePipeline.configure()
 
-        // Verify V3 fonts are loaded
         #if DEBUG
         verifyCustomFonts()
         #endif

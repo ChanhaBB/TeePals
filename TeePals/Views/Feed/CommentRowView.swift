@@ -312,24 +312,9 @@ struct CommentRowView: View {
     // MARK: - Avatar Helper
 
     private func avatarView(c: Comment, size: CGFloat) -> some View {
-        Group {
-            if let photoUrl = c.authorPhotoUrl, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    Circle().fill(AppColors.backgroundSecondary)
-                }
-            } else {
-                Circle()
-                    .fill(AppColors.primary.opacity(0.15))
-                    .overlay(
-                        Text(String(c.authorNickname?.prefix(1) ?? "?"))
-                            .font(size > 30 ? AppTypography.bodyMedium : AppTypography.caption)
-                            .foregroundColor(AppColors.primary)
-                    )
-            }
-        }
-        .frame(width: size, height: size)
-        .clipShape(Circle())
+        TPAvatar(
+            url: c.authorPhotoUrl.flatMap { URL(string: $0) },
+            size: size
+        )
     }
 }

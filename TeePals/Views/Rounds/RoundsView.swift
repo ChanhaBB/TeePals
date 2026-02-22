@@ -13,7 +13,7 @@ struct RoundsView: View {
     @State private var selectedSegment: RoundsSegment = .nearby
     @State private var showingCreateRound = false
     @State private var showingFilters = false
-    @State private var selectedRound: Round?
+    @State private var roundDetail: RoundDetailIdentifier?
 
     init(
         nearbyViewModel: RoundsListViewModel,
@@ -24,58 +24,50 @@ struct RoundsView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                AppColorsV3.bgNeutral.ignoresSafeArea()
+        ZStack(alignment: .bottomTrailing) {
+            AppColorsV3.bgNeutral.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    // Header section (segmented control + filter summary)
-                    headerSection
+            VStack(spacing: 0) {
+                headerSection
+                segmentContent
+            }
 
-                    // Content area per segment
-                    segmentContent
-                }
-
-                // Floating action button (always visible)
-                floatingActionButton
-            }
-            .navigationBarHidden(true)
-            .navigationDestination(item: $selectedRound) { round in
-                if let roundId = round.id {
-                    RoundDetailView(viewModel: container.makeRoundDetailViewModel(roundId: roundId))
-                }
-            }
-            .sheet(isPresented: $showingCreateRound) {
-                CreateRoundFlow(
-                    viewModel: container.makeCreateRoundViewModel(),
-                    onSuccess: { _ in refreshCurrentSegment() }
-                )
-            }
-            .sheet(isPresented: $showingFilters) {
-                RoundsFilterSheet(viewModel: nearbyViewModel)
-            }
-            .task {
-                handlePendingActivityTarget()
-
-                await loadSegment(selectedSegment)
-
-                Task {
-                    await preloadOtherSegments()
-                }
-            }
-            .onChange(of: selectedSegment) { _, newSegment in
-                Task { await loadSegment(newSegment) }
-            }
-            .onChange(of: deepLinkCoordinator.navigationTrigger) { _, roundId in
-                if let roundId = roundId {
-                    handleDeepLinkNavigation(roundId: roundId)
-                }
-            }
-            .onChange(of: deepLinkCoordinator.activityTabTarget) { _, _ in
-                handlePendingActivityTarget()
-            }
-            .animation(.none, value: selectedSegment)
+            floatingActionButton
         }
+        .sheet(isPresented: $showingCreateRound) {
+            CreateRoundFlow(
+                viewModel: container.makeCreateRoundViewModel(),
+                onSuccess: { _ in refreshCurrentSegment() }
+            )
+        }
+        .sheet(isPresented: $showingFilters) {
+            RoundsFilterSheet(viewModel: nearbyViewModel)
+        }
+        .fullScreenCover(item: $roundDetail) { item in
+            RoundDetailCover(roundId: item.roundId)
+                .environmentObject(container)
+        }
+        .task {
+            handlePendingActivityTarget()
+
+            await loadSegment(selectedSegment)
+
+            Task {
+                await preloadOtherSegments()
+            }
+        }
+        .onChange(of: selectedSegment) { _, newSegment in
+            Task { await loadSegment(newSegment) }
+        }
+        .onChange(of: deepLinkCoordinator.navigationTrigger) { _, roundId in
+            if let roundId = roundId {
+                handleDeepLinkNavigation(roundId: roundId)
+            }
+        }
+        .onChange(of: deepLinkCoordinator.activityTabTarget) { _, _ in
+            handlePendingActivityTarget()
+        }
+        .animation(.none, value: selectedSegment)
     }
     
     // MARK: - Header Section
@@ -100,7 +92,8 @@ struct RoundsView: View {
             } else if selectedSegment == .activity {
                 ActivityChipBar(
                     selectedTab: $activityViewModel.selectedTab,
-                    inviteCount: activityViewModel.inviteCount
+                    inviteCount: activityViewModel.inviteCount,
+                    pendingCount: activityViewModel.pendingCount
                 )
                 .padding(.horizontal, AppSpacingV3.contentPadding)
             }
@@ -128,7 +121,9 @@ struct RoundsView: View {
         case .nearby:
             NearbyRoundsContent(
                 viewModel: nearbyViewModel,
-                onRoundTap: { selectedRound = $0 },
+                onRoundTap: { round in
+                    if let id = round.id { roundDetail = RoundDetailIdentifier(roundId: id) }
+                },
                 onCreateRound: { attemptCreateRound() },
                 onShowFilters: { showingFilters = true }
             )
@@ -137,7 +132,9 @@ struct RoundsView: View {
         case .activity:
             ActivityRoundsViewV2(
                 viewModel: activityViewModel,
-                onRoundTap: { selectedRound = $0 },
+                onRoundTap: { round in
+                    if let id = round.id { roundDetail = RoundDetailIdentifier(roundId: id) }
+                },
                 onCreateRound: { attemptCreateRound() },
                 onSwitchToNearby: { selectedSegment = .nearby }
             )
@@ -214,19 +211,8 @@ struct RoundsView: View {
     // MARK: - Deep Link Handling
 
     private func handleDeepLinkNavigation(roundId: String) {
-        // Create a minimal Round object to trigger navigation
-        let round = Round(
-            id: roundId,
-            hostUid: "",
-            title: "Loading...",
-            courseCandidates: [],
-            teeTimeCandidates: []
-        )
-
-        // Trigger navigation
-        selectedRound = round
-
-        // Clear the navigation trigger
+        roundDetail = RoundDetailIdentifier(roundId: roundId)
         deepLinkCoordinator.clearNavigationTrigger()
     }
 }
+

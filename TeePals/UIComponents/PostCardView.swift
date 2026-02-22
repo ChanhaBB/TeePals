@@ -107,21 +107,10 @@ struct PostCardView: View {
     }
     
     private var avatarView: some View {
-        Group {
-            if let photoUrl = post.authorPhotoUrl, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    initialsView
-                }
-            } else {
-                initialsView
-            }
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(Circle())
+        TPAvatar(
+            url: post.authorPhotoUrl.flatMap { URL(string: $0) },
+            size: 40
+        )
     }
     
     private var initialsView: some View {
@@ -195,18 +184,8 @@ struct PostCardView: View {
     }
 
     private func photoView(url: String) -> some View {
-        CachedAsyncImage(url: URL(string: url)) { image in
-            image
-                .resizable()
-                .scaledToFill()
-        } placeholder: {
-            Rectangle()
-                .fill(AppColors.backgroundSecondary)
-                .overlay(
-                    ProgressView()
-                )
-        }
-        .clipped()
+        TPImage(url: URL(string: url))
+            .clipped()
     }
     
     // MARK: - Linked Round Preview
@@ -224,7 +203,7 @@ struct PostCardView: View {
 
                 if let round = linkedRound {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(round.displayCourseName)
+                        Text(round.displayCourseName.compactCourseName())
                             .font(AppTypography.labelLarge)
                             .foregroundColor(AppColors.textPrimary)
 

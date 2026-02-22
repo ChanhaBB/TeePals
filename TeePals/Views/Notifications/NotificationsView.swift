@@ -7,7 +7,7 @@ struct NotificationsView: View {
     @EnvironmentObject var container: AppContainer
     @ObservedObject var viewModel: NotificationsViewModel
 
-    @State private var selectedRoundId: String?
+    @State private var roundDetail: RoundDetailIdentifier?
     @State private var selectedPostId: String?
     @State private var selectedProfileUid: String?
     @State private var selectedFeedbackRoundId: String?
@@ -51,8 +51,9 @@ struct NotificationsView: View {
                     }
                 }
             }
-            .navigationDestination(item: $selectedRoundId) { roundId in
-                RoundDetailView(viewModel: container.makeRoundDetailViewModel(roundId: roundId))
+            .fullScreenCover(item: $roundDetail) { item in
+                RoundDetailCover(roundId: item.roundId)
+                    .environmentObject(container)
             }
             .navigationDestination(item: $selectedPostId) { postId in
                 PostDetailView(
@@ -241,7 +242,7 @@ struct NotificationsView: View {
     }
 
     private func navigateToRound(_ roundId: String) {
-        selectedRoundId = roundId
+        roundDetail = RoundDetailIdentifier(roundId: roundId)
     }
 
     private func navigateToPost(_ postId: String) {

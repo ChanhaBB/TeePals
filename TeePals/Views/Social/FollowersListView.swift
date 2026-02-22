@@ -117,19 +117,7 @@ struct FollowersListView: View {
             selectedUserUid = user.uid
         } label: {
             HStack(spacing: AppSpacing.sm) {
-                // Avatar
-                if let photoUrl = user.photoUrl, let url = URL(string: photoUrl) {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        initialsView(user.nickname)
-                    }
-                    .frame(width: 44, height: 44)
-                    .clipShape(Circle())
-                } else {
-                    initialsView(user.nickname)
-                        .frame(width: 44, height: 44)
-                }
+                TPAvatar(url: user.photoUrl.flatMap { URL(string: $0) }, size: 44)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(user.nickname)

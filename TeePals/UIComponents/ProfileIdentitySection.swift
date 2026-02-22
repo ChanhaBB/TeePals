@@ -52,21 +52,10 @@ struct ProfileIdentitySection: View {
     // MARK: - Avatar
 
     private var avatarView: some View {
-        Group {
-            if let firstPhotoUrl = profile.photoUrls.first, let url = URL(string: firstPhotoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    avatarPlaceholder
-                }
-            } else {
-                avatarPlaceholder
-            }
-        }
-        .frame(width: 100, height: 100)
-        .clipShape(Circle())
+        TPAvatar(
+            url: profile.photoUrls.first.flatMap { URL(string: $0) },
+            size: 100
+        )
     }
 
     private var avatarPlaceholder: some View {

@@ -150,20 +150,10 @@ struct InviteUserRow: View {
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            // Avatar
-            if let photoUrl = user.photoUrls.first, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    initialsView
-                }
-                .frame(width: 44, height: 44)
-                .clipShape(Circle())
-            } else {
-                initialsView
-            }
+            TPAvatar(
+                url: user.photoUrls.first.flatMap { URL(string: $0) },
+                size: 44
+            )
 
             // User info
             VStack(alignment: .leading, spacing: 2) {

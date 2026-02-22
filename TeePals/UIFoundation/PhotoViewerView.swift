@@ -1,4 +1,5 @@
 import SwiftUI
+import NukeUI
 
 /// Fullscreen photo viewer with swipeable paging through multiple photos.
 /// Supports swipe-down to dismiss gesture.
@@ -122,49 +123,48 @@ private struct PhotoPage: View {
 
     var body: some View {
         GeometryReader { geometry in
-            CachedAsyncImage(url: URL(string: url)) { image in
-                image
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale)
-                    .gesture(
-                        MagnificationGesture()
-                            .onChanged { value in
-                                scale = lastScale * value
-                            }
-                            .onEnded { value in
-                                lastScale = scale
-                                // Reset if zoomed out too far
-                                if scale < 1.0 {
-                                    withAnimation {
-                                        scale = 1.0
-                                        lastScale = 1.0
+            LazyImage(url: URL(string: url)) { state in
+                if let image = state.image {
+                    image
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(scale)
+                        .gesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    scale = lastScale * value
+                                }
+                                .onEnded { value in
+                                    lastScale = scale
+                                    if scale < 1.0 {
+                                        withAnimation {
+                                            scale = 1.0
+                                            lastScale = 1.0
+                                        }
+                                    }
+                                    if scale > 3.0 {
+                                        withAnimation {
+                                            scale = 3.0
+                                            lastScale = 3.0
+                                        }
                                     }
                                 }
-                                // Limit max zoom
-                                if scale > 3.0 {
-                                    withAnimation {
-                                        scale = 3.0
-                                        lastScale = 3.0
-                                    }
+                        )
+                        .onTapGesture(count: 2) {
+                            withAnimation {
+                                if scale > 1.0 {
+                                    scale = 1.0
+                                    lastScale = 1.0
+                                } else {
+                                    scale = 2.0
+                                    lastScale = 2.0
                                 }
-                            }
-                    )
-                    .onTapGesture(count: 2) {
-                        // Double tap to toggle zoom
-                        withAnimation {
-                            if scale > 1.0 {
-                                scale = 1.0
-                                lastScale = 1.0
-                            } else {
-                                scale = 2.0
-                                lastScale = 2.0
                             }
                         }
-                    }
-            } placeholder: {
-                ProgressView()
-                    .tint(.white)
+                } else {
+                    ProgressView()
+                        .tint(.white)
+                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }

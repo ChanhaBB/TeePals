@@ -10,7 +10,7 @@ struct FeedView: View {
     @State private var showCreatePost = false
     @State private var selectedPost: Post?
     @State private var selectedAuthorUid: String?
-    @State private var selectedRoundId: String?
+    @State private var roundDetail: RoundDetailIdentifier?
     
     init(viewModel: FeedViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -87,15 +87,9 @@ struct FeedView: View {
                     }
                 }
             }
-            .sheet(item: Binding(
-                get: { selectedRoundId.map { IdentifiableString(value: $0) } },
-                set: { selectedRoundId = $0?.value }
-            )) { wrapper in
-                NavigationStack {
-                    RoundDetailView(
-                        viewModel: container.makeRoundDetailViewModel(roundId: wrapper.value)
-                    )
-                }
+            .fullScreenCover(item: $roundDetail) { item in
+                RoundDetailCover(roundId: item.roundId)
+                    .environmentObject(container)
             }
             .task {
                 await viewModel.loadFeed()
@@ -203,7 +197,7 @@ struct FeedView: View {
                             selectedAuthorUid = post.authorUid
                         },
                         onRoundTap: { roundId in
-                            selectedRoundId = roundId
+                            roundDetail = RoundDetailIdentifier(roundId: roundId)
                         }
                     )
                     .onAppear {

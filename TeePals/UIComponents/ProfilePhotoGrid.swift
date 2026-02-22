@@ -189,16 +189,9 @@ private struct PhotoCell: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topTrailing) {
-                CachedAsyncImage(url: URL(string: url)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                } placeholder: {
-                    placeholder
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: AppRadii.card))
+                TPImage(url: URL(string: url))
+                    .frame(width: geometry.size.width, height: geometry.size.width)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadii.card))
 
                 // Primary badge
                 if isPrimary {

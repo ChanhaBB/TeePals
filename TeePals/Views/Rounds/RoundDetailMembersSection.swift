@@ -198,21 +198,10 @@ struct ProfileAvatarView: View {
     var onTap: (() -> Void)?
 
     var body: some View {
-        let avatarContent = Group {
-            if let urlString = url, let imageUrl = URL(string: urlString) {
-                CachedAsyncImage(url: imageUrl) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    placeholderView
-                }
-            } else {
-                placeholderView
-            }
-        }
-        .frame(width: size, height: size)
-        .clipShape(Circle())
+        let avatarContent = TPAvatar(
+            url: url.flatMap { URL(string: $0) },
+            size: size
+        )
 
         return Group {
             if let onTap = onTap, url != nil {

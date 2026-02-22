@@ -74,25 +74,29 @@ struct HeroCardV3: View {
         } else {
             // Next round: whole card is tappable
             Button(action: action) {
-                ZStack(alignment: .bottomLeading) {
-                    // Background image
+                ZStack {
                     backgroundView
 
-                    // Gradient overlay
                     gradientOverlay
 
-                    // Content
+                    // Badge anchored top-left
+                    if let badgeText = badgeText {
+                        VStack {
+                            HStack {
+                                badge(text: badgeText)
+                                Spacer()
+                            }
+                            Spacer()
+                        }
+                        .padding(AppSpacingV3.lg)
+                    }
+
+                    // Title, subtitle, CTA anchored bottom-left
                     VStack(alignment: .leading, spacing: AppSpacingV3.md) {
                         Spacer()
 
-                        if let badgeText = badgeText {
-                            badge(text: badgeText)
-                        }
-
-                        // Title and subtitle
                         contentSection
 
-                        // CTA Button (visual only, parent button handles tap)
                         ctaButtonContent
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -120,14 +124,7 @@ struct HeroCardV3: View {
                             .scaledToFill()
 
                     } else if let imageURL = backgroundImage {
-                        AsyncImage(url: imageURL) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image.resizable().scaledToFill()
-                            default:
-                                placeholderBackground
-                            }
-                        }
+                        TPImage(url: imageURL)
 
                     } else {
                         placeholderBackground
@@ -167,7 +164,6 @@ struct HeroCardV3: View {
                             .stroke(.white.opacity(0.3), lineWidth: 1)
                     )
             )
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var contentSection: some View {

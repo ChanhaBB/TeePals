@@ -284,21 +284,10 @@ struct ProfileView: View {
     }
 
     private func photoDisplay(profile: PublicProfile) -> some View {
-        Group {
-            if let photoUrl = profile.photoUrls.first, let url = URL(string: photoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    photoPlaceholder
-                }
-            } else {
-                photoPlaceholder
-            }
-        }
-        .frame(width: 100, height: 100)
-        .clipShape(Circle())
+        TPAvatar(
+            url: profile.photoUrls.first.flatMap { URL(string: $0) },
+            size: 100
+        )
         .overlay(
             Circle()
                 .stroke(AppColors.border, lineWidth: 1)

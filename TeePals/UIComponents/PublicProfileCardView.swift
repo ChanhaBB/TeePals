@@ -128,21 +128,10 @@ struct PublicProfileCardView: View {
     // MARK: - Avatar View
 
     private func avatarView(size: CGFloat, isTappable: Bool = false) -> some View {
-        let avatarContent = Group {
-            if let firstPhotoUrl = profile.photoUrls.first, let url = URL(string: firstPhotoUrl) {
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    avatarPlaceholder
-                }
-            } else {
-                avatarPlaceholder
-            }
-        }
-        .frame(width: size, height: size)
-        .clipShape(Circle())
+        let avatarContent = TPAvatar(
+            url: profile.photoUrls.first.flatMap { URL(string: $0) },
+            size: size
+        )
 
         return Group {
             if isTappable, let onAvatarTap = onAvatarTap, !profile.photoUrls.isEmpty {

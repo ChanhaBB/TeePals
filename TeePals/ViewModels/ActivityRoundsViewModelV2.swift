@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+import Nuke
 
 /// ViewModel for the Activity tab — supports Schedule, Invites, and Past chips.
 @MainActor
@@ -39,10 +39,10 @@ final class ActivityRoundsViewModelV2: ObservableObject {
 
     // MARK: - Computed Properties
 
-    /// Upcoming rounds: confirmed + hosting + pending, sorted soonest first.
+    /// Confirmed + hosting rounds only (no pending requests). Soonest first.
     var scheduleRounds: [ActivityRoundItem] {
         allRounds
-            .filter { $0.isFuture && !$0.needsAction }
+            .filter { $0.isFuture && !$0.needsAction && !$0.isPending }
             .sorted { lhs, rhs in
                 guard let l = lhs.round.startTime, let r = rhs.round.startTime else { return false }
                 return l < r
@@ -53,6 +53,16 @@ final class ActivityRoundsViewModelV2: ObservableObject {
     var inviteRounds: [ActivityRoundItem] {
         allRounds
             .filter { $0.needsAction }
+            .sorted { lhs, rhs in
+                guard let l = lhs.round.startTime, let r = rhs.round.startTime else { return false }
+                return l < r
+            }
+    }
+
+    /// Outbound requests waiting on the host.
+    var pendingRounds: [ActivityRoundItem] {
+        allRounds
+            .filter { $0.isPending && $0.isFuture }
             .sorted { lhs, rhs in
                 guard let l = lhs.round.startTime, let r = rhs.round.startTime else { return false }
                 return l < r
@@ -70,11 +80,13 @@ final class ActivityRoundsViewModelV2: ObservableObject {
     }
 
     var inviteCount: Int { inviteRounds.count }
+    var pendingCount: Int { pendingRounds.count }
 
     var isCurrentTabEmpty: Bool {
         switch selectedTab {
         case .schedule: return scheduleRounds.isEmpty
         case .invites: return inviteRounds.isEmpty
+        case .pending: return pendingRounds.isEmpty
         case .past: return pastRounds.isEmpty
         }
     }
@@ -272,16 +284,11 @@ final class ActivityRoundsViewModelV2: ObservableObject {
 
         guard !photoURLs.isEmpty else { return }
 
+        let pipeline = ImagePipeline.shared
         await withTaskGroup(of: Void.self) { group in
             for url in photoURLs {
                 group.addTask {
-                    if ImageCache.shared.get(for: url) != nil { return }
-                    do {
-                        let (data, _) = try await URLSession.shared.data(from: url)
-                        if let image = UIImage(data: data) {
-                            ImageCache.shared.set(image, for: url)
-                        }
-                    } catch {}
+                    _ = try? await pipeline.image(for: url)
                 }
             }
         }

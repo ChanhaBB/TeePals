@@ -1,28 +1,19 @@
 import Foundation
+import UIKit
+import Nuke
 
 /// Service for fetching and caching golf course photos from Google Places API (New).
 ///
 /// **Caching Strategy (Google Places ToS Compliant):**
-/// - Memory cache: place_id → photo URL (session-only, instant access)
-/// - URLCache: Automatic disk cache (respects HTTP headers, per-device only)
-/// - Google Places API (New): Fetch on cache miss
+/// - Memory + disk cache via Nuke's shared `ImagePipeline` (25-day TTL on disk)
+/// - Cache key: stable `teepals-course://{placeId}` URL per course
+/// - Google Places API (New): Fetch on cache miss only
 ///
-/// **Why This is Compliant:**
-/// - No server-side CDN (Firebase Storage removed)
-/// - Client-side caching only (memory + URLCache disk)
-/// - Respects cache-control headers from Google
-/// - Uses place_id as canonical identifier (Google explicitly allows storing place_id)
-///
-/// **API Usage:**
-/// - Uses Places API (New) v1 endpoints with proper iOS headers
-/// - Includes X-Ios-Bundle-Identifier for iOS app restrictions
-/// - Supports bundle ID restrictions in Google Cloud Console
-///
-/// **Performance:**
-/// - First load: ~500ms (Google API call)
-/// - Subsequent loads: instant (memory) or ~50-100ms (URLCache disk)
-/// - Memory cache persists during app session
-/// - URLCache persists across sessions per system cache policy
+/// **Flow:**
+/// 1. Resolve place_id from course name/location (cached in memory)
+/// 2. Check Nuke cache for existing photo → return immediately if hit
+/// 3. On miss: fetch photo name → download image with auth headers
+/// 4. Store in Nuke cache (memory + disk) → return stable URL
 @MainActor
 final class CoursePhotoService {
 
@@ -34,18 +25,17 @@ final class CoursePhotoService {
 
     // MARK: - Cache
 
-    /// In-memory cache: place_id → photo URL (data URL with actual image data)
-    private var photoURLCache: [String: URL] = [:]
+    /// course identifier → place_id (avoids redundant API calls).
+    /// Backed by UserDefaults for persistence across app launches.
+    private var placeIdCache: [String: String]
 
-    /// In-memory cache: course identifier → place_id
-    /// Avoids redundant Place Search API calls for same course
-    private var placeIdCache: [String: String] = [:]
+    private static let placeIdCacheKey = "teepals_placeIdCache"
 
     // MARK: - Constants
 
     private enum Config {
-        static let photoMaxWidth = 400  // Thumbnail size for cards
-        static let photoMaxHeight = 400
+        static let photoMaxWidth = 800
+        static let photoMaxHeight = 600
     }
 
     // MARK: - Init
@@ -54,57 +44,57 @@ final class CoursePhotoService {
         self.googleAPIKey = googleAPIKey
         self.urlSession = urlSession
         self.bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.teepals.app"
-
-        // Ensure URLSession has URLCache enabled (it does by default)
-        // URLCache will handle disk caching automatically and respect HTTP cache headers
+        self.placeIdCache = UserDefaults.standard.dictionary(forKey: Self.placeIdCacheKey) as? [String: String] ?? [:]
     }
 
     // MARK: - Public API
 
-    /// Fetch photo URL for a course (with compliant caching)
-    /// - Parameter course: The course candidate to fetch photo for
-    /// - Returns: URL to photo, or nil if not available
+    /// Fetch photo URL for a course. Returns a stable URL that resolves from Nuke's cache.
+    ///
+    /// On first call, downloads from Google Places API and caches.
+    /// On subsequent calls, returns immediately from cache.
     func fetchPhotoURL(for course: CourseCandidate) async -> URL? {
-        print("📸 CoursePhotoService: Fetching photo for \(course.name)")
         let courseKey = generateCourseKey(course: course)
 
-        // Step 1: Get place_id (from cache or API)
         guard let placeId = await getPlaceId(for: course, courseKey: courseKey) else {
-            print("❌ CoursePhotoService: Could not find place_id for \(course.name)")
             return nil
         }
-        print("✅ CoursePhotoService: Found place_id: \(placeId)")
 
-        // Step 2: Check memory cache for photo URL
-        if let cachedPhotoURL = photoURLCache[placeId] {
-            print("✅ CoursePhotoService: Using cached photo URL")
-            return cachedPhotoURL
+        let stableURL = stableCacheURL(for: placeId)
+        let request = ImageRequest(url: stableURL)
+
+        if ImagePipeline.shared.cache.containsCachedImage(for: request, caches: .all) {
+            return stableURL
         }
 
-        // Step 3: Get photo name from Place Details
         guard let photoName = await getPhotoName(placeId: placeId) else {
-            print("❌ CoursePhotoService: No photo found for place_id: \(placeId)")
-            return nil
-        }
-        print("✅ CoursePhotoService: Found photo name")
-
-        // Step 4: Download photo with authenticated request
-        guard let photoURL = await downloadPhoto(photoName: photoName, placeId: placeId) else {
-            print("❌ CoursePhotoService: Failed to download photo")
             return nil
         }
 
-        // Step 5: Store in memory cache for instant future access
-        photoURLCache[placeId] = photoURL
+        guard let imageData = await downloadPhotoData(photoName: photoName) else {
+            return nil
+        }
 
-        print("✅ CoursePhotoService: Photo URL ready")
-        return photoURL
+        guard let uiImage = UIImage(data: imageData) else {
+            print("CoursePhotoService: Failed to decode image data")
+            return nil
+        }
+
+        let container = ImageContainer(image: uiImage)
+        ImagePipeline.shared.cache.storeCachedImage(container, for: request, caches: .all)
+
+        return stableURL
     }
 
-    // MARK: - Private Helpers
+    // MARK: - Stable URL
 
-    /// Generate unique course identifier for place_id caching
-    /// Uses name + city + location to create stable key (not used for photo URLs)
+    /// Deterministic URL used as cache key. Not a real network URL.
+    private func stableCacheURL(for placeId: String) -> URL {
+        URL(string: "teepals-course://photo/\(placeId)")!
+    }
+
+    // MARK: - Place ID Resolution
+
     private func generateCourseKey(course: CourseCandidate) -> String {
         let name = course.name.lowercased().replacingOccurrences(of: " ", with: "_")
         let city = course.cityLabel.lowercased().replacingOccurrences(of: " ", with: "_")
@@ -112,28 +102,23 @@ final class CoursePhotoService {
         return "\(name)_\(city)_\(latLng)"
     }
 
-    /// Get place_id for course (from cache or API)
     private func getPlaceId(for course: CourseCandidate, courseKey: String) async -> String? {
-        // Check place_id cache first
-        if let cachedPlaceId = placeIdCache[courseKey] {
-            return cachedPlaceId
+        if let cached = placeIdCache[courseKey] {
+            return cached
         }
 
-        // Fetch from Places API (New)
         guard let placeId = await searchPlace(course: course) else {
             return nil
         }
 
-        // Cache place_id (Google explicitly allows storing place_id)
         placeIdCache[courseKey] = placeId
+        UserDefaults.standard.set(placeIdCache, forKey: Self.placeIdCacheKey)
         return placeId
     }
 
-    /// Search for place using Places API (New) searchText endpoint
     private func searchPlace(course: CourseCandidate) async -> String? {
         let url = URL(string: "https://places.googleapis.com/v1/places:searchText")!
 
-        // Build request body
         let requestBody: [String: Any] = [
             "textQuery": "\(course.name) \(course.cityLabel)",
             "locationBias": [
@@ -142,7 +127,7 @@ final class CoursePhotoService {
                         "latitude": course.location.latitude,
                         "longitude": course.location.longitude
                     ],
-                    "radius": 5000.0  // 5km radius
+                    "radius": 5000.0
                 ]
             ]
         ]
@@ -156,39 +141,24 @@ final class CoursePhotoService {
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        } catch {
-            print("❌ CoursePhotoService: Failed to serialize request body - \(error)")
-            return nil
-        }
+            let (data, _) = try await urlSession.data(for: request)
 
-        do {
-            let (data, response) = try await urlSession.data(for: request)
-
-            // Log response for debugging
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 Places API (New) searchText - Status: \(httpResponse.statusCode)")
-            }
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("📡 Places API Response: \(jsonString)")
-            }
-
-            // Parse response
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let places = json["places"] as? [[String: Any]],
                   let firstPlace = places.first,
                   let placeId = firstPlace["id"] as? String else {
-                print("❌ CoursePhotoService: No places found in response")
                 return nil
             }
 
             return placeId
         } catch {
-            print("❌ CoursePhotoService: Error searching place - \(error)")
+            print("CoursePhotoService: Place search failed — \(error)")
             return nil
         }
     }
 
-    /// Get photo name from Place Details using Places API (New)
+    // MARK: - Photo Resolution
+
     private func getPhotoName(placeId: String) async -> String? {
         let url = URL(string: "https://places.googleapis.com/v1/places/\(placeId)")!
 
@@ -199,49 +169,27 @@ final class CoursePhotoService {
         request.setValue("photos", forHTTPHeaderField: "X-Goog-FieldMask")
 
         do {
-            let (data, response) = try await urlSession.data(for: request)
+            let (data, _) = try await urlSession.data(for: request)
 
-            // Log response for debugging
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 Places API (New) Details - Status: \(httpResponse.statusCode)")
-            }
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("📡 Places API Details Response: \(jsonString)")
-            }
-
-            // Parse response
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let photos = json["photos"] as? [[String: Any]],
                   let firstPhoto = photos.first,
                   let photoName = firstPhoto["name"] as? String else {
-                print("❌ CoursePhotoService: No photos found in response")
                 return nil
             }
 
             return photoName
         } catch {
-            print("❌ CoursePhotoService: Error getting photo - \(error)")
+            print("CoursePhotoService: Photo name fetch failed — \(error)")
             return nil
         }
     }
 
-    /// Download photo with authenticated request and cache locally
-    ///
-    /// Because iOS-restricted API keys require bundle identifier headers,
-    /// we can't use AsyncImage directly with the Google media URL.
-    /// Instead, we download the image with proper headers and cache it locally.
-    ///
-    /// This is compliant with Google's ToS because:
-    /// - Caching is client-side only (per-device temporary files)
-    /// - Respects HTTP cache policies
-    /// - No permanent storage or CDN behavior
-    private func downloadPhoto(photoName: String, placeId: String) async -> URL? {
+    /// Downloads photo bytes with authenticated headers. Returns raw data (not a URL).
+    private func downloadPhotoData(photoName: String) async -> Data? {
         let mediaURLString = "https://places.googleapis.com/v1/\(photoName)/media?maxWidthPx=\(Config.photoMaxWidth)&maxHeightPx=\(Config.photoMaxHeight)"
 
-        guard let mediaURL = URL(string: mediaURLString) else {
-            print("❌ CoursePhotoService: Invalid media URL")
-            return nil
-        }
+        guard let mediaURL = URL(string: mediaURLString) else { return nil }
 
         var request = URLRequest(url: mediaURL)
         request.httpMethod = "GET"
@@ -251,26 +199,15 @@ final class CoursePhotoService {
         do {
             let (data, response) = try await urlSession.data(for: request)
 
-            // Check response status
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 Photo Download - Status: \(httpResponse.statusCode)")
-                guard httpResponse.statusCode == 200 else {
-                    print("❌ CoursePhotoService: Photo download failed with status \(httpResponse.statusCode)")
-                    return nil
-                }
+            if let httpResponse = response as? HTTPURLResponse,
+               httpResponse.statusCode != 200 {
+                print("CoursePhotoService: Photo download status \(httpResponse.statusCode)")
+                return nil
             }
 
-            // Save to temporary file
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "\(placeId).jpg"
-            let fileURL = tempDir.appendingPathComponent(fileName)
-
-            try data.write(to: fileURL)
-            print("✅ CoursePhotoService: Photo cached to \(fileURL.path)")
-
-            return fileURL
+            return data
         } catch {
-            print("❌ CoursePhotoService: Error downloading photo - \(error)")
+            print("CoursePhotoService: Photo download failed — \(error)")
             return nil
         }
     }

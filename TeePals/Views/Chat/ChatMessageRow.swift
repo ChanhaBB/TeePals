@@ -165,21 +165,11 @@ struct ChatMessageRow: View {
     
     // MARK: - Avatar View
     
-    @ViewBuilder
     private var avatarView: some View {
-        if let photoUrl = senderPhotoUrl, let url = URL(string: photoUrl) {
-            CachedAsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                initialsAvatar
-            }
-            .frame(width: 32, height: 32)
-            .clipShape(Circle())
-        } else {
-            initialsAvatar
-        }
+        TPAvatar(
+            url: senderPhotoUrl.flatMap { URL(string: $0) },
+            size: 32
+        )
     }
     
     private var initialsAvatar: some View {
@@ -227,19 +217,9 @@ struct ChatMessageRow: View {
         Button {
             onPhotoTap(url)
         } label: {
-            CachedAsyncImage(url: URL(string: url)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                ZStack {
-                    Rectangle()
-                        .fill(AppColors.backgroundSecondary)
-                    ProgressView()
-                }
-            }
-            .frame(width: 200, height: 200)
-            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+            TPImage(url: URL(string: url))
+                .frame(width: 200, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
         }
         .buttonStyle(.plain)
     }

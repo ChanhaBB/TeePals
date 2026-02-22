@@ -118,6 +118,7 @@
 		966A60E32F1180A80064F1A9 /* RoundDetailSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60E12F1180A80064F1A9 /* RoundDetailSections.swift */; };
 		966A60E42F1180A80064F1A9 /* RoundDetailMoreSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60E02F1180A80064F1A9 /* RoundDetailMoreSections.swift */; };
 		966A60E52F1180A80064F1A9 /* RoundDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60E22F1180A80064F1A9 /* RoundDetailView.swift */; };
+		10000032 /* RoundDetailCover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000033 /* RoundDetailCover.swift */; };
 		966A60E72F1199400064F1A9 /* OtherUserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60E62F1199400064F1A9 /* OtherUserProfileViewModel.swift */; };
 		966A60E92F1199550064F1A9 /* OtherUserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60E82F1199550064F1A9 /* OtherUserProfileView.swift */; };
 		966A60EB2F1199770064F1A9 /* EditRoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966A60EA2F1199770064F1A9 /* EditRoundView.swift */; };
@@ -187,13 +188,16 @@
 		96910BC72F443944005635DA /* PrimaryButtonV3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BC62F443944005635DA /* PrimaryButtonV3.swift */; };
 		96910BCA2F469DEF005635DA /* FilterSummaryViewV3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BC82F469DEF005635DA /* FilterSummaryViewV3.swift */; };
 		96910BCD2F46F8AC005635DA /* Array+Chunked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BCC2F46F8AC005635DA /* Array+Chunked.swift */; };
+		10000031 /* String+CompactCourse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000030 /* String+CompactCourse.swift */; };
 		96910BCF2F46F8C3005635DA /* FollowUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BCE2F46F8C3005635DA /* FollowUser.swift */; };
 		96910BD12F46F8D6005635DA /* ProfileCompletionEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD02F46F8D6005635DA /* ProfileCompletionEvaluator.swift */; };
 		96910BD32F46F8F8005635DA /* AsyncContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD22F46F8F8005635DA /* AsyncContentView.swift */; };
 		96910BD52F46FA00005635DA /* ProfileGateCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD42F46FA00005635DA /* ProfileGateCoordinator.swift */; };
 		96910BD52F46FB65005635DA /* FeedRankingConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD42F46FB65005635DA /* FeedRankingConfig.swift */; };
 		96910BD72F46FB78005635DA /* TestDataHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD62F46FB78005635DA /* TestDataHelper.swift */; };
-		96910BE02F46FB99005635DA /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BD92F46FB99005635DA /* CachedAsyncImage.swift */; };
+		96AA10012F1D10010064F1A9 /* TPImagePipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96AA10042F1D10040064F1A9 /* TPImagePipeline.swift */; };
+		96AA10022F1D10020064F1A9 /* TPImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96AA10052F1D10050064F1A9 /* TPImage.swift */; };
+		96AA10032F1D10030064F1A9 /* TPAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96AA10062F1D10060064F1A9 /* TPAvatar.swift */; };
 		96910BE12F46FB99005635DA /* PhotoViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BDC2F46FB99005635DA /* PhotoViewerView.swift */; };
 		96910BE22F46FB99005635DA /* SectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BDD2F46FB99005635DA /* SectionCard.swift */; };
 		96910BE32F46FB99005635DA /* FormFieldRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96910BDA2F46FB99005635DA /* FormFieldRow.swift */; };
@@ -211,6 +215,7 @@
 		10000000 /* TeePals.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TeePals.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		10000001 /* TeePalsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeePalsApp.swift; sourceTree = "<group>"; };
 		10000018 /* FirestoreConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreConstants.swift; sourceTree = "<group>"; };
+		10000030 /* String+CompactCourse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CompactCourse.swift"; sourceTree = "<group>"; };
 		10000019 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		10000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		10000021 /* TeePals.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeePals.entitlements; sourceTree = "<group>"; };
@@ -318,6 +323,7 @@
 		966A60E02F1180A80064F1A9 /* RoundDetailMoreSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundDetailMoreSections.swift; sourceTree = "<group>"; };
 		966A60E12F1180A80064F1A9 /* RoundDetailSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundDetailSections.swift; sourceTree = "<group>"; };
 		966A60E22F1180A80064F1A9 /* RoundDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundDetailView.swift; sourceTree = "<group>"; };
+		10000033 /* RoundDetailCover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundDetailCover.swift; sourceTree = "<group>"; };
 		966A60E62F1199400064F1A9 /* OtherUserProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileViewModel.swift; sourceTree = "<group>"; };
 		966A60E82F1199550064F1A9 /* OtherUserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileView.swift; sourceTree = "<group>"; };
 		966A60EA2F1199770064F1A9 /* EditRoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRoundView.swift; sourceTree = "<group>"; };
@@ -394,7 +400,9 @@
 		96910BD42F46FB65005635DA /* FeedRankingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedRankingConfig.swift; sourceTree = "<group>"; };
 		96910BD62F46FB78005635DA /* TestDataHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDataHelper.swift; sourceTree = "<group>"; };
 		96910BD82F46FB99005635DA /* AdvancedTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedTextEditor.swift; sourceTree = "<group>"; };
-		96910BD92F46FB99005635DA /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
+		96AA10042F1D10040064F1A9 /* TPImagePipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TPImagePipeline.swift; sourceTree = "<group>"; };
+		96AA10052F1D10050064F1A9 /* TPImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TPImage.swift; sourceTree = "<group>"; };
+		96AA10062F1D10060064F1A9 /* TPAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TPAvatar.swift; sourceTree = "<group>"; };
 		96910BDA2F46FB99005635DA /* FormFieldRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormFieldRow.swift; sourceTree = "<group>"; };
 		96910BDB2F46FB99005635DA /* MultiSelectChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiSelectChip.swift; sourceTree = "<group>"; };
 		96910BDC2F46FB99005635DA /* PhotoViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewerView.swift; sourceTree = "<group>"; };
@@ -463,6 +471,7 @@
 				966A61032F13E2230064F1A9 /* GeoHashUtil.swift */,
 				966A61042F13E2230064F1A9 /* GeoPrecisionPolicy.swift */,
 				10000018 /* FirestoreConstants.swift */,
+				10000030 /* String+CompactCourse.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -587,6 +596,7 @@
 			children = (
 				96910BD02F46F8D6005635DA /* ProfileCompletionEvaluator.swift */,
 				96910B862F287061005635DA /* CoursePhotoService.swift */,
+				96AA10042F1D10040064F1A9 /* TPImagePipeline.swift */,
 				965BCAE12F19A39600063CD5 /* ShareLinkService.swift */,
 				9604DC4F2F15BAF800C7D73F /* FeedRankingService.swift */,
 				966A61122F13FA920064F1A9 /* ActivityRoundsService.swift */,
@@ -617,6 +627,8 @@
 				966A60A52F1151C80064F1A9 /* CitySearchSheet.swift */,
 				966A60A72F1151C80064F1A9 /* LocationFieldView.swift */,
 				966A60462F11330F0064F1A9 /* PublicProfileCardView.swift */,
+				96AA10052F1D10050064F1A9 /* TPImage.swift */,
+				96AA10062F1D10060064F1A9 /* TPAvatar.swift */,
 			);
 			path = UIComponents;
 			sourceTree = "<group>";
@@ -719,6 +731,7 @@
 				966A60EA2F1199770064F1A9 /* EditRoundView.swift */,
 				966A60E02F1180A80064F1A9 /* RoundDetailMoreSections.swift */,
 				966A60E12F1180A80064F1A9 /* RoundDetailSections.swift */,
+				10000033 /* RoundDetailCover.swift */,
 				966A60E22F1180A80064F1A9 /* RoundDetailView.swift */,
 				966A60582F11330F0064F1A9 /* RoundsView.swift */,
 			);
@@ -762,7 +775,6 @@
 			isa = PBXGroup;
 			children = (
 				96910BD82F46FB99005635DA /* AdvancedTextEditor.swift */,
-				96910BD92F46FB99005635DA /* CachedAsyncImage.swift */,
 				96910BDA2F46FB99005635DA /* FormFieldRow.swift */,
 				96910BDB2F46FB99005635DA /* MultiSelectChip.swift */,
 				96910BDC2F46FB99005635DA /* PhotoViewerView.swift */,
@@ -878,6 +890,8 @@
 				20000002 /* FirebaseFirestore */,
 				966A5FC32F0FF7050064F1A9 /* FirebaseAnalytics */,
 				966A60C32F115A7E0064F1A9 /* FirebaseStorage */,
+				96AA00012F1D00010064F1A9 /* Nuke */,
+				96AA00022F1D00020064F1A9 /* NukeUI */,
 			);
 			productName = TeePals;
 			productReference = 10000000 /* TeePals.app */;
@@ -909,6 +923,7 @@
 			mainGroup = 40000000;
 			packageReferences = (
 				80000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				96AA00032F1D00030064F1A9 /* XCRemoteSwiftPackageReference "Nuke" */,
 			);
 			productRefGroup = 40000010 /* Products */;
 			projectDirPath = "";
@@ -966,6 +981,9 @@
 				966A609F2F1146770064F1A9 /* AppSpacing.swift in Sources */,
 				966A61572F1467080064F1A9 /* UserPostsListView.swift in Sources */,
 				96910B872F287061005635DA /* CoursePhotoService.swift in Sources */,
+				96AA10012F1D10010064F1A9 /* TPImagePipeline.swift in Sources */,
+				96AA10022F1D10020064F1A9 /* TPImage.swift in Sources */,
+				96AA10032F1D10030064F1A9 /* TPAvatar.swift in Sources */,
 				965BCAD62F183FAA00063CD5 /* InviteUsersSheet.swift in Sources */,
 				966A60A02F1146770064F1A9 /* AppColors.swift in Sources */,
 				965BCADE2F18644A00063CD5 /* FirestoreNotificationsRepository.swift in Sources */,
@@ -981,6 +999,7 @@
 				96910BD32F46F8F8005635DA /* AsyncContentView.swift in Sources */,
 				966A60E42F1180A80064F1A9 /* RoundDetailMoreSections.swift in Sources */,
 				966A60E52F1180A80064F1A9 /* RoundDetailView.swift in Sources */,
+				10000032 /* RoundDetailCover.swift in Sources */,
 				96910BD72F46FB78005635DA /* TestDataHelper.swift in Sources */,
 				96910BD52F46FB65005635DA /* FeedRankingConfig.swift in Sources */,
 				966A61192F13FAA50064F1A9 /* FirestoreRoundDecoder.swift in Sources */,
@@ -1032,7 +1051,6 @@
 				966A606B2F11330F0064F1A9 /* AuthView.swift in Sources */,
 				96910BCF2F46F8C3005635DA /* FollowUser.swift in Sources */,
 				966A61412F1466A60064F1A9 /* Comment.swift in Sources */,
-				96910BE02F46FB99005635DA /* CachedAsyncImage.swift in Sources */,
 				96910BE12F46FB99005635DA /* PhotoViewerView.swift in Sources */,
 				96910BE22F46FB99005635DA /* SectionCard.swift in Sources */,
 				96910BE32F46FB99005635DA /* FormFieldRow.swift in Sources */,
@@ -1074,6 +1092,7 @@
 				966A60E92F1199550064F1A9 /* OtherUserProfileView.swift in Sources */,
 				96910B8D2F2F4AF2005635DA /* HomeViewModel.swift in Sources */,
 				96910BCD2F46F8AC005635DA /* Array+Chunked.swift in Sources */,
+				10000031 /* String+CompactCourse.swift in Sources */,
 				966A60F92F11A51F0064F1A9 /* EditRoundCourseDateSections.swift in Sources */,
 				966A606F2F11330F0064F1A9 /* Round.swift in Sources */,
 				966A61092F13E2350064F1A9 /* RoundsSearchService.swift in Sources */,
@@ -1353,6 +1372,14 @@
 				minimumVersion = 10.0.0;
 			};
 		};
+		96AA00032F1D00030064F1A9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1375,6 +1402,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 80000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		96AA00012F1D00010064F1A9 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96AA00032F1D00030064F1A9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		96AA00022F1D00020064F1A9 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96AA00032F1D00030064F1A9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -72,6 +72,8 @@ struct ActivityRoundsViewV2: View {
             scheduleContent
         case .invites:
             invitesContent
+        case .pending:
+            pendingContent
         case .past:
             pastContent
         }
@@ -95,28 +97,16 @@ struct ActivityRoundsViewV2: View {
         CompactRoundCard(
             dateMonth: monthAbbrev(item.round.startTime),
             dateDay: dayOfMonth(item.round.startTime),
-            courseName: item.round.displayCourseName,
+            courseName: item.round.displayCourseName.compactCourseName(),
             hostName: item.hostProfile?.nickname ?? "Host",
             hostPhotoURL: item.hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
             distance: distanceToRound(item.round),
-            statusBadge: scheduleStatusBadge(for: item),
+            statusBadge: item.role == .hosting ? "Hosting" : nil,
+            showNotificationDot: item.role == .hosting && item.round.requestCount > 0,
             isUserRound: item.isConfirmedOrHosting,
             showSlots: false,
             action: { onRoundTap(item.round) }
         )
-    }
-
-    private func scheduleStatusBadge(for item: ActivityRoundItem) -> String? {
-        if item.role == .hosting && item.round.requestCount > 0 {
-            return "\(item.round.requestCount) Requests"
-        }
-        if item.isPending {
-            return "Awaiting Host"
-        }
-        if item.role == .hosting {
-            return "Hosting"
-        }
-        return nil
     }
 
     // MARK: - Invites Tab
@@ -140,7 +130,7 @@ struct ActivityRoundsViewV2: View {
         return ActivityInviteCard(
             dateMonth: monthAbbrev(item.round.startTime),
             dateDay: dayOfMonth(item.round.startTime),
-            courseName: item.round.displayCourseName,
+            courseName: item.round.displayCourseName.compactCourseName(),
             inviterName: hostName,
             inviterPhotoURL: hostPhoto.flatMap(URL.init),
             onTap: { onRoundTap(item.round) },
@@ -161,6 +151,31 @@ struct ActivityRoundsViewV2: View {
         )
     }
 
+    // MARK: - Pending Tab
+
+    @ViewBuilder
+    private var pendingContent: some View {
+        let rounds = viewModel.pendingRounds
+        if rounds.isEmpty {
+            pendingEmptyState
+        } else {
+            ForEach(rounds) { item in
+                CompactRoundCard(
+                    dateMonth: monthAbbrev(item.round.startTime),
+                    dateDay: dayOfMonth(item.round.startTime),
+                    courseName: item.round.displayCourseName.compactCourseName(),
+                    hostName: item.hostProfile?.nickname ?? "Host",
+                    hostPhotoURL: item.hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
+                    distance: distanceToRound(item.round),
+                    statusBadge: "Awaiting Host",
+                    isUserRound: false,
+                    showSlots: false,
+                    action: { onRoundTap(item.round) }
+                )
+            }
+        }
+    }
+
     // MARK: - Past Tab
 
     @ViewBuilder
@@ -173,7 +188,7 @@ struct ActivityRoundsViewV2: View {
                 CompactRoundCard(
                     dateMonth: monthAbbrev(item.round.startTime),
                     dateDay: dayOfMonth(item.round.startTime),
-                    courseName: item.round.displayCourseName,
+                    courseName: item.round.displayCourseName.compactCourseName(),
                     hostName: item.hostProfile?.nickname ?? "Host",
                     hostPhotoURL: item.hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
                     distance: distanceToRound(item.round),
@@ -316,6 +331,40 @@ struct ActivityRoundsViewV2: View {
                 .padding(.bottom, 12)
 
             Text("Your completed rounds and scores will appear here after you play.")
+                .font(AppTypographyV3.bodyRegular)
+                .foregroundColor(AppColorsV3.textSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 240)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacingV3.contentPadding)
+    }
+
+    // MARK: - Pending Empty State
+
+    private var pendingEmptyState: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 60)
+
+            Circle()
+                .fill(Color.gray.opacity(0.04))
+                .frame(width: 80, height: 80)
+                .overlay(
+                    Image(systemName: "hourglass")
+                        .font(.system(size: 36, weight: .light))
+                        .foregroundColor(Color.gray.opacity(0.3))
+                )
+                .padding(.bottom, 24)
+
+            Text("No pending requests")
+                .font(.custom("PlayfairDisplay-Regular", size: 24, relativeTo: .title))
+                .fontWeight(.bold)
+                .foregroundColor(AppColorsV3.textPrimary)
+                .padding(.bottom, 8)
+
+            Text("When you request to join a round, it will appear here until the host responds.")
                 .font(AppTypographyV3.bodyRegular)
                 .foregroundColor(AppColorsV3.textSecondary)
                 .multilineTextAlignment(.center)
