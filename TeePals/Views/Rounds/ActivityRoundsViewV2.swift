@@ -10,8 +10,8 @@ struct ActivityRoundsViewV2: View {
     let onSwitchToNearby: () -> Void
 
     var body: some View {
-        Group {
-            if viewModel.isLoading && !viewModel.hasLoadedOnce {
+        ScrollView {
+            if !viewModel.hasLoadedOnce {
                 loadingState
             } else if let error = viewModel.errorMessage, viewModel.isEmpty {
                 errorState(error)
@@ -19,50 +19,44 @@ struct ActivityRoundsViewV2: View {
                 contentView
             }
         }
+        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Loading
 
     private var loadingState: some View {
-        ScrollView {
-            VStack(spacing: AppSpacingV3.md) {
-                ForEach(0..<4, id: \.self) { _ in
-                    SkeletonCard(style: .roundCard)
-                }
+        VStack(spacing: AppSpacingV3.md) {
+            ForEach(0..<4, id: \.self) { _ in
+                SkeletonCard(style: .roundCard)
             }
-            .padding(.horizontal, AppSpacingV3.contentPadding)
-            .padding(.top, AppSpacingV3.sm)
         }
-        .scrollContentBackground(.hidden)
+        .padding(.horizontal, AppSpacingV3.contentPadding)
+        .padding(.top, AppSpacingV3.sm)
+        .padding(.bottom, 100)
     }
 
     // MARK: - Error
 
     private func errorState(_ message: String) -> some View {
-        ScrollView {
-            VStack {
-                Spacer(minLength: 48)
-                InlineErrorBanner(message, actionTitle: "Retry") {
-                    Task { await viewModel.loadActivity() }
-                }
-                .padding(.horizontal, AppSpacingV3.contentPadding)
-                Spacer()
+        VStack {
+            Spacer(minLength: 48)
+            InlineErrorBanner(message, actionTitle: "Retry") {
+                Task { await viewModel.loadActivity() }
             }
+            .padding(.horizontal, AppSpacingV3.contentPadding)
+            Spacer()
         }
     }
 
     // MARK: - Content
 
     private var contentView: some View {
-        ScrollView {
-            VStack(spacing: AppSpacingV3.md) {
-                tabContent
-            }
-            .padding(.horizontal, AppSpacingV3.contentPadding)
-            .padding(.top, AppSpacingV3.xs)
-            .padding(.bottom, 100)
+        VStack(spacing: AppSpacingV3.md) {
+            tabContent
         }
-        .scrollContentBackground(.hidden)
+        .padding(.horizontal, AppSpacingV3.contentPadding)
+        .padding(.top, AppSpacingV3.xs)
+        .padding(.bottom, 100)
     }
 
     @ViewBuilder
@@ -74,8 +68,6 @@ struct ActivityRoundsViewV2: View {
             invitesContent
         case .pending:
             pendingContent
-        case .past:
-            pastContent
         }
     }
 
@@ -179,27 +171,6 @@ struct ActivityRoundsViewV2: View {
     // MARK: - Past Tab
 
     @ViewBuilder
-    private var pastContent: some View {
-        let rounds = viewModel.pastRounds
-        if rounds.isEmpty {
-            pastEmptyState
-        } else {
-            ForEach(rounds) { item in
-                CompactRoundCard(
-                    dateMonth: monthAbbrev(item.round.startTime),
-                    dateDay: dayOfMonth(item.round.startTime),
-                    courseName: item.round.displayCourseName.compactCourseName(),
-                    hostName: item.hostProfile?.nickname ?? "Host",
-                    hostPhotoURL: item.hostProfile?.photoUrls.first.flatMap { URL(string: $0) },
-                    distance: distanceToRound(item.round),
-                    isUserRound: false,
-                    showSlots: false,
-                    action: { onRoundTap(item.round) }
-                )
-            }
-        }
-    }
-
     // MARK: - Schedule Empty State
 
     private var scheduleEmptyState: some View {
@@ -309,38 +280,6 @@ struct ActivityRoundsViewV2: View {
     }
 
     // MARK: - Past Empty State
-
-    private var pastEmptyState: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 60)
-
-            Circle()
-                .fill(AppColorsV3.forestGreen.opacity(0.05))
-                .frame(width: 80, height: 80)
-                .overlay(
-                    Image(systemName: "trophy")
-                        .font(.system(size: 36, weight: .ultraLight))
-                        .foregroundColor(AppColorsV3.forestGreen.opacity(0.3))
-                )
-                .padding(.bottom, 24)
-
-            Text("No past rounds yet")
-                .font(.custom("PlayfairDisplay-Regular", size: 24, relativeTo: .title))
-                .fontWeight(.bold)
-                .foregroundColor(AppColorsV3.textPrimary)
-                .padding(.bottom, 12)
-
-            Text("Your completed rounds and scores will appear here after you play.")
-                .font(AppTypographyV3.bodyRegular)
-                .foregroundColor(AppColorsV3.textSecondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 240)
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, AppSpacingV3.contentPadding)
-    }
 
     // MARK: - Pending Empty State
 

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Modern Member Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --forest-green-light: #1A5240;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FFFFFF;
+            --surface-white: #FFFFFF;
+            --surface-light: #F9FAFB;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #E5E7EB;
+            --badge-bg: #E8F5E9;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .tab-active {
+            border-bottom: 2px solid var(--forest-green);
+            color: var(--forest-green);
+        }
+        .tab-inactive {
+            border-bottom: 1px solid var(--border-light);
+            color: #9CA3AF;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(844px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col bg-white">
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-6 pt-12 pb-2">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<button class="w-10 h-10 flex items-center justify-center -ml-2 text-[var(--text-primary)] hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<span class="text-[16px] font-bold font-serif text-[var(--forest-green)]">michael_sterling</span>
+<button class="w-10 h-10 flex items-center justify-center -mr-2 text-[var(--text-primary)] hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[24px]">more_horiz</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar pb-32">
+<div class="max-w-md mx-auto">
+<div class="px-6 mb-6">
+<div class="flex items-center gap-6 mb-4">
+<div class="relative shrink-0">
+<div class="w-[86px] h-[86px] rounded-full p-[2px] border border-[var(--forest-green)]/30">
+<img alt="Michael S." class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfqioSnIA1hRc9NxO9J5mpqd4JRoFbt6oHWPW_y8i25SUAL6yFy6zqhN8qtvbZ0wG2L47Nl0EzwlmRHPztIt5GGfJnDGOqvcYTLqML93_Edf1P_GYhWaj2T79S02fnOnQOnC78KBz_eCtmtSck6opGT5HCirf9Ij4Ml2dyAXW9QCAHbyehMVLvNvATkMo4mlNn6Wm5KigjgajzQLVvYWnbe7rx_4N0ufa6pSwMuHPGtrWlOSYMGgNYE8OwsHQ0tVbdXPFYcHXh"/>
+</div>
+<div class="absolute bottom-0 right-0 bg-[var(--forest-green)] text-white w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] font-bold">check</span>
+</div>
+</div>
+<div class="flex-1 flex justify-around items-center text-center">
+<div class="flex flex-col">
+<span class="text-[17px] font-bold text-[var(--text-primary)]">24</span>
+<span class="text-[13px] text-[var(--text-secondary)] font-normal">Rounds</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[17px] font-bold text-[var(--text-primary)]">1.2k</span>
+<span class="text-[13px] text-[var(--text-secondary)] font-normal">Followers</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[17px] font-bold text-[var(--text-primary)]">156</span>
+<span class="text-[13px] text-[var(--text-secondary)] font-normal">Following</span>
+</div>
+</div>
+</div>
+<div class="mb-4">
+<h1 class="text-[18px] font-serif font-bold text-[var(--text-primary)] mb-1">Michael Sterling</h1>
+<p class="text-[14px] text-[var(--text-primary)] leading-relaxed mb-1">
+              Weekend warrior looking to break 85 consistently. Love early morning tee times and the occasional 19th hole celebration. ⛳️🥃
+            </p>
+<div class="flex items-center gap-3 text-[13px]">
+<div class="flex items-center gap-1 text-[var(--text-secondary)]">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>San Diego, CA</span>
+</div>
+<a class="text-[var(--forest-green)] font-medium hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[14px]">link</span>
+                instagram.com/msterling
+              </a>
+</div>
+</div>
+<div class="flex gap-2 mb-2">
+<button class="flex-1 bg-[var(--forest-green)] text-white text-[14px] font-semibold py-2 rounded-lg active:scale-[0.98] transition-transform shadow-sm">
+              Follow
+            </button>
+<button class="flex-1 bg-white border border-gray-300 text-[var(--text-primary)] text-[14px] font-semibold py-2 rounded-lg active:scale-[0.98] transition-transform">
+              Message
+            </button>
+<button class="w-10 bg-white border border-gray-300 text-[var(--text-primary)] rounded-lg flex items-center justify-center active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</button>
+</div>
+</div>
+<div class="sticky top-[88px] bg-white z-40 border-b border-gray-100 flex">
+<button class="flex-1 py-3 flex justify-center items-center tab-active">
+<span class="material-symbols-outlined text-[24px]">grid_view</span>
+</button>
+<button class="flex-1 py-3 flex justify-center items-center tab-inactive">
+<span class="material-symbols-outlined text-[24px]">list_alt</span>
+</button>
+<button class="flex-1 py-3 flex justify-center items-center tab-inactive">
+<span class="material-symbols-outlined text-[24px]">bookmark_border</span>
+</button>
+</div>
+<div class="px-6 py-6 space-y-8">
+<section>
+<h3 class="text-[12px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">Personal Info</h3>
+<div class="grid grid-cols-2 gap-x-4 gap-y-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">cake</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Age</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">34 Years</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">work</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Occupation</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">Product Design</span>
+</div>
+</div>
+<div class="flex items-center gap-3 col-span-2">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">school</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Alma Mater</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">University of California, San Diego</span>
+</div>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-[12px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">Golf Profile</h3>
+<div class="grid grid-cols-2 gap-x-4 gap-y-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">sports_score</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Handicap</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">14.2</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">emoji_events</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Best Score</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">82</span>
+</div>
+</div>
+<div class="flex items-center gap-3 col-span-2">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">flag</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)]">Home Course</span>
+<span class="text-[14px] font-medium text-[var(--text-primary)]">Torrey Pines North</span>
+</div>
+</div>
+<div class="flex items-center gap-3 col-span-2">
+<div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[var(--forest-green)]">style</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] text-[var(--text-secondary)] mb-1">Play Style</span>
+<div class="flex gap-2">
+<span class="text-[11px] font-medium text-[var(--forest-green)] bg-[var(--forest-green)]/5 px-2 py-0.5 rounded border border-[var(--forest-green)]/10">Casual</span>
+<span class="text-[11px] font-medium text-[var(--forest-green)] bg-[var(--forest-green)]/5 px-2 py-0.5 rounded border border-[var(--forest-green)]/10">Walker</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--border-light)] pb-8 pt-3 px-6 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-12" href="#">
+<span class="material-symbols-outlined text-[26px]">home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-12" href="#">
+<span class="material-symbols-outlined text-[26px]">sports_golf</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-12" href="#">
+<span class="material-symbols-outlined text-[26px]">rss_feed</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--forest-green)] transition-colors w-12" href="#">
+<span class="material-symbols-outlined text-[26px]">favorite_border</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--forest-green)] transition-colors w-12" href="#">
+<div class="w-[26px] h-[26px] rounded-full border-2 border-[var(--text-primary)] overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfqioSnIA1hRc9NxO9J5mpqd4JRoFbt6oHWPW_y8i25SUAL6yFy6zqhN8qtvbZ0wG2L47Nl0EzwlmRHPztIt5GGfJnDGOqvcYTLqML93_Edf1P_GYhWaj2T79S02fnOnQOnC78KBz_eCtmtSck6opGT5HCirf9Ij4Ml2dyAXW9QCAHbyehMVLvNvATkMo4mlNn6Wm5KigjgajzQLVvYWnbe7rx_4N0ufa6pSwMuHPGtrWlOSYMGgNYE8OwsHQ0tVbdXPFYcHXh"/>
+</div>
+</a>
+</div>
+</nav>
+</body></html>

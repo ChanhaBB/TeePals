@@ -59,7 +59,10 @@ struct RoundsSearchFilter: Equatable {
     
     /// Specific host UID filter (for "My Rounds" queries).
     var hostUid: String?
-    
+
+    /// List of friend UIDs for filtering friends-only rounds.
+    var friendUids: [String]?
+
     // MARK: - Initializer
     
     init(
@@ -72,6 +75,7 @@ struct RoundsSearchFilter: Equatable {
         visibility: RoundVisibility? = nil,
         excludeFullRounds: Bool = true,
         hostUid: String? = nil,
+        friendUids: [String]? = nil,
         isDiscoveryMode: Bool = false
     ) {
         self.centerLat = centerLat
@@ -84,6 +88,7 @@ struct RoundsSearchFilter: Equatable {
         self.visibility = visibility
         self.excludeFullRounds = excludeFullRounds
         self.hostUid = hostUid
+        self.friendUids = friendUids
     }
     
     // MARK: - Convenience Initializers
@@ -97,6 +102,7 @@ struct RoundsSearchFilter: Equatable {
         visibility: RoundVisibility? = nil,
         excludeFullRounds: Bool = true,
         hostUid: String? = nil,
+        friendUids: [String]? = nil,
         isDiscoveryMode: Bool = false
     ) {
         self.centerLat = center.latitude
@@ -109,6 +115,7 @@ struct RoundsSearchFilter: Equatable {
         self.visibility = visibility
         self.excludeFullRounds = excludeFullRounds
         self.hostUid = hostUid
+        self.friendUids = friendUids
     }
     
     // MARK: - Computed Properties

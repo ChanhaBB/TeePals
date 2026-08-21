@@ -71,12 +71,16 @@ final class FirestoreRoundsRepository: RoundsRepository {
             query = query.whereField("status", isEqualTo: status.rawValue)
         }
         
-        // Apply visibility filter (MVP: only public)
-        if let visibility = filters.visibility {
-            query = query.whereField("visibility", isEqualTo: visibility.rawValue)
-        } else {
-            // Default to public rounds
-            query = query.whereField("visibility", isEqualTo: RoundVisibility.public.rawValue)
+        // Apply visibility filter.
+        // skipVisibilityFilter bypasses this entirely (used for profile-history queries
+        // where client-side filtering handles visibility rules per-round).
+        // Falls back to public-only for discovery feeds when neither is specified.
+        if !filters.skipVisibilityFilter {
+            if let visibility = filters.visibility {
+                query = query.whereField("visibility", isEqualTo: visibility.rawValue)
+            } else {
+                query = query.whereField("visibility", isEqualTo: RoundVisibility.public.rawValue)
+            }
         }
         
         // Apply host filter (for "my rounds" view)

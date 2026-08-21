@@ -22,4 +22,11 @@ protocol UserRepository {
     /// - Parameter uid: The user's unique identifier
     /// - Throws: Repository errors (network, permission, etc.)
     func updateLastActive(uid: String) async throws
+
+    /// Persists the device's FCM token so Cloud Functions can deliver push notifications.
+    /// Safe to call on every launch — overwrites the previous value.
+    /// - Parameters:
+    ///   - token: The FCM registration token from Firebase Messaging.
+    ///   - uid: The authenticated user's unique identifier.
+    func updateFCMToken(_ token: String, uid: String) async throws
 }

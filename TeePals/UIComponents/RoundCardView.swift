@@ -183,7 +183,7 @@ struct RoundCardView: View {
         guard !isLoadingPhoto else { return }
         isLoadingPhoto = true
 
-        coursePhotoURL = await container.coursePhotoService.fetchPhotoURL(for: course)
+        coursePhotoURL = await container.coursePhotoService?.fetchPhotoURL(for: course)
         isLoadingPhoto = false
     }
 }

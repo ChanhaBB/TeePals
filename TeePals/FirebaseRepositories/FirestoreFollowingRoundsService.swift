@@ -24,26 +24,31 @@ final class FirestoreFollowingRoundsService: FollowingRoundsService {
     func fetchFollowingHostedRounds(dateRange: DateRangeOption) async throws -> [Round] {
         // Get list of users the current user follows
         let followingUids = try await socialRepository.getFollowing()
-        
+
         guard !followingUids.isEmpty else { return [] }
-        
+
+        // Get friends list (mutual follows) for filtering friends-only rounds
+        let friendUids = try await socialRepository.getFriends()
+        let friendUidsSet = Set(friendUids)
+
         // Chunk into groups of 10 (Firestore "in" query limit)
         let chunks = followingUids.chunked(into: maxHostsPerQuery)
-        
+
         // Fetch rounds from each chunk concurrently
         var allRounds: [Round] = []
         var seenIds = Set<String>()
-        
+
         try await withThrowingTaskGroup(of: [Round].self) { group in
             for chunk in chunks {
                 group.addTask { [self] in
                     try await self.fetchRoundsForHosts(
                         hostUids: chunk,
-                        dateRange: dateRange
+                        dateRange: dateRange,
+                        friendUids: friendUidsSet
                     )
                 }
             }
-            
+
             for try await rounds in group {
                 for round in rounds {
                     guard let id = round.id, !seenIds.contains(id) else { continue }
@@ -52,35 +57,55 @@ final class FirestoreFollowingRoundsService: FollowingRoundsService {
                 }
             }
         }
-        
+
         // Sort by startTime ascending
         allRounds.sort { lhs, rhs in
             let lhsTime = lhs.startTime ?? .distantFuture
             let rhsTime = rhs.startTime ?? .distantFuture
             return lhsTime < rhsTime
         }
-        
+
         return allRounds
     }
     
     // MARK: - Private Helpers
     
-    private func fetchRoundsForHosts(hostUids: [String], dateRange: DateRangeOption) async throws -> [Round] {
+    private func fetchRoundsForHosts(
+        hostUids: [String],
+        dateRange: DateRangeOption,
+        friendUids: Set<String>
+    ) async throws -> [Round] {
         guard !hostUids.isEmpty else { return [] }
-        
+
+        // Fetch rounds without visibility filter (apply client-side)
         let query = db.collection(FirestoreCollection.rounds)
             .whereField("hostUid", in: hostUids)
             .whereField("status", isEqualTo: "open")
-            .whereField("visibility", isEqualTo: "public")
             .whereField("startTime", isGreaterThanOrEqualTo: Timestamp(date: dateRange.startDate))
             .whereField("startTime", isLessThan: Timestamp(date: dateRange.endDate))
             .order(by: "startTime", descending: false)
             .limit(to: maxResultsPerChunk)
-        
+
         let snapshot = try await query.getDocuments()
-        
-        return snapshot.documents.compactMap { doc in
+
+        // Decode and apply visibility filter client-side
+        let rounds = snapshot.documents.compactMap { doc -> Round? in
             try? roundsDecoder.decode(from: doc.data(), id: doc.documentID)
+        }
+
+        // Filter by visibility:
+        // - Public: Always show
+        // - Friends: Only if host is a friend (mutual follow)
+        // - Private: Never show (even in Following filter)
+        return rounds.filter { round in
+            switch round.visibility {
+            case .public:
+                return true
+            case .friends:
+                return friendUids.contains(round.hostUid)
+            case .private:
+                return false  // Private rounds never shown in Following filter
+            }
         }
     }
 }

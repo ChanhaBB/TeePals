@@ -24,33 +24,30 @@ struct EmptyStateView: View {
     }
     
     var body: some View {
-        VStack(spacing: AppSpacing.lg) {
-            // Icon
+        VStack(spacing: AppSpacingV3.md) {
             Image(systemName: icon)
                 .font(.system(size: 64))
-                .foregroundStyle(AppColors.primary.opacity(0.4))
+                .foregroundStyle(AppColorsV3.forestGreen.opacity(0.4))
             
-            // Text content
-            VStack(spacing: AppSpacing.sm) {
+            VStack(spacing: AppSpacingV3.xs) {
                 Text(title)
-                    .font(AppTypography.headlineLarge)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.headlineLarge)
+                    .foregroundColor(AppColorsV3.textPrimary)
                 
                 Text(message)
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.bodyMedium)
+                    .foregroundColor(AppColorsV3.textSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
             
-            // Optional CTA
             if let actionTitle = actionTitle, let action = action {
-                PrimaryButton(actionTitle, size: .medium, action: action)
+                PrimaryButtonV3(actionTitle, size: .medium, action: action)
                     .frame(maxWidth: 200)
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacingV3.xs)
             }
         }
-        .padding(AppSpacing.xl)
+        .padding(AppSpacingV3.lg)
         .frame(maxWidth: .infinity, minHeight: 300)
     }
 }
@@ -116,10 +113,10 @@ extension EmptyStateView {
 #if DEBUG
 struct EmptyStateView_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: AppSpacingV3.lg) {
             EmptyStateView.noRounds(onCreate: {})
         }
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceLight)
     }
 }
 #endif

@@ -16,12 +16,15 @@ final class InviteUsersViewModel: ObservableObject {
     // MARK: - State
 
     @Published var followingUsers: [PublicProfile] = []
+    @Published var sortedFollowingUsers: [PublicProfile] = []  // Stable sorted list
+    @Published var suggestedUsers: [PublicProfile] = []        // Frozen snapshot set at load time
     @Published var memberStatus: [String: MemberStatus] = [:]  // Track membership status
     @Published var searchText: String = ""
     @Published var isLoading = false
     @Published var isInviting: Set<String> = []  // Track which users are being invited
     @Published var errorMessage: String?
     @Published var successMessage: String?
+    @Published var currentUserProfile: PublicProfile?
 
     var isEmpty: Bool {
         followingUsers.isEmpty && !isLoading
@@ -29,11 +32,20 @@ final class InviteUsersViewModel: ObservableObject {
 
     var filteredUsers: [PublicProfile] {
         if searchText.isEmpty {
-            return followingUsers
+            return sortedFollowingUsers
         }
-        return followingUsers.filter { user in
+        return sortedFollowingUsers.filter { user in
             user.nickname.localizedCaseInsensitiveContains(searchText)
         }
+    }
+
+    var allFollowingUsers: [PublicProfile] {
+        guard searchText.isEmpty else {
+            return filteredUsers
+        }
+
+        // Return stable sorted list (no re-sorting during session)
+        return sortedFollowingUsers
     }
 
     // MARK: - Init
@@ -59,6 +71,11 @@ final class InviteUsersViewModel: ObservableObject {
         errorMessage = nil
 
         do {
+            // Load current user profile for distance calculation
+            if let uid = currentUid() {
+                currentUserProfile = try? await profileRepository.fetchPublicProfile(uid: uid)
+            }
+
             // Fetch following UIDs
             let followingUids = try await socialRepository.getFollowing()
 
@@ -90,16 +107,34 @@ final class InviteUsersViewModel: ObservableObject {
                 return profiles
             }
 
-            // Sort: non-members first, then by nickname within each group
-            followingUsers = profileResults.sorted { lhs, rhs in
-                let lhsIsMember = statusMap[lhs.id ?? ""] != nil
-                let rhsIsMember = statusMap[rhs.id ?? ""] != nil
+            // Filter out members (status == .accepted) - we only want to show people we can invite
+            let nonMembers = profileResults.filter { profile in
+                let status = statusMap[profile.id ?? ""]
+                return status != .accepted
+            }
 
-                if lhsIsMember != rhsIsMember {
-                    return !lhsIsMember  // Non-members first
+            // Sort once on load: invited first, then candidates (alphabetically)
+            let sorted = nonMembers.sorted { lhs, rhs in
+                let lhsStatus = statusMap[lhs.id ?? ""]
+                let rhsStatus = statusMap[rhs.id ?? ""]
+
+                let lhsIsInvited = lhsStatus == .invited
+                let rhsIsInvited = rhsStatus == .invited
+
+                if lhsIsInvited != rhsIsInvited {
+                    return lhsIsInvited  // Invited first
                 }
                 return lhs.nickname < rhs.nickname
             }
+
+            // Store all following users and stable sorted list
+            followingUsers = profileResults
+            sortedFollowingUsers = sorted
+
+            // Build suggested snapshot: top 5 closest uninvited candidates.
+            // Frozen at load time so rows don't disappear mid-session when tapping Invite.
+            // On next open loadFollowing() runs fresh and rebuilds with current Firestore state.
+            suggestedUsers = buildSuggested(from: sorted, statusMap: statusMap)
         } catch {
             print("Failed to load following users: \(error)")
             errorMessage = error.localizedDescription
@@ -149,6 +184,31 @@ final class InviteUsersViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    private func buildSuggested(from users: [PublicProfile], statusMap: [String: MemberStatus]) -> [PublicProfile] {
+        guard let currentProfile = currentUserProfile else { return [] }
+
+        // Only uninvited candidates — excludes .invited so fresh open always shows new suggestions
+        let candidates = users.filter { user in
+            let status = statusMap[user.id ?? ""]
+            return status == nil || canBeReinvited(status!)
+        }
+
+        let userLocation = currentProfile.primaryLocation
+        let byDistance = candidates.sorted { lhs, rhs in
+            let ld = DistanceUtil.haversineMiles(
+                lat1: userLocation.latitude, lng1: userLocation.longitude,
+                lat2: lhs.primaryLocation.latitude, lng2: lhs.primaryLocation.longitude
+            )
+            let rd = DistanceUtil.haversineMiles(
+                lat1: userLocation.latitude, lng1: userLocation.longitude,
+                lat2: rhs.primaryLocation.latitude, lng2: rhs.primaryLocation.longitude
+            )
+            return ld < rd
+        }
+
+        return Array(byDistance.prefix(5))
+    }
 
     private func canBeReinvited(_ status: MemberStatus) -> Bool {
         // Users with these statuses can be re-invited

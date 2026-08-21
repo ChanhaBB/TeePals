@@ -19,7 +19,8 @@ final class RoundDetailViewModel: ObservableObject {
     @Published var memberProfiles: [String: PublicProfile] = [:]
     @Published var hostProfile: PublicProfile?
     @Published var myMembership: RoundMember?
-    
+    @Published var currentUserProfile: PublicProfile?
+
     @Published var isLoading = false
     @Published var isActioning = false
     @Published var errorMessage: String?
@@ -71,7 +72,7 @@ final class RoundDetailViewModel: ObservableObject {
     
     var canJoin: Bool {
         guard let round = round else { return false }
-        return !isHost && !isMember && !hasRequested && !round.isFull && round.status == .open
+        return !isHost && !isMember && !hasRequested && !isInvited && !round.isFull && round.status == .open
     }
     
     var acceptedMembers: [RoundMember] {
@@ -154,6 +155,13 @@ final class RoundDetailViewModel: ObservableObject {
             async let membersData = roundsRepository.fetchMembers(roundId: roundId)
             async let membershipData = roundsRepository.fetchMembershipStatus(roundId: roundId)
 
+            // Load current user profile for distance calculation
+            let currentUserProfile: PublicProfile? = if let uid = currentUid() {
+                try? await profileRepository.fetchPublicProfile(uid: uid)
+            } else {
+                nil
+            }
+
             // Wait for core data
             let fetchedRound = try await roundData
             let fetchedMembers = try await membersData
@@ -190,6 +198,7 @@ final class RoundDetailViewModel: ObservableObject {
             myMembership = fetchedMembership
             hostProfile = profileResults[fetchedRound.hostUid]
             memberProfiles = profileResults
+            self.currentUserProfile = currentUserProfile
 
             isLoading = false
         } catch {
@@ -292,6 +301,48 @@ final class RoundDetailViewModel: ObservableObject {
             successMessage = nil
         } catch {
             // Rollback on error
+            myMembership = previousMembership
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func acceptInvite() async {
+        guard let uid = currentUid() else { return }
+
+        isActioning = true
+        errorMessage = nil
+
+        // Optimistic update
+        myMembership = RoundMember(uid: uid, role: .member, status: .accepted)
+        successMessage = "You've joined the round!"
+
+        do {
+            try await roundsRepository.acceptInvite(roundId: roundId)
+            await refresh()
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            successMessage = nil
+        } catch {
+            myMembership = RoundMember(uid: uid, role: .member, status: .invited)
+            successMessage = nil
+            errorMessage = error.localizedDescription
+        }
+
+        isActioning = false
+    }
+
+    func declineInvite() async {
+        guard let uid = currentUid() else { return }
+
+        let previousMembership = myMembership
+        myMembership = nil
+
+        do {
+            try await roundsRepository.declineInvite(roundId: roundId)
+            successMessage = "Invitation declined"
+            await refresh()
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            successMessage = nil
+        } catch {
             myMembership = previousMembership
             errorMessage = error.localizedDescription
         }

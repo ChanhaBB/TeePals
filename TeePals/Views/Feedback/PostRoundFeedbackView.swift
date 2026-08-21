@@ -38,13 +38,13 @@ struct PostRoundFeedbackView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.headlineLarge)
+                    .foregroundColor(AppColorsV3.textSecondary)
                     .frame(width: 44, height: 44)
-                    .background(AppColors.surface.opacity(0.9))
+                    .background(AppColorsV3.surfaceWhite.opacity(0.9))
                     .clipShape(Circle())
             }
-            .padding(AppSpacing.contentPadding)
+            .padding(AppSpacingV3.md)
         }
         .task {
             await viewModel.loadRound()
@@ -76,18 +76,18 @@ private struct PrimaryQuestionScreen: View {
                     VStack(spacing: 0) {
                         // Course info - subtle context
                         Text(viewModel.courseName)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(AppColors.textSecondary)
+                            .font(AppTypographyV3.bodyMedium)
+                            .foregroundColor(AppColorsV3.textSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.bottom, 24)
 
                         // Main question - hero element
                         Text("How was the group experience?")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(AppTypographyV3.displayLargeSerifRegular)
+                            .foregroundColor(AppColorsV3.textPrimary)
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
-                            .padding(.horizontal, AppSpacing.contentPadding)
+                            .padding(.horizontal, AppSpacingV3.md)
                             .padding(.bottom, 28)
 
                         // Answer buttons
@@ -96,16 +96,16 @@ private struct PrimaryQuestionScreen: View {
                             Button {
                                 viewModel.answerYes()
                             } label: {
-                                HStack(spacing: AppSpacing.sm) {
+                                HStack(spacing: AppSpacingV3.xs) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 22))
                                     Text("Everything went well")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(AppTypographyV3.headlineMediumSerif)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
                                 .foregroundColor(.white)
-                                .background(AppColors.success)
+                                .background(AppColorsV3.success)
                                 .cornerRadius(16)
                             }
 
@@ -113,28 +113,28 @@ private struct PrimaryQuestionScreen: View {
                             Button {
                                 viewModel.answerNo()
                             } label: {
-                                HStack(spacing: AppSpacing.sm) {
+                                HStack(spacing: AppSpacingV3.xs) {
                                     Image(systemName: "exclamationmark.circle")
                                         .font(.system(size: 22))
                                     Text("Report an issue")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(AppTypographyV3.headlineMediumSerif)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .foregroundColor(AppColors.textPrimary)
-                                .background(AppColors.surface)
+                                .foregroundColor(AppColorsV3.textPrimary)
+                                .background(AppColorsV3.surfaceWhite)
                                 .cornerRadius(16)
                             }
                         }
-                        .padding(.horizontal, AppSpacing.contentPadding)
+                        .padding(.horizontal, AppSpacingV3.md)
                         .padding(.bottom, 20)
 
                         // Helper text
                         Text("You can skip this — feedback is optional and private")
-                            .font(.system(size: 14))
-                            .foregroundColor(AppColors.textTertiary)
+                            .font(AppTypographyV3.bodyRegular)
+                            .foregroundColor(AppColorsV3.textTertiary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, AppSpacing.xl)
+                            .padding(.horizontal, AppSpacingV3.lg)
                     }
 
                     Spacer()
@@ -154,32 +154,32 @@ private struct EndorsementScreen: View {
             // Progress dots
             HStack(spacing: 8) {
                 Circle()
-                    .fill(AppColors.success)
+                    .fill(AppColorsV3.success)
                     .frame(width: 8, height: 8)
                 Circle()
-                    .fill(AppColors.primary)
+                    .fill(AppColorsV3.forestGreen)
                     .frame(width: 8, height: 8)
             }
             .padding(.top, 60)
 
             ScrollView {
-                VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: AppSpacingV3.lg) {
                     // Title
-                    VStack(spacing: AppSpacing.xs) {
+                    VStack(spacing: AppSpacingV3.xxs) {
                         Text("Great!")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(AppColors.success)
+                            .font(AppTypographyV3.displayMediumSerif)
+                            .foregroundColor(AppColorsV3.success)
 
                         Text("Would you play with them again?")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(AppTypographyV3.displayMediumSerif)
+                            .foregroundColor(AppColorsV3.textPrimary)
                             .multilineTextAlignment(.center)
                             .lineSpacing(2)
                     }
-                    .padding(.top, AppSpacing.xl)
+                    .padding(.top, AppSpacingV3.lg)
 
                     // Player cards
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: AppSpacingV3.md) {
                         ForEach(viewModel.participants) { participant in
                             PlayerEndorsementCard(
                                 participant: participant,
@@ -190,13 +190,13 @@ private struct EndorsementScreen: View {
                     }
 
                     // Skill accuracy question
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: AppSpacingV3.md) {
                         Text("Was everyone's skill level accurate?")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(AppTypographyV3.headlineMediumSerif)
+                            .foregroundColor(AppColorsV3.textPrimary)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                        HStack(spacing: AppSpacing.md) {
+                        HStack(spacing: AppSpacingV3.md) {
                             Button {
                                 viewModel.skillAccurate = true
                             } label: {
@@ -204,9 +204,9 @@ private struct EndorsementScreen: View {
                                     Image(systemName: viewModel.skillAccurate == true ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
                                     Text("Yes")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(AppTypographyV3.bodyLarge)
                                 }
-                                .foregroundColor(viewModel.skillAccurate == true ? AppColors.primary : AppColors.textSecondary)
+                                .foregroundColor(viewModel.skillAccurate == true ? AppColorsV3.forestGreen : AppColorsV3.textSecondary)
                             }
 
                             Button {
@@ -216,9 +216,9 @@ private struct EndorsementScreen: View {
                                     Image(systemName: viewModel.skillAccurate == false ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
                                     Text("No")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(AppTypographyV3.bodyLarge)
                                 }
-                                .foregroundColor(viewModel.skillAccurate == false ? AppColors.primary : AppColors.textSecondary)
+                                .foregroundColor(viewModel.skillAccurate == false ? AppColorsV3.forestGreen : AppColorsV3.textSecondary)
                             }
                         }
                     }
@@ -227,20 +227,20 @@ private struct EndorsementScreen: View {
                     Spacer()
                         .frame(height: 120)
                 }
-                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.horizontal, AppSpacingV3.md)
             }
 
             // Sticky bottom buttons
-            VStack(spacing: AppSpacing.sm) {
+            VStack(spacing: AppSpacingV3.xs) {
                 Button {
                     Task { await viewModel.submitFeedback() }
                 } label: {
                     Text("Submit Feedback")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(AppTypographyV3.headlineMediumSerif)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(AppColors.primary)
+                        .background(AppColorsV3.forestGreen)
                         .cornerRadius(16)
                 }
 
@@ -248,13 +248,13 @@ private struct EndorsementScreen: View {
                     viewModel.skipEndorsements()
                 } label: {
                     Text("Skip for Now")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.bodyLarge)
+                        .foregroundColor(AppColorsV3.textSecondary)
                         .frame(height: 44)
                 }
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.lg)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.md)
             .background(Color.white)
         }
     }
@@ -269,7 +269,7 @@ private struct PlayerEndorsementCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacingV3.md) {
                 TPAvatar(
                     url: participant.photoUrls.first.flatMap { URL(string: $0) },
                     size: 64
@@ -278,16 +278,16 @@ private struct PlayerEndorsementCard: View {
                 // Name & location
                 VStack(alignment: .leading, spacing: 4) {
                     Text(participant.nickname)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.headlineMediumSerif)
+                        .foregroundColor(AppColorsV3.textPrimary)
 
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 12))
+                            .font(AppTypographyV3.captionEmphasis)
                         Text(participant.primaryCityLabel)
-                            .font(.system(size: 14))
+                            .font(AppTypographyV3.bodyRegular)
                     }
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(AppColorsV3.textSecondary)
                 }
 
                 Spacer()
@@ -295,16 +295,16 @@ private struct PlayerEndorsementCard: View {
                 // Checkmark
                 Image(systemName: isEndorsed ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 28))
-                    .foregroundColor(isEndorsed ? AppColors.success : AppColors.textTertiary)
+                    .foregroundColor(isEndorsed ? AppColorsV3.success : AppColorsV3.textTertiary)
             }
-            .padding(AppSpacing.md)
+            .padding(AppSpacingV3.md)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isEndorsed ? AppColors.success.opacity(0.08) : AppColors.surface)
+                    .fill(isEndorsed ? AppColorsV3.success.opacity(0.08) : AppColorsV3.surfaceWhite)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(isEndorsed ? AppColors.success.opacity(0.3) : Color.clear, lineWidth: 2)
+                    .strokeBorder(isEndorsed ? AppColorsV3.success.opacity(0.3) : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(.plain)
@@ -313,7 +313,7 @@ private struct PlayerEndorsementCard: View {
     private var placeholderImage: some View {
         Image(systemName: "person.circle.fill")
             .resizable()
-            .foregroundColor(AppColors.textTertiary)
+            .foregroundColor(AppColorsV3.textTertiary)
     }
 }
 
@@ -327,29 +327,29 @@ private struct SelectIssueUsersScreen: View {
             // Progress dots
             HStack(spacing: 8) {
                 Circle()
-                    .fill(AppColors.error)
+                    .fill(AppColorsV3.error)
                     .frame(width: 8, height: 8)
                 Circle()
-                    .fill(AppColors.primary)
+                    .fill(AppColorsV3.forestGreen)
                     .frame(width: 8, height: 8)
             }
             .padding(.top, 60)
 
             ScrollView {
-                VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: AppSpacingV3.lg) {
                     // Title
                     Text("Who had issues?")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.displayLargeSerifRegular)
+                        .foregroundColor(AppColorsV3.textPrimary)
                         .multilineTextAlignment(.center)
-                        .padding(.top, AppSpacing.xl)
+                        .padding(.top, AppSpacingV3.lg)
 
                     Text("Select all that apply")
-                        .font(.system(size: 16))
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.bodyLarge)
+                        .foregroundColor(AppColorsV3.textSecondary)
 
                     // Player cards
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: AppSpacingV3.md) {
                         ForEach(viewModel.participants) { participant in
                             IssueUserCard(
                                 participant: participant,
@@ -363,7 +363,7 @@ private struct SelectIssueUsersScreen: View {
                     Spacer()
                         .frame(height: 100)
                 }
-                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.horizontal, AppSpacingV3.md)
             }
 
             // Sticky bottom button
@@ -371,16 +371,16 @@ private struct SelectIssueUsersScreen: View {
                 viewModel.proceedToIssueDetails()
             } label: {
                 Text("Continue")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(AppTypographyV3.headlineMediumSerif)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(viewModel.hasSelectedIssueUsers ? AppColors.primary : AppColors.textTertiary)
+                    .background(viewModel.hasSelectedIssueUsers ? AppColorsV3.forestGreen : AppColorsV3.textTertiary)
                     .cornerRadius(16)
             }
             .disabled(!viewModel.hasSelectedIssueUsers)
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.lg)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.md)
             .background(Color.white)
         }
     }
@@ -395,7 +395,7 @@ private struct IssueUserCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacingV3.md) {
                 TPAvatar(
                     url: participant.photoUrls.first.flatMap { URL(string: $0) },
                     size: 64
@@ -404,16 +404,16 @@ private struct IssueUserCard: View {
                 // Name & location
                 VStack(alignment: .leading, spacing: 4) {
                     Text(participant.nickname)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.headlineMediumSerif)
+                        .foregroundColor(AppColorsV3.textPrimary)
 
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 12))
+                            .font(AppTypographyV3.captionEmphasis)
                         Text(participant.primaryCityLabel)
-                            .font(.system(size: 14))
+                            .font(AppTypographyV3.bodyRegular)
                     }
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(AppColorsV3.textSecondary)
                 }
 
                 Spacer()
@@ -421,16 +421,16 @@ private struct IssueUserCard: View {
                 // Checkmark
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 28))
-                    .foregroundColor(isSelected ? AppColors.error : AppColors.textTertiary)
+                    .foregroundColor(isSelected ? AppColorsV3.error : AppColorsV3.textTertiary)
             }
-            .padding(AppSpacing.md)
+            .padding(AppSpacingV3.md)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? AppColors.error.opacity(0.08) : AppColors.surface)
+                    .fill(isSelected ? AppColorsV3.error.opacity(0.08) : AppColorsV3.surfaceWhite)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(isSelected ? AppColors.error.opacity(0.3) : Color.clear, lineWidth: 2)
+                    .strokeBorder(isSelected ? AppColorsV3.error.opacity(0.3) : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(.plain)
@@ -439,7 +439,7 @@ private struct IssueUserCard: View {
     private var placeholderImage: some View {
         Image(systemName: "person.circle.fill")
             .resizable()
-            .foregroundColor(AppColors.textTertiary)
+            .foregroundColor(AppColorsV3.textTertiary)
     }
 }
 
@@ -453,22 +453,22 @@ private struct IssueDetailsScreen: View {
             // Progress dots
             HStack(spacing: 8) {
                 Circle()
-                    .fill(AppColors.error.opacity(0.4))
+                    .fill(AppColorsV3.error.opacity(0.4))
                     .frame(width: 8, height: 8)
                 Circle()
-                    .fill(AppColors.error)
+                    .fill(AppColorsV3.error)
                     .frame(width: 8, height: 8)
             }
             .padding(.top, 60)
 
             ScrollView {
-                VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: AppSpacingV3.lg) {
                     // Title
                     Text("What happened?")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.displayLargeSerifRegular)
+                        .foregroundColor(AppColorsV3.textPrimary)
                         .multilineTextAlignment(.center)
-                        .padding(.top, AppSpacing.xl)
+                        .padding(.top, AppSpacingV3.lg)
 
                     // Issue chips for each selected user
                     ForEach(Array(viewModel.selectedIssueUsers), id: \.self) { uid in
@@ -487,7 +487,7 @@ private struct IssueDetailsScreen: View {
                     Spacer()
                         .frame(height: 100)
                 }
-                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.horizontal, AppSpacingV3.md)
             }
 
             // Sticky bottom button
@@ -495,15 +495,15 @@ private struct IssueDetailsScreen: View {
                 Task { await viewModel.submitFeedback() }
             } label: {
                 Text("Submit Report")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(AppTypographyV3.headlineMediumSerif)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(AppColors.error)
+                    .background(AppColorsV3.error)
                     .cornerRadius(16)
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.lg)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.md)
             .background(Color.white)
         }
     }
@@ -516,17 +516,17 @@ private struct UserIssueSection: View {
     @Binding var selectedIssues: Set<IssueType>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
+        VStack(alignment: .leading, spacing: AppSpacingV3.md) {
             // User header
-            HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 TPAvatar(
                     url: participant.photoUrls.first.flatMap { URL(string: $0) },
                     size: 40
                 )
 
                 Text(participant.nickname)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.headlineMediumSerif)
+                    .foregroundColor(AppColorsV3.textPrimary)
             }
 
             // Issue chips
@@ -546,15 +546,15 @@ private struct UserIssueSection: View {
                 }
             }
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.surface)
+        .padding(AppSpacingV3.md)
+        .background(AppColorsV3.surfaceWhite)
         .cornerRadius(16)
     }
 
     private var placeholderImage: some View {
         Image(systemName: "person.circle.fill")
             .resizable()
-            .foregroundColor(AppColors.textTertiary)
+            .foregroundColor(AppColorsV3.textTertiary)
     }
 }
 
@@ -568,17 +568,17 @@ private struct IssueChip: View {
     var body: some View {
         Button(action: onTap) {
             Text(issueType.displayName)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(isSelected ? .white : AppColors.textPrimary)
+                .font(AppTypographyV3.bodyMedium)
+                .foregroundColor(isSelected ? .white : AppColorsV3.textPrimary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? AppColors.error : Color.white)
+                        .fill(isSelected ? AppColorsV3.error : Color.white)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(isSelected ? Color.clear : AppColors.border, lineWidth: 1)
+                        .strokeBorder(isSelected ? Color.clear : AppColorsV3.borderLight, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -636,31 +636,31 @@ private struct FeedbackSuccessScreen: View {
     let onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: AppSpacingV3.lg) {
             Spacer()
 
             // Success icon
             ZStack {
                 Circle()
-                    .fill(AppColors.success.opacity(0.1))
+                    .fill(AppColorsV3.success.opacity(0.1))
                     .frame(width: 120, height: 120)
 
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 72))
-                    .foregroundColor(AppColors.success)
+                    .foregroundColor(AppColorsV3.success)
             }
 
             // Title
             Text("Thank you!")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(AppColors.textPrimary)
+                .font(AppTypographyV3.displayLargeSerifRegular)
+                .foregroundColor(AppColorsV3.textPrimary)
 
             // Message
             Text("Your feedback helps build a safer golf community")
-                .font(.system(size: 17))
-                .foregroundColor(AppColors.textSecondary)
+                .font(AppTypographyV3.bodyLarge)
+                .foregroundColor(AppColorsV3.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
+                .padding(.horizontal, AppSpacingV3.lg)
 
             Spacer()
 
@@ -669,15 +669,15 @@ private struct FeedbackSuccessScreen: View {
                 onDone()
             } label: {
                 Text("Done")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(AppTypographyV3.headlineMediumSerif)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(AppColors.primary)
+                    .background(AppColorsV3.forestGreen)
                     .cornerRadius(16)
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.lg)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.md)
         }
     }
 }
@@ -688,25 +688,25 @@ private struct AlreadySubmittedScreen: View {
     let onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: AppSpacingV3.lg) {
             Spacer()
 
             // Icon
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 72))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(AppColorsV3.textSecondary)
 
             // Title
             Text("Already Submitted")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(AppColors.textPrimary)
+                .font(AppTypographyV3.displayMediumSerif)
+                .foregroundColor(AppColorsV3.textPrimary)
 
             // Message
             Text("You've already provided feedback for this round")
-                .font(.system(size: 17))
-                .foregroundColor(AppColors.textSecondary)
+                .font(AppTypographyV3.bodyLarge)
+                .foregroundColor(AppColorsV3.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
+                .padding(.horizontal, AppSpacingV3.lg)
 
             Spacer()
 
@@ -715,15 +715,15 @@ private struct AlreadySubmittedScreen: View {
                 onDone()
             } label: {
                 Text("Done")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(AppTypographyV3.headlineMediumSerif)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(AppColors.primary)
+                    .background(AppColorsV3.forestGreen)
                     .cornerRadius(16)
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.lg)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.md)
         }
     }
 }

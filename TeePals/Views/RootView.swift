@@ -4,7 +4,8 @@ struct RootView: View {
     @EnvironmentObject var authService: AuthService
     @EnvironmentObject var container: AppContainer
     @State private var showLaunchScreen = true
-    
+    @State private var minimumSplashDone = false
+
     var body: some View {
         ZStack {
             Group {
@@ -16,12 +17,11 @@ struct RootView: View {
                 case .needsProfile:
                     Tier1OnboardingFlow(viewModel: container.makeTier1OnboardingViewModel())
                 case .authenticated:
-                    MainTabView()
+                    MainTabView(tabBarState: container.tabBarState)
                 }
             }
             .animation(.easeInOut(duration: 0.3), value: authService.authState)
-            
-            // Splash screen overlay (minimum 4 seconds)
+
             if showLaunchScreen {
                 LaunchScreenView()
                     .transition(.asymmetric(
@@ -32,11 +32,19 @@ struct RootView: View {
             }
         }
         .task {
-            // Show splash for at least 4 seconds
-            try? await Task.sleep(nanoseconds: 4_000_000_000)
-            withAnimation(.easeInOut(duration: 0.6)) {
-                showLaunchScreen = false
-            }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            minimumSplashDone = true
+            dismissSplashIfReady()
+        }
+        .onChange(of: authService.authState) { _, _ in
+            dismissSplashIfReady()
+        }
+    }
+
+    private func dismissSplashIfReady() {
+        guard minimumSplashDone, authService.authState != .loading, showLaunchScreen else { return }
+        withAnimation(.easeInOut(duration: 0.6)) {
+            showLaunchScreen = false
         }
     }
 }

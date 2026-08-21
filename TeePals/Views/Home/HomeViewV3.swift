@@ -47,21 +47,13 @@ struct HomeViewV3: View {
         }
         .task {
             async let dashboard: () = viewModel.loadDashboard()
-            async let activity: () = activityViewModel.loadActivity()
-            _ = await (dashboard, activity)
-
-            if let firstRound = activityViewModel.scheduleRounds.first {
-                await viewModel.loadCoursePhoto(for: firstRound.round)
-            }
+            async let activityAndPhoto: () = loadActivityThenPhoto()
+            _ = await (dashboard, activityAndPhoto)
         }
         .refreshable {
             async let dashboard: () = viewModel.refresh()
-            async let activity: () = activityViewModel.refresh()
-            _ = await (dashboard, activity)
-
-            if let firstRound = activityViewModel.scheduleRounds.first {
-                await viewModel.loadCoursePhoto(for: firstRound.round)
-            }
+            async let activityAndPhoto: () = refreshActivityThenPhoto()
+            _ = await (dashboard, activityAndPhoto)
         }
         .fullScreenCover(item: $roundDetail) { item in
             RoundDetailCover(roundId: item.roundId)
@@ -169,7 +161,6 @@ struct HomeViewV3: View {
                 label: "Invites",
                 action: {
                     deepLinkCoordinator.navigateToActivityTab(.invites)
-                    selectedTab = 1
                 }
             )
 
@@ -179,7 +170,6 @@ struct HomeViewV3: View {
                 label: "Pending",
                 action: {
                     deepLinkCoordinator.navigateToActivityTab(.pending)
-                    selectedTab = 1
                 }
             )
         }
@@ -197,7 +187,6 @@ struct HomeViewV3: View {
                 actionTitle: scheduleItems.isEmpty ? nil : "View All",
                 action: {
                     deepLinkCoordinator.navigateToActivityTab(.schedule)
-                    selectedTab = 1
                 }
             )
             .padding(.horizontal, AppSpacingV3.contentPadding)
@@ -246,6 +235,7 @@ struct HomeViewV3: View {
                 title: "Discover Rounds",
                 actionTitle: "View All",
                 action: {
+                    deepLinkCoordinator.navigateToRoundsSegment(.nearby)
                     selectedTab = 1
                 }
             )
@@ -284,6 +274,22 @@ struct HomeViewV3: View {
                 }
                 .padding(.horizontal, AppSpacingV3.contentPadding)
             }
+        }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadActivityThenPhoto() async {
+        await activityViewModel.loadActivity()
+        if let firstRound = activityViewModel.scheduleRounds.first {
+            await viewModel.loadCoursePhoto(for: firstRound.round)
+        }
+    }
+
+    private func refreshActivityThenPhoto() async {
+        await activityViewModel.refresh()
+        if let firstRound = activityViewModel.scheduleRounds.first {
+            await viewModel.loadCoursePhoto(for: firstRound.round)
         }
     }
 

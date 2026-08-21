@@ -22,6 +22,14 @@ enum AppTypographyV3 {
     static let sectionHeaderSerif = Font.custom("PlayfairDisplay-Regular", size: 20, relativeTo: .title2)
         .weight(.bold)
 
+    /// Headline medium serif - 18pt bold (for profile username, card titles)
+    static let headlineMediumSerif = Font.custom("PlayfairDisplay-Regular", size: 18, relativeTo: .title3)
+        .weight(.bold)
+
+    /// Headline large serif - 22pt bold (for profile display name)
+    static let headlineLargeSerif = Font.custom("PlayfairDisplay-Regular", size: 22, relativeTo: .title2)
+        .weight(.bold)
+
     /// Large number serif - 30pt bold (for metric card numbers)
     static let numberLargeSerif = Font.custom("PlayfairDisplay-Regular", size: 30, relativeTo: .largeTitle)
         .weight(.bold)
@@ -60,6 +68,9 @@ enum AppTypographyV3 {
     /// Body small - 11pt medium (for host info, distance)
     static let bodySmall = Font.system(size: 11, weight: .medium, design: .default)
 
+    /// Body large - 16pt regular (for larger body text)
+    static let bodyLarge = Font.system(size: 16, weight: .regular, design: .default)
+
     /// Round card title - 15pt bold
     static let roundCardTitle = Font.system(size: 15, weight: .bold, design: .default)
 
@@ -70,6 +81,9 @@ enum AppTypographyV3 {
 
     /// Label small - 9pt bold (for tiny uppercase labels like "Feb", "You're In")
     static let labelTiny = Font.system(size: 9, weight: .bold, design: .default)
+
+    /// Label small - 11pt regular (for stats labels like "Followers", "Following")
+    static let labelSmall = Font.system(size: 11, weight: .regular, design: .default)
 
     /// Label medium - 11pt bold (for "View All" links)
     static let labelLink = Font.system(size: 11, weight: .bold, design: .default)
@@ -92,6 +106,21 @@ enum AppTypographyV3 {
 
     /// Placeholder - 14pt medium (for empty states)
     static let placeholder = Font.system(size: 14, weight: .medium, design: .default)
+
+    /// Caption - 12pt regular (for secondary info, captions)
+    static let caption = Font.system(size: 12, weight: .regular, design: .default)
+
+    /// Caption emphasis - 12pt medium
+    static let captionEmphasis = Font.system(size: 12, weight: .medium, design: .default)
+
+    /// Label medium - 13pt medium (for banner action text, secondary labels)
+    static let labelMedium = Font.system(size: 13, weight: .medium, design: .default)
+
+    /// Headline large - 20pt bold (for numbers in stats)
+    static let headlineLarge = Font.system(size: 20, weight: .bold, design: .default)
+
+    /// Headline medium - 16pt semibold (for card section headers)
+    static let headlineMedium = Font.system(size: 16, weight: .semibold, design: .default)
 }
 
 // MARK: - Text Modifiers

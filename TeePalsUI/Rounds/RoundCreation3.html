@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Create Round</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --surface-light: #F9FAFB;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #E5E7EB;
+            --input-bg: #F3F4F6;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgba(0,0,0,0.4);
+            color: var(--text-primary);
+        }
+        .ios-bottom-sheet {
+            background-color: var(--surface-white);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            height: 4px;
+            background-color: #E5E7EB;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--forest-green);
+            width: 75%;
+        }.pill-toggle-container {
+            background-color: var(--surface-light);
+            border: 1px solid var(--border-light);
+            padding: 4px;
+            border-radius: 9999px;
+            display: flex;
+        }
+        .pill-toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .pill-toggle-active {
+            background-color: var(--forest-green);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .pill-toggle-inactive {
+            color: var(--text-secondary);
+            background-color: transparent;
+        }.chip-active {
+            background-color: var(--forest-green);
+            color: white;
+            border: 1px solid var(--forest-green);
+        }
+        .chip-inactive {
+            background-color: var(--surface-white);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-light);
+        }.dual-thumb-slider {
+            height: 4px;
+            background: #E5E7EB;
+            position: relative;
+            border-radius: 2px;
+        }
+        .slider-track {
+            position: absolute;
+            left: 0%;
+            right: 0%; 
+            height: 100%;
+            background: var(--forest-green);
+        }.slider-active-range {
+            position: absolute;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background: var(--forest-green);
+        }
+        .slider-thumb {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }.slider-thumb::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: var(--forest-green);
+            border-radius: 50%;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }.app-text-field {
+            background-color: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .app-text-field:focus-within {
+            background-color: var(--surface-white);
+            border-color: var(--forest-green);
+            box-shadow: 0 0 0 1px var(--forest-green);
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col justify-end">
+<div class="ios-bottom-sheet w-full max-w-md mx-auto h-[92vh] flex flex-col overflow-hidden">
+<div class="pt-3 pb-2 flex flex-col items-center border-b border-transparent">
+<div class="w-10 h-1.5 bg-gray-300 rounded-full mb-6"></div>
+<div class="w-full px-8 space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-[11px] font-bold tracking-widest text-[var(--forest-green)] uppercase">Step 3 of 4</span>
+</div>
+<div class="progress-bar">
+<div class="progress-fill"></div>
+</div>
+<h1 class="text-3xl font-serif font-bold text-[var(--forest-green)] pt-2">Round Details</h1>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-8 py-6 no-scrollbar">
+<div class="space-y-10 pb-10">
+<section class="space-y-4">
+<label class="text-[13px] font-bold text-gray-400 uppercase tracking-wider pl-1">Visibility</label>
+<div class="pill-toggle-container">
+<button class="pill-toggle-option pill-toggle-active">
+<span class="material-symbols-outlined text-[18px]">public</span>
+                            Public
+                        </button>
+<button class="pill-toggle-option pill-toggle-inactive">
+<span class="material-symbols-outlined text-[18px]">group</span>
+                            Friends Only
+                        </button>
+</div>
+<p class="text-[12px] text-gray-500 italic pl-1">Public rounds are visible to all players in the community.</p>
+</section>
+<section class="space-y-4">
+<label class="text-[13px] font-bold text-gray-400 uppercase tracking-wider pl-1">Green Fee (Per Player)</label>
+<div class="app-text-field relative flex items-center">
+<span class="pl-4 text-gray-500 font-medium text-lg">$</span>
+<input class="w-full pl-2 pr-4 py-4 bg-transparent border-none focus:ring-0 text-lg font-semibold text-[var(--text-primary)] placeholder-gray-400" inputmode="decimal" pattern="[0-9]*" placeholder="0.00" type="number"/>
+</div>
+</section>
+<section class="space-y-6">
+<div class="flex justify-between items-end px-1">
+<label class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Age Range</label>
+<span class="text-sm font-bold text-[var(--forest-green)]">18 – 65+</span>
+</div>
+<div class="px-2 py-2">
+<div class="dual-thumb-slider">
+<div class="absolute w-full h-full bg-gray-200 rounded-full"></div>
+<div class="slider-track" style="left: 0%; right: 0%;"></div>
+<div class="slider-thumb" style="left: 0%"></div>
+<div class="slider-thumb" style="right: 0%"></div>
+</div>
+</div>
+</section>
+<section class="space-y-4">
+<label class="text-[13px] font-bold text-gray-400 uppercase tracking-wider pl-1">Skill Level</label>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-2.5 rounded-full chip-inactive text-[13px] font-semibold transition-colors hover:bg-gray-50">Beginner</button>
+<button class="px-5 py-2.5 rounded-full chip-active text-[13px] font-semibold shadow-sm">Intermediate</button>
+<button class="px-5 py-2.5 rounded-full chip-active text-[13px] font-semibold shadow-sm">Advanced</button>
+<button class="px-5 py-2.5 rounded-full chip-inactive text-[13px] font-semibold transition-colors hover:bg-gray-50">Scratch</button>
+</div>
+</section>
+<section class="space-y-4">
+<label class="text-[13px] font-bold text-gray-400 uppercase tracking-wider pl-1">Message from Host</label>
+<div class="app-text-field">
+<textarea class="w-full p-4 bg-transparent border-none focus:ring-0 text-sm leading-relaxed text-gray-700 placeholder-gray-400 min-h-[120px] resize-none" placeholder="Share any specific details about the round, meeting spot, or post-round drinks..."></textarea>
+</div>
+</section>
+</div>
+</div>
+<footer class="p-8 bg-white border-t border-[var(--border-light)] pb-10">
+<div class="flex gap-4 max-w-md mx-auto">
+<button class="flex-1 py-4 px-6 rounded-2xl border border-gray-200 text-gray-600 font-bold text-[15px] hover:bg-gray-50 transition-colors">
+                    Back
+                </button>
+<button class="flex-[2] py-4 px-6 rounded-2xl bg-[var(--forest-green)] text-white font-bold text-[15px] shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-opacity">
+                    Next
+                </button>
+</div>
+</footer>
+</div>
+
+</body></html>

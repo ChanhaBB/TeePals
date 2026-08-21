@@ -13,6 +13,7 @@ struct CommentRowView: View {
     let onDelete: () -> Void
     let onDeleteReply: (Comment) -> Void
     let onAuthorTap: (String) -> Void
+    let onReport: (Comment) -> Void
 
     @State private var showDeleteConfirmation = false
     @State private var showReplies = true
@@ -58,19 +59,19 @@ struct CommentRowView: View {
     private var mainCommentView: some View {
         let isAuthor = comment.authorUid == currentUserUid
 
-        return VStack(alignment: .leading, spacing: AppSpacing.sm) {
+        return VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
             // Header with author info
-            HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 if comment.isSoftDeleted {
                     // Deleted comment: generic avatar (not tappable)
                     Circle()
-                        .fill(AppColors.textTertiary.opacity(0.3))
+                        .fill(AppColorsV3.textTertiary.opacity(0.3))
                         .frame(width: 32, height: 32)
 
                     // Deleted user label
                     Text("Deleted User")
-                        .font(AppTypography.labelMedium)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.labelMedium)
+                        .foregroundColor(AppColorsV3.textTertiary)
                 } else {
                     // Avatar (tappable)
                     Button {
@@ -86,15 +87,15 @@ struct CommentRowView: View {
                             onAuthorTap(comment.authorUid)
                         } label: {
                             Text(comment.authorNickname ?? "Unknown")
-                                .font(AppTypography.labelMedium)
-                                .foregroundColor(AppColors.textPrimary)
+                                .font(AppTypographyV3.labelMedium)
+                                .foregroundColor(AppColorsV3.textPrimary)
                         }
                         .buttonStyle(.plain)
 
                         if isPostAuthor {
                             Text("*")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(AppColorsV3.error)
                         }
                     }
                 }
@@ -104,16 +105,16 @@ struct CommentRowView: View {
 
             // Comment text
             Text(comment.displayText)
-                .font(AppTypography.bodyMedium)
-                .foregroundColor(comment.isSoftDeleted ? AppColors.textTertiary : AppColors.textPrimary)
+                .font(AppTypographyV3.bodyMedium)
+                .foregroundColor(comment.isSoftDeleted ? AppColorsV3.textTertiary : AppColorsV3.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, AppSpacing.sm)
+                .padding(.bottom, AppSpacingV3.xs)
 
             // Footer: time, like, reply, menu (hide actions for deleted comments)
-            HStack(spacing: AppSpacing.lg) {
+            HStack(spacing: AppSpacingV3.md) {
                 Text(comment.timeAgoString)
-                    .font(AppTypography.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .font(AppTypographyV3.caption)
+                    .foregroundColor(AppColorsV3.textTertiary)
 
                 if !comment.isSoftDeleted {
 
@@ -123,16 +124,16 @@ struct CommentRowView: View {
                     HStack(spacing: 4) {
                         Image(systemName: (comment.hasLiked ?? false) ? "heart.fill" : "heart")
                             .font(.caption)
-                            .foregroundColor((comment.hasLiked ?? false) ? AppColors.error : AppColors.textSecondary)
+                            .foregroundColor((comment.hasLiked ?? false) ? AppColorsV3.error : AppColorsV3.textSecondary)
 
                         if let likeCount = comment.likeCount, likeCount > 0 {
                             Text("\(likeCount)")
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .font(AppTypographyV3.caption)
+                                .foregroundColor(AppColorsV3.textSecondary)
                         } else {
                             Text("Like")
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .font(AppTypographyV3.caption)
+                                .foregroundColor(AppColorsV3.textSecondary)
                         }
                     }
                 }
@@ -141,8 +142,8 @@ struct CommentRowView: View {
                     onReply(comment)
                 } label: {
                     Text("Reply")
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textSecondary)
                 }
 
                 // Three dots menu - always visible
@@ -155,24 +156,26 @@ struct CommentRowView: View {
                         }
                     }
 
-                    Button {
-                        // TODO: Implement report
-                    } label: {
-                        Label("Report", systemImage: "exclamationmark.triangle")
+                    if !isAuthor {
+                        Button {
+                            onReport(comment)
+                        } label: {
+                            Label("Report", systemImage: "exclamationmark.triangle")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18))
-                        .foregroundColor(AppColors.textTertiary)
-                        .frame(width: 44)  // Only expand width, let height be natural
+                        .foregroundColor(AppColorsV3.textTertiary)
+                        .frame(width: 44)
                 }
                 }
 
                 Spacer()
             }
         }
-        .padding(.vertical, AppSpacing.md)
-        .padding(.horizontal, AppSpacing.contentPadding)
+        .padding(.vertical, AppSpacingV3.sm)
+        .padding(.horizontal, AppSpacingV3.md)
     }
 
     // MARK: - Replies Section
@@ -187,7 +190,7 @@ struct CommentRowView: View {
                     // Separator between replies
                     if reply.id != replies.last?.id {
                         Rectangle()
-                            .fill(AppColors.textTertiary.opacity(0.15))
+                            .fill(AppColorsV3.textTertiary.opacity(0.15))
                             .frame(height: 1)
                     }
                 }
@@ -203,11 +206,11 @@ struct CommentRowView: View {
 
         return ZStack {
             // Grey background filling full width
-            AppColors.backgroundSecondary.opacity(0.7)
+            AppColorsV3.surfaceLight.opacity(0.7)
 
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
                 // Header with author info
-                HStack(spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacingV3.xs) {
                     // Avatar (tappable)
                     Button {
                         onAuthorTap(reply.authorUid)
@@ -222,15 +225,15 @@ struct CommentRowView: View {
                             onAuthorTap(reply.authorUid)
                         } label: {
                             Text(reply.authorNickname ?? "Unknown")
-                                .font(AppTypography.labelMedium)
-                                .foregroundColor(AppColors.textPrimary)
+                                .font(AppTypographyV3.labelMedium)
+                                .foregroundColor(AppColorsV3.textPrimary)
                         }
                         .buttonStyle(.plain)
 
                         if isReplyPostAuthor {
                             Text("*")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(AppColorsV3.error)
                         }
                     }
 
@@ -239,16 +242,16 @@ struct CommentRowView: View {
 
                 // Reply text
                 Text(reply.displayText)
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodyMedium)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, AppSpacing.sm)
+                    .padding(.bottom, AppSpacingV3.xs)
 
                 // Footer: time, like, reply, menu
-                HStack(spacing: AppSpacing.lg) {
+                HStack(spacing: AppSpacingV3.md) {
                     Text(reply.timeAgoString)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textTertiary)
 
                     Button {
                         onLike(reply)
@@ -256,16 +259,16 @@ struct CommentRowView: View {
                         HStack(spacing: 4) {
                             Image(systemName: (reply.hasLiked ?? false) ? "heart.fill" : "heart")
                                 .font(.caption)
-                                .foregroundColor((reply.hasLiked ?? false) ? AppColors.error : AppColors.textSecondary)
+                                .foregroundColor((reply.hasLiked ?? false) ? AppColorsV3.error : AppColorsV3.textSecondary)
 
                             if let likeCount = reply.likeCount, likeCount > 0 {
                                 Text("\(likeCount)")
-                                    .font(AppTypography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .font(AppTypographyV3.caption)
+                                    .foregroundColor(AppColorsV3.textSecondary)
                             } else {
                                 Text("Like")
-                                    .font(AppTypography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .font(AppTypographyV3.caption)
+                                    .foregroundColor(AppColorsV3.textSecondary)
                             }
                         }
                     }
@@ -274,8 +277,8 @@ struct CommentRowView: View {
                         onReply(reply)
                     } label: {
                         Text("Reply")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .font(AppTypographyV3.caption)
+                            .foregroundColor(AppColorsV3.textSecondary)
                     }
 
                     // Three dots menu - always visible
@@ -288,24 +291,26 @@ struct CommentRowView: View {
                             }
                         }
 
-                        Button {
-                            // TODO: Implement report
-                        } label: {
-                            Label("Report", systemImage: "exclamationmark.triangle")
+                        if !isReplyAuthor {
+                            Button {
+                                onReport(reply)
+                            } label: {
+                                Label("Report", systemImage: "exclamationmark.triangle")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18))
-                            .foregroundColor(AppColors.textTertiary)
-                            .frame(width: 44)  // Only expand width, let height be natural
+                            .foregroundColor(AppColorsV3.textTertiary)
+                            .frame(width: 44)
                     }
 
                     Spacer()
                 }
             }
-            .padding(.vertical, AppSpacing.md)
-            .padding(.leading, AppSpacing.contentPadding + AppSpacing.lg)
-            .padding(.trailing, AppSpacing.contentPadding)
+            .padding(.vertical, AppSpacingV3.sm)
+            .padding(.leading, AppSpacingV3.md + AppSpacingV3.md)
+            .padding(.trailing, AppSpacingV3.md)
         }
     }
 

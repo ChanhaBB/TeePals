@@ -20,6 +20,9 @@ enum AppColorsV3 {
     /// Surface White - Pure white cards
     static let surfaceWhite = Color(hex: "FFFFFF")
 
+    /// Surface Light - Light gray background for secondary surfaces
+    static let surfaceLight = Color(hex: "F9FAFB")
+
     // MARK: - Text Colors
 
     /// Text Primary - Near-black for headings and primary content
@@ -27,6 +30,9 @@ enum AppColorsV3 {
 
     /// Text Secondary - Gray for secondary text
     static let textSecondary = Color(hex: "6B7280")
+
+    /// Text Tertiary - Lighter gray for captions and timestamps
+    static let textTertiary = Color(hex: "9CA3AF")
 
     // MARK: - Border Colors
 
@@ -46,6 +52,28 @@ enum AppColorsV3 {
 
     /// Border color
     static let border = borderLight
+
+    // MARK: - Status Colors
+
+    /// Success green - darker, muted green
+    static let success = Color(hex: "2A7C4F")
+
+    /// Error red - darker, muted red
+    static let error = Color(hex: "C9302C")
+
+    /// Warning orange - darker, muted orange
+    static let warning = Color(hex: "D97706")
+
+    /// Info blue
+    static let info = Color(hex: "3B82F6")
+
+    // MARK: - Additional Text Colors
+
+    /// Disabled text - light gray
+    static let textDisabled = Color(hex: "D1D5DB")
+
+    /// Inverse text (on dark backgrounds)
+    static let textInverse = Color.white
 }
 
 // MARK: - Color Extension for Hex Support

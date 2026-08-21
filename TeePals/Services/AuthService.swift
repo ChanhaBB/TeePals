@@ -2,6 +2,7 @@ import Foundation
 import AuthenticationServices
 import CryptoKit
 import FirebaseAuth
+import FirebaseFunctions
 
 enum AuthState: Equatable {
     case loading
@@ -84,6 +85,12 @@ class AuthService: ObservableObject {
                 await signInWithApple(authorization: authorization)
             }
         case .failure(let error):
+            let nsError = error as NSError
+            if nsError.domain == ASAuthorizationError.errorDomain,
+               let code = ASAuthorizationError.Code(rawValue: nsError.code),
+               code == .canceled || code == .unknown {
+                return
+            }
             errorMessage = error.localizedDescription
         }
     }
@@ -131,6 +138,73 @@ class AuthService: ObservableObject {
         }
     }
     
+    // MARK: - Account Deletion
+
+    @Published var isDeletingAccount = false
+
+    func deleteAccount() async {
+        guard Auth.auth().currentUser != nil else {
+            errorMessage = "You must be signed in to delete your account."
+            return
+        }
+
+        isDeletingAccount = true
+        defer { isDeletingAccount = false }
+
+        do {
+            try await reauthenticateWithApple()
+
+            let callable = Functions.functions().httpsCallable("deleteUserAccount")
+            _ = try await callable.call()
+
+            try Auth.auth().signOut()
+            authState = .unauthenticated
+        } catch let error as NSError where
+            error.domain == ASAuthorizationError.errorDomain &&
+            (ASAuthorizationError.Code(rawValue: error.code) == .canceled ||
+             ASAuthorizationError.Code(rawValue: error.code) == .unknown) {
+            // User canceled the re-auth prompt — not an error
+            return
+        } catch {
+            print("Account deletion error: \(error)")
+            errorMessage = "Failed to delete account. Please try again."
+        }
+    }
+
+    private func reauthenticateWithApple() async throws {
+        let nonce = randomNonceString()
+        let hashedNonce = sha256(nonce)
+
+        let credential: ASAuthorizationAppleIDCredential = try await withCheckedThrowingContinuation { continuation in
+            let provider = ASAuthorizationAppleIDProvider()
+            let request = provider.createRequest()
+            request.requestedScopes = [.fullName, .email]
+            request.nonce = hashedNonce
+
+            let delegate = AppleSignInDelegate(continuation: continuation)
+            self.reAuthDelegate = delegate
+
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = delegate
+            controller.performRequests()
+        }
+
+        guard let appleIDToken = credential.identityToken,
+              let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+            throw AccountDeletionError.missingToken
+        }
+
+        let oauthCredential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: nonce,
+            fullName: credential.fullName
+        )
+
+        try await Auth.auth().currentUser?.reauthenticate(with: oauthCredential)
+    }
+
+    private var reAuthDelegate: AppleSignInDelegate?
+
     // MARK: - Sign Out
     
     func signOut() {
@@ -155,7 +229,8 @@ class AuthService: ObservableObject {
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
         if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+            print("⚠️ SecRandomCopyBytes failed (OSStatus \(errorCode)) — falling back to UUID nonce")
+            return UUID().uuidString
         }
         
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
@@ -172,6 +247,44 @@ class AuthService: ObservableObject {
             String(format: "%02x", $0)
         }.joined()
         return hashString
+    }
+}
+
+// MARK: - Account Deletion Helpers
+
+enum AccountDeletionError: LocalizedError {
+    case missingToken
+
+    var errorDescription: String? {
+        switch self {
+        case .missingToken:
+            return "Unable to process Apple credential for re-authentication."
+        }
+    }
+}
+
+/// Wraps ASAuthorizationControllerDelegate in a continuation for async/await usage.
+private class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate {
+    private var continuation: CheckedContinuation<ASAuthorizationAppleIDCredential, Error>?
+
+    init(continuation: CheckedContinuation<ASAuthorizationAppleIDCredential, Error>) {
+        self.continuation = continuation
+    }
+
+    func authorizationController(controller: ASAuthorizationController,
+                                 didCompleteWithAuthorization authorization: ASAuthorization) {
+        if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            continuation?.resume(returning: credential)
+        } else {
+            continuation?.resume(throwing: AccountDeletionError.missingToken)
+        }
+        continuation = nil
+    }
+
+    func authorizationController(controller: ASAuthorizationController,
+                                 didCompleteWithError error: Error) {
+        continuation?.resume(throwing: error)
+        continuation = nil
     }
 }
 

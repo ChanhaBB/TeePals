@@ -21,7 +21,7 @@ struct SectionHeaderV3: View {
     var body: some View {
         HStack(alignment: .center) {
             Text(title)
-                .font(AppTypographyV3.sectionHeaderSerif)
+                .font(Font.custom("PlayfairDisplay-Regular", size: 20, relativeTo: .title2).bold())
                 .foregroundColor(AppColorsV3.textPrimary)
 
             Spacer()

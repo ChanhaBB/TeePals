@@ -26,7 +26,7 @@ struct CreatePostView: View {
                         titleSection
 
                         Divider()
-                            .padding(.horizontal, AppSpacing.contentPadding)
+                            .padding(.horizontal, AppSpacingV3.md)
 
                         // Text input
                         textSection
@@ -39,15 +39,15 @@ struct CreatePostView: View {
                         // Linked round
                         if let round = viewModel.linkedRound {
                             linkedRoundSection(round)
-                                .padding(.horizontal, AppSpacing.contentPadding)
-                                .padding(.top, AppSpacing.md)
+                                .padding(.horizontal, AppSpacingV3.md)
+                                .padding(.top, AppSpacingV3.sm)
                         }
 
                         // Error
                         if let error = viewModel.errorMessage {
                             InlineErrorBanner(error)
-                                .padding(.horizontal, AppSpacing.contentPadding)
-                                .padding(.top, AppSpacing.md)
+                                .padding(.horizontal, AppSpacingV3.md)
+                                .padding(.top, AppSpacingV3.sm)
                         }
 
                         // Bottom padding for action bar
@@ -55,7 +55,7 @@ struct CreatePostView: View {
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .background(AppColors.backgroundGrouped)
+                .background(AppColorsV3.surfaceLight)
 
                 // Action buttons bar (stays above keyboard)
                 actionButtonsBar
@@ -66,7 +66,7 @@ struct CreatePostView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(AppColorsV3.textPrimary)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
@@ -78,9 +78,9 @@ struct CreatePostView: View {
                             }
                         }
                     }
-                    .font(AppTypography.labelLarge)
+                    .font(AppTypographyV3.bodySemibold)
                     .fontWeight(.semibold)
-                    .foregroundColor(viewModel.canPost ? AppColors.primary : AppColors.textTertiary)
+                    .foregroundColor(viewModel.canPost ? AppColorsV3.forestGreen : AppColorsV3.textTertiary)
                     .disabled(!viewModel.canPost)
                 }
             }
@@ -106,7 +106,7 @@ struct CreatePostView: View {
         return VStack(spacing: 0) {
             Divider()
 
-            HStack(spacing: AppSpacing.lg) {
+            HStack(spacing: AppSpacingV3.md) {
                 // Add photos
                 PhotosPicker(
                     selection: $viewModel.selectedPhotos,
@@ -115,7 +115,7 @@ struct CreatePostView: View {
                 ) {
                     Image(systemName: "photo")
                         .font(.title3)
-                        .foregroundColor(remainingPhotos > 0 ? AppColors.primary : AppColors.textTertiary)
+                        .foregroundColor(remainingPhotos > 0 ? AppColorsV3.forestGreen : AppColorsV3.textTertiary)
                 }
                 .disabled(remainingPhotos <= 0)
 
@@ -126,7 +126,7 @@ struct CreatePostView: View {
                 } label: {
                     Image(systemName: "flag")
                         .font(.title3)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(AppColorsV3.forestGreen)
                 }
 
                 Spacer()
@@ -148,19 +148,19 @@ struct CreatePostView: View {
                 } label: {
                     Image(systemName: viewModel.visibility.icon)
                         .font(.title3)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(AppColorsV3.textSecondary)
                 }
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.vertical, AppSpacing.sm)
-            .background(AppColors.surface)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.vertical, AppSpacingV3.xs)
+            .background(AppColorsV3.surfaceWhite)
         }
     }
 
     // MARK: - Title Section
 
     private var titleSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+        VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
             UIKitTextField(
                 text: $viewModel.title,
                 placeholder: "Write a specific title",
@@ -168,45 +168,45 @@ struct CreatePostView: View {
                 maxLength: viewModel.maxTitleLength
             )
             .frame(height: 44)
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.top, AppSpacing.lg)
-            .padding(.bottom, AppSpacing.sm)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.top, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.xs)
 
             // Character count
             HStack {
                 Spacer()
                 Text("\(viewModel.titleCharacterCount)/\(viewModel.maxTitleLength)")
-                    .font(AppTypography.caption)
+                    .font(AppTypographyV3.caption)
                     .foregroundColor(
                         viewModel.titleCharacterCount > viewModel.maxTitleLength
-                        ? AppColors.error
-                        : AppColors.textTertiary
+                        ? AppColorsV3.error
+                        : AppColorsV3.textTertiary
                     )
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.sm)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.xs)
         }
     }
 
     // MARK: - Text Section
 
     private var textSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+        VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $viewModel.text)
-                    .font(AppTypography.bodyMedium)
+                    .font(AppTypographyV3.bodyMedium)
                     .scrollContentBackground(.hidden)
                     .focused($textFocused)
                     .frame(minHeight: 200)
-                    .padding(.horizontal, AppSpacing.contentPadding - 4)
-                    .padding(.top, AppSpacing.md)
+                    .padding(.horizontal, AppSpacingV3.md - 4)
+                    .padding(.top, AppSpacingV3.sm)
 
                 if viewModel.text.isEmpty {
                     Text("Start a conversation.\nKeep it classy. No personal information or trade secrets.")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textTertiary)
-                        .padding(.horizontal, AppSpacing.contentPadding)
-                        .padding(.top, AppSpacing.md + 8)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textTertiary)
+                        .padding(.horizontal, AppSpacingV3.md)
+                        .padding(.top, AppSpacingV3.sm + 8)
                         .allowsHitTesting(false)
                 }
             }
@@ -215,15 +215,15 @@ struct CreatePostView: View {
             HStack {
                 Spacer()
                 Text("\(viewModel.textCharacterCount)/\(viewModel.maxTextLength)")
-                    .font(AppTypography.caption)
+                    .font(AppTypographyV3.caption)
                     .foregroundColor(
                         viewModel.textCharacterCount > viewModel.maxTextLength
-                        ? AppColors.error
-                        : AppColors.textTertiary
+                        ? AppColorsV3.error
+                        : AppColorsV3.textTertiary
                     )
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.bottom, AppSpacing.md)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.bottom, AppSpacingV3.sm)
         }
     }
 
@@ -231,14 +231,14 @@ struct CreatePostView: View {
 
     private var photoPreviewSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 ForEach(Array(viewModel.photoImages.enumerated()), id: \.offset) { index, image in
                     ZStack(alignment: .topTrailing) {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
                             .frame(width: 100, height: 100)
-                            .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+                            .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.xs))
 
                         Button {
                             viewModel.removePhoto(at: index)
@@ -252,8 +252,8 @@ struct CreatePostView: View {
                     }
                 }
             }
-            .padding(.horizontal, AppSpacing.contentPadding)
-            .padding(.vertical, AppSpacing.md)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.vertical, AppSpacingV3.sm)
         }
     }
 
@@ -262,17 +262,17 @@ struct CreatePostView: View {
     private func linkedRoundSection(_ round: Round) -> some View {
         HStack {
             Image(systemName: "flag.fill")
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(AppColorsV3.forestGreen)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(round.displayCourseName)
-                    .font(AppTypography.labelLarge)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodySemibold)
+                    .foregroundColor(AppColorsV3.textPrimary)
 
                 if let dateTime = round.displayDateTime {
                     Text(dateTime)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textSecondary)
                 }
             }
 
@@ -282,12 +282,12 @@ struct CreatePostView: View {
                 viewModel.removeLinkedRound()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(AppColorsV3.textTertiary)
             }
         }
-        .padding(AppSpacing.sm)
-        .background(AppColors.surface)
-        .cornerRadius(AppSpacing.sm)
+        .padding(AppSpacingV3.xs)
+        .background(AppColorsV3.surfaceWhite)
+        .cornerRadius(AppSpacingV3.xs)
     }
 
     // MARK: - Round Picker Sheet
@@ -298,14 +298,14 @@ struct CreatePostView: View {
                 if viewModel.isLoadingRounds {
                     ProgressView()
                 } else if viewModel.recentRounds.isEmpty {
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: AppSpacingV3.sm) {
                         Image(systemName: "flag.slash")
                             .font(.largeTitle)
-                            .foregroundColor(AppColors.textTertiary)
+                            .foregroundColor(AppColorsV3.textTertiary)
 
                         Text("No rounds to link")
-                            .font(AppTypography.bodyMedium)
-                            .foregroundColor(AppColors.textSecondary)
+                            .font(AppTypographyV3.bodyMedium)
+                            .foregroundColor(AppColorsV3.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -315,13 +315,13 @@ struct CreatePostView: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(round.displayCourseName)
-                                    .font(AppTypography.labelLarge)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .font(AppTypographyV3.bodySemibold)
+                                    .foregroundColor(AppColorsV3.textPrimary)
 
                                 if let dateTime = round.displayDateTime {
                                     Text(dateTime)
-                                        .font(AppTypography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
+                                        .font(AppTypographyV3.caption)
+                                        .foregroundColor(AppColorsV3.textSecondary)
                                 }
                             }
                         }
@@ -348,18 +348,18 @@ struct CreatePostView: View {
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
 
-            VStack(spacing: AppSpacing.md) {
+            VStack(spacing: AppSpacingV3.sm) {
                 ProgressView(value: viewModel.uploadProgress)
                     .progressViewStyle(.linear)
                     .frame(width: 200)
 
                 Text("Uploading photos...")
-                    .font(AppTypography.bodyMedium)
+                    .font(AppTypographyV3.bodyMedium)
                     .foregroundColor(.white)
             }
-            .padding(AppSpacing.lg)
-            .background(AppColors.surface)
-            .cornerRadius(AppSpacing.md)
+            .padding(AppSpacingV3.md)
+            .background(AppColorsV3.surfaceWhite)
+            .cornerRadius(AppSpacingV3.sm)
         }
     }
 }
@@ -497,8 +497,13 @@ struct UIKitTextField: UIViewRepresentable {
         }
 
         func textFieldDidChangeSelection(_ textField: UITextField) {
-            text = textField.text ?? ""
+            // Defer the binding write to the next run loop cycle.
+            // textFieldDidChangeSelection can fire during UIKit's layout pass which
+            // overlaps SwiftUI's view update, causing "Publishing from within view update" warnings.
+            let updated = textField.text ?? ""
+            DispatchQueue.main.async { [weak self] in
+                self?.text = updated
+            }
         }
     }
 }
-

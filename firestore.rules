@@ -153,12 +153,17 @@ service cloud.firestore {
 
     // ============================================
     // ROUNDS
-    // Complex visibility (public/friends/invite) - MVP: public only
+    // Three-tier visibility: public, friends, private
+    // Note: Visibility filtering is handled CLIENT-SIDE in the app
+    // Security rules allow queries to succeed, client filters results appropriately
     // ============================================
-    
+
     match /rounds/{roundId} {
-      // Any authenticated user can read public rounds
-      // TODO: Add friends/invite visibility checks later
+      // Any authenticated user can read rounds
+      // Client-side filtering enforces visibility rules:
+      // - Public: Shown to everyone in discovery
+      // - Friends: Client filters to show only if host is friend
+      // - Private: Never shown in discovery, only in Activity if invited
       allow read: if isSignedIn();
       
       // Authenticated users can create rounds (they become host)
@@ -485,9 +490,13 @@ service cloud.firestore {
     // ============================================
 
     match /{path=**}/members/{memberUid} {
-      // Allow users to query their own memberships across all rounds
-      // This enables Activity tab's "requested rounds" feature
-      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      // Any signed-in user can query memberships across rounds.
+      // This enables:
+      //   - Activity tab: current user's own round requests/schedule
+      //   - Profile history: viewing another user's participated rounds
+      // Round documents themselves are already readable by all signed-in users,
+      // so membership (who played in a round) is no more sensitive than the round itself.
+      allow read: if isSignedIn();
     }
 
     match /{path=**}/comments/{commentId} {

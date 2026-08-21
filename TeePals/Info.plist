@@ -4,10 +4,24 @@
 <dict>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>TeePals needs your location to find golf rounds near you and set your home location.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>TeePals needs access to your photos so you can add profile pictures, share round photos, and create posts.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>TeePals needs camera access so you can take photos for your profile, rounds, and posts.</string>
     <key>CFBundleDisplayName</key>
     <string>TeePals</string>
     <key>GooglePlacesAPIKey</key>
     <string>AIzaSyCmfw86N2pgolIlnPdx3zzXt5AU61Lfj24</string>
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+    </array>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>UIUserInterfaceStyle</key>
+    <string>Light</string>
     <key>UIAppFonts</key>
     <array>
       <string>Inter-VariableFont_opsz,wght.ttf</string>

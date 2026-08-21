@@ -59,7 +59,7 @@ struct AsyncContentView<Loading: View, Empty: View, Content: View>: View {
     }
 
     private func errorState(_ message: String) -> some View {
-        VStack(spacing: AppSpacing.lg) {
+        VStack(spacing: AppSpacingV3.md) {
             Spacer()
             InlineErrorBanner(
                 message,
@@ -68,7 +68,7 @@ struct AsyncContentView<Loading: View, Empty: View, Content: View>: View {
                     { Task { await retry() } }
                 }
             )
-            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.horizontal, AppSpacingV3.md)
             Spacer()
         }
         .frame(maxWidth: .infinity)

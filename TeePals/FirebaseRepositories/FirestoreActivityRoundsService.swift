@@ -18,14 +18,17 @@ final class FirestoreActivityRoundsService: ActivityRoundsService {
     
     // MARK: - Hosting Rounds
     
-    func fetchHostingRounds(dateRange: DateRangeOption?) async throws -> [Round] {
+    func fetchHostingRounds(dateRange: DateRangeOption?, includeCompleted: Bool) async throws -> [Round] {
         guard let uid = currentUid else {
             throw ActivityRoundsError.notAuthenticated
         }
         
+        var statuses = ["open", "full"]
+        if includeCompleted { statuses.append("completed") }
+        
         var query: Query = db.collection(FirestoreCollection.rounds)
             .whereField("hostUid", isEqualTo: uid)
-            .whereField("status", in: ["open", "full"])
+            .whereField("status", in: statuses)
         
         // Apply date filter if provided
         if let dateRange = dateRange {
@@ -133,6 +136,73 @@ final class FirestoreActivityRoundsService: ActivityRoundsService {
             return lhsTime < rhsTime
         }
         
+        return allRequests
+    }
+
+    // MARK: - Any User's Participated Rounds
+
+    func fetchViewerMemberRoundIds() async throws -> Set<String> {
+        guard let uid = currentUid else { throw ActivityRoundsError.notAuthenticated }
+
+        // Read only membership documents — no round document fetches needed.
+        // We only need the round ID, which we extract from the document path.
+        let snapshot = try await db.collectionGroup(FirestoreCollection.members)
+            .whereField("uid", isEqualTo: uid)
+            .whereField("status", isEqualTo: MemberStatus.accepted.rawValue)
+            .getDocuments()
+
+        var roundIds = Set<String>()
+        for doc in snapshot.documents {
+            let parts = doc.reference.path.components(separatedBy: "/")
+            guard let idx = parts.firstIndex(of: "rounds"), idx + 1 < parts.count else { continue }
+            roundIds.insert(parts[idx + 1])
+        }
+        return roundIds
+    }
+
+    func fetchParticipatedRounds(for uid: String, dateRange: DateRangeOption?) async throws -> [RoundRequest] {
+        // collectionGroup query is now allowed for any signed-in user after the security rule change.
+        let membershipsSnapshot = try await db.collectionGroup(FirestoreCollection.members)
+            .whereField("uid", isEqualTo: uid)
+            .whereField("role", isEqualTo: "member")
+            .whereField("status", isEqualTo: MemberStatus.accepted.rawValue)
+            .getDocuments()
+
+        var roundMemberships: [(roundId: String, createdAt: Date)] = []
+        for doc in membershipsSnapshot.documents {
+            let pathComponents = doc.reference.path.components(separatedBy: "/")
+            guard let roundIdIndex = pathComponents.firstIndex(of: "rounds"),
+                  roundIdIndex + 1 < pathComponents.count else { continue }
+            let roundId = pathComponents[roundIdIndex + 1]
+            let createdAt = (doc.data()["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+            roundMemberships.append((roundId, createdAt))
+        }
+
+        guard !roundMemberships.isEmpty else { return [] }
+
+        var allRequests: [RoundRequest] = []
+        for chunk in roundMemberships.chunked(into: 30) {
+            let roundIds = chunk.map { $0.roundId }
+            let roundsSnapshot = try await db.collection(FirestoreCollection.rounds)
+                .whereField(FieldPath.documentID(), in: roundIds)
+                .getDocuments()
+
+            for doc in roundsSnapshot.documents {
+                guard let round = try? roundsDecoder.decode(from: doc.data(), id: doc.documentID),
+                      round.status != .canceled else { continue }
+
+                if let dateRange, let startTime = round.startTime {
+                    if startTime < dateRange.startDate || startTime >= dateRange.endDate { continue }
+                }
+
+                guard let membership = chunk.first(where: { $0.roundId == doc.documentID }) else { continue }
+                allRequests.append(RoundRequest(round: round, status: .accepted, requestedAt: membership.createdAt))
+            }
+        }
+
+        allRequests.sort {
+            ($0.round.startTime ?? .distantFuture) < ($1.round.startTime ?? .distantFuture)
+        }
         return allRequests
     }
 }

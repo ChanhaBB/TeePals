@@ -15,112 +15,168 @@
     <meta property="og:image" content="https://teepals-cf67c.web.app/app-icon.png">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            color: #fff;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 480px;
             width: 100%;
+            background: #fff;
+            border-radius: 20px;
+            padding: 48px 32px;
             text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
-        .logo {
-            width: 120px;
-            height: 120px;
+        .app-icon {
+            width: 88px;
+            height: 88px;
             margin: 0 auto 32px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         h1 {
-            font-size: 48px;
+            font-size: 28px;
             font-weight: 700;
-            margin-bottom: 16px;
-            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+            color: #1d1d1f;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
         }
 
         .tagline {
-            font-size: 24px;
-            margin-bottom: 48px;
+            font-size: 17px;
             font-style: italic;
-            opacity: 0.9;
+            color: #2E7D32;
+            font-weight: 500;
+            margin-bottom: 24px;
         }
 
         .description {
-            font-size: 18px;
+            color: #86868b;
+            font-size: 16px;
             line-height: 1.6;
-            margin-bottom: 48px;
-            opacity: 0.85;
+            max-width: 320px;
+            margin: 0 auto 32px;
+        }
+
+        .features {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            flex: 1;
+            min-width: 100px;
+            max-width: 140px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 8px;
+            background: #f0f7f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .feature-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #86868b;
+        }
+
+        .app-store-section {
+            padding-top: 32px;
+            border-top: 1px solid #e5e5e7;
+        }
+
+        .app-store-section p {
+            color: #86868b;
+            font-size: 14px;
+            margin-bottom: 14px;
         }
 
         .app-store-badge img {
-            height: 60px;
-            transition: transform 0.2s;
+            height: 44px;
+            opacity: 0.9;
         }
 
         .app-store-badge img:hover {
-            transform: translateY(-4px);
+            opacity: 1;
         }
 
         .footer {
-            margin-top: 64px;
-            font-size: 14px;
-            opacity: 0.7;
+            margin-top: 40px;
+            color: #86868b;
+            font-size: 12px;
         }
 
         @media (max-width: 480px) {
-            h1 {
-                font-size: 36px;
-            }
-
-            .tagline {
-                font-size: 20px;
-            }
-
-            .description {
-                font-size: 16px;
-            }
+            .container { padding: 40px 24px; }
+            h1 { font-size: 24px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">⛳</div>
+        <div class="app-icon">
+            <img src="/app-icon.png" alt="TeePals">
+        </div>
+
         <h1>TeePals</h1>
         <p class="tagline">Golf, better together.</p>
 
-        <div class="description">
-            <p>Connect with golfers, discover rounds near you,<br>and play more golf.</p>
+        <p class="description">Connect with golfers, discover rounds near you, and play more golf.</p>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">⛳</div>
+                <div class="feature-label">Find Rounds</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">👥</div>
+                <div class="feature-label">Meet Golfers</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📍</div>
+                <div class="feature-label">Nearby Courses</div>
+            </div>
         </div>
 
-        <div class="app-store-badge">
+        <div class="app-store-section">
+            <p>Available on iOS</p>
             <!-- TODO: Replace with actual App Store link when app is published -->
-            <a href="https://apps.apple.com" target="_blank">
+            <a href="https://apps.apple.com" target="_blank" class="app-store-badge">
                 <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store">
             </a>
         </div>
 
         <div class="footer">
-            <p>TeePals &copy; 2026</p>
+            <p>&copy; 2026 TeePals</p>
         </div>
     </div>
 </body>

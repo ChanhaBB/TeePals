@@ -11,7 +11,7 @@ final class HomeViewModel: ObservableObject {
 
     private let roundsSearchService: RoundsSearchService
     private let profileRepository: ProfileRepository
-    private let coursePhotoService: CoursePhotoService
+    private let coursePhotoService: CoursePhotoService?
     private let currentUid: () -> String?
 
     // MARK: - State
@@ -29,7 +29,7 @@ final class HomeViewModel: ObservableObject {
     init(
         roundsSearchService: RoundsSearchService,
         profileRepository: ProfileRepository,
-        coursePhotoService: CoursePhotoService,
+        coursePhotoService: CoursePhotoService?,
         currentUid: @escaping () -> String?
     ) {
         self.roundsSearchService = roundsSearchService
@@ -78,7 +78,7 @@ final class HomeViewModel: ObservableObject {
             self.nextRoundPhotoURL = nil
             return
         }
-        self.nextRoundPhotoURL = await coursePhotoService.fetchPhotoURL(for: course)
+        self.nextRoundPhotoURL = await coursePhotoService?.fetchPhotoURL(for: course)
     }
 
     func refresh() async {

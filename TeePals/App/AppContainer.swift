@@ -29,6 +29,10 @@ final class AppContainer: ObservableObject {
         FirestoreTrustRepository()
     }()
 
+    private(set) lazy var reportRepository: ReportRepository = {
+        FirestoreReportRepository()
+    }()
+
     // MARK: - Services (Singletons)
 
     private(set) lazy var authService: AuthService = {
@@ -73,10 +77,18 @@ final class AppContainer: ObservableObject {
         ShareLinkService()
     }()
 
-    private(set) lazy var coursePhotoService: CoursePhotoService = {
-        // TODO: Add GooglePlacesAPIKey to Info.plist
-        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "GooglePlacesAPIKey") as? String else {
-            fatalError("GooglePlacesAPIKey not found in Info.plist. Please add your Google Places API key.")
+    private(set) lazy var pushNotificationService: PushNotificationService = {
+        PushNotificationService(
+            userRepository: userRepository,
+            currentUid: { [weak self] in self?.currentUid }
+        )
+    }()
+
+    private(set) lazy var coursePhotoService: CoursePhotoService? = {
+        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "GooglePlacesAPIKey") as? String,
+              !apiKey.isEmpty else {
+            print("⚠️ GooglePlacesAPIKey not found in Info.plist — course photos will be disabled.")
+            return nil
         }
         return CoursePhotoService(googleAPIKey: apiKey)
     }()
@@ -89,6 +101,9 @@ final class AppContainer: ObservableObject {
             currentUid: { [weak self] in self?.currentUid }
         )
     }()
+
+    /// Shared state for controlling tab bar visibility from pushed views.
+    let tabBarState = TabBarState()
 
     // MARK: - ViewModels (Singletons - for tab-level state)
 
@@ -118,8 +133,29 @@ final class AppContainer: ObservableObject {
     private var _roundsListViewModel: RoundsListViewModel?
     private var _activityRoundsViewModelV2: ActivityRoundsViewModelV2?
 
+    // Home tab ViewModel (singleton to preserve state across tab switches)
+    private var _homeViewModel: HomeViewModel?
+
+    // Feed tab ViewModel (singleton — makeFeedViewModel() always creates a new instance)
+    private var _feedViewModel: FeedViewModel?
+
     private var cancellables = Set<AnyCancellable>()
-    
+
+    // MARK: - Init
+
+    init() {
+        // Request push permission + register for remote notifications as soon as
+        // the user is fully authenticated. Safe to call on every launch — iOS
+        // silently re-registers if permission was already granted.
+        authService.$authState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self, state == .authenticated else { return }
+                Task { await self.pushNotificationService.requestPermissionAndRegister() }
+            }
+            .store(in: &cancellables)
+    }
+
     // MARK: - Current User UID
 
     var currentUid: String? {
@@ -150,8 +186,11 @@ final class AppContainer: ObservableObject {
             return existing
         }
         let vm = ProfileViewModel(
+            uid: nil, // nil = own profile
             profileRepository: profileRepository,
             socialRepository: socialRepository,
+            activityService: activityRoundsService,
+            roundsRepository: roundsRepository,
             currentUid: { [weak self] in self?.currentUid }
         )
         Task { @MainActor in
@@ -159,7 +198,19 @@ final class AppContainer: ObservableObject {
         }
         return vm
     }
-    
+
+    /// Creates a ProfileViewModel for viewing another user's profile (not cached)
+    func makeProfileViewModel(uid: String) -> ProfileViewModel {
+        ProfileViewModel(
+            uid: uid,
+            profileRepository: profileRepository,
+            socialRepository: socialRepository,
+            activityService: activityRoundsService,
+            roundsRepository: roundsRepository,
+            currentUid: { [weak self] in self?.currentUid }
+        )
+    }
+
     func makeProfileGateViewModel() -> ProfileGateViewModel {
         ProfileGateViewModel(
             profileRepository: profileRepository,
@@ -216,15 +267,6 @@ final class AppContainer: ObservableObject {
         )
     }
     
-    func makeOtherUserProfileViewModel(uid: String) -> OtherUserProfileViewModel {
-        OtherUserProfileViewModel(
-            uid: uid,
-            profileRepository: profileRepository,
-            socialRepository: socialRepository,
-            currentUid: { [weak self] in self?.currentUid }
-        )
-    }
-    
     /// Shared singleton — used by both Home and Rounds tabs.
     var sharedActivityViewModel: ActivityRoundsViewModelV2 {
         if let existing = _activityRoundsViewModelV2 {
@@ -238,6 +280,45 @@ final class AppContainer: ObservableObject {
         )
         _activityRoundsViewModelV2 = vm
         return vm
+    }
+
+    /// Shared singleton — used by Home tab to preserve state across tab switches.
+    var sharedHomeViewModel: HomeViewModel {
+        if let existing = _homeViewModel {
+            return existing
+        }
+        let vm = HomeViewModel(
+            roundsSearchService: roundsSearchService,
+            profileRepository: profileRepository,
+            coursePhotoService: coursePhotoService,
+            currentUid: { [weak self] in self?.currentUid }
+        )
+        _homeViewModel = vm
+        return vm
+    }
+
+    /// Shared singleton for the Rounds tab.
+    var sharedRoundsListViewModel: RoundsListViewModel {
+        makeRoundsListViewModel()
+    }
+
+    /// Shared singleton for the Feed tab.
+    var sharedFeedViewModel: FeedViewModel {
+        if let existing = _feedViewModel { return existing }
+        let vm = FeedViewModel(
+            postsRepository: postsRepository,
+            socialRepository: socialRepository,
+            profileRepository: profileRepository,
+            roundsRepository: roundsRepository,
+            currentUid: { [weak self] in self?.currentUid }
+        )
+        _feedViewModel = vm
+        return vm
+    }
+
+    /// Shared singleton for the Notifications tab.
+    var sharedNotificationsViewModel: NotificationsViewModel {
+        makeNotificationsViewModel()
     }
 
     func makeHomeViewModel() -> HomeViewModel {

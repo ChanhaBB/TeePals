@@ -1,7 +1,7 @@
 import SwiftUI
 import PhotosUI
 
-/// Round group chat view with real-time messages.
+/// V3 Round group chat view with real-time messages.
 struct RoundChatView: View {
 
     @StateObject private var viewModel: RoundChatViewModel
@@ -14,24 +14,21 @@ struct RoundChatView: View {
     init(viewModel: RoundChatViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // Chat header with round info
+            // V3 Sheet-style header
             if let round = viewModel.round {
-                chatHeader(round)
+                chatHeaderV3(round)
             }
-            
-            Divider()
-            
+
             // Messages area fills remaining space
             messagesArea
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            composerBar
+            composerBarV3
         }
-        .navigationTitle("Round Chat")
-        .navigationBarTitleDisplayMode(.inline)
+        .background(AppColorsV3.surfaceWhite)
         .task {
             await viewModel.loadChat()
         }
@@ -43,23 +40,12 @@ struct RoundChatView: View {
                 PhotoViewerView(photoUrls: [url], initialIndex: 0)
             }
         }
-        .sheet(item: Binding(
+        .fullScreenCover(item: Binding(
             get: { selectedAuthorUid.map { IdentifiableString(value: $0) } },
             set: { selectedAuthorUid = $0?.value }
         )) { wrapper in
-            if wrapper.value == viewModel.uid {
-                // Show own profile
-                NavigationStack {
-                    ProfileView(viewModel: container.makeProfileViewModel())
-                }
-            } else {
-                // Show other user's profile
-                NavigationStack {
-                    OtherUserProfileView(
-                        viewModel: container.makeOtherUserProfileViewModel(uid: wrapper.value)
-                    )
-                }
-            }
+            ProfileViewV3(viewModel: container.makeProfileViewModel(uid: wrapper.value), isPresented: true)
+                .environmentObject(container)
         }
         .overlay {
             if viewModel.isUploadingPhoto {
@@ -73,74 +59,225 @@ struct RoundChatView: View {
         }
     }
     
-    // MARK: - Composer Bar
+    // MARK: - V3 Header
 
-    private var composerBar: some View {
+    private func chatHeaderV3(_ round: Round) -> some View {
+        VStack(spacing: 0) {
+            // Drag indicator
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 48, height: 5)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
+
+            // Header content
+            HStack(alignment: .top, spacing: AppSpacingV3.md) {
+                // Course info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(round.displayCourseName.compactCourseName())
+                        .font(AppTypographyV3.sectionHeaderSerif)
+                        .foregroundColor(AppColorsV3.forestGreen)
+                        .lineLimit(1)
+
+                    Text(headerSubtitle(round))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppColorsV3.textSecondary)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                }
+
+                Spacer()
+
+                // Members count + close button
+                HStack(spacing: AppSpacingV3.sm) {
+                    // Members count
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 12))
+                        Text("\(round.acceptedCount)/\(round.maxPlayers)")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(AppColorsV3.textSecondary)
+
+                    // Close button
+                    Button {
+                        dismiss()
+                    } label: {
+                        Circle()
+                            .fill(AppColorsV3.borderLight)
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(AppColorsV3.textPrimary)
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal, AppSpacingV3.contentPadding)
+            .padding(.bottom, AppSpacingV3.md)
+        }
+        .background(
+            AppColorsV3.surfaceWhite
+                .opacity(0.95)
+                .background(.ultraThinMaterial)
+        )
+        .overlay(
+            Rectangle()
+                .fill(AppColorsV3.borderLight)
+                .frame(height: 1),
+            alignment: .bottom
+        )
+    }
+
+    private func headerSubtitle(_ round: Round) -> String {
+        var parts: [String] = []
+
+        // Location
+        parts.append(round.displayCityLabel)
+
+        // Date
+        if let date = round.displayTeeTime {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            parts.append(formatter.string(from: date))
+        }
+
+        // Time
+        if let time = round.displayTeeTime {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            parts.append(formatter.string(from: time))
+        }
+
+        return parts.joined(separator: " • ")
+    }
+
+    // MARK: - V3 Composer Bar
+
+    private var composerBarV3: some View {
         VStack(spacing: 0) {
             // Photo preview (if selected)
             if let photoImage = viewModel.photoImage {
-                photoPreviewBar(image: photoImage)
+                photoPreviewBarV3(image: photoImage)
             }
 
-            Divider()
+            Rectangle()
+                .fill(AppColorsV3.borderLight)
+                .frame(height: 1)
 
-            HStack(alignment: .bottom, spacing: AppSpacing.sm) {
+            HStack(alignment: .bottom, spacing: AppSpacingV3.sm) {
                 // Photo picker button
-                photoPickerButton
+                photoPickerButtonV3
 
                 // Text field
-                textField
+                textFieldV3
 
                 // Send button
-                sendButton
+                sendButtonV3
             }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.sm)
+            .padding(.horizontal, AppSpacingV3.md)
+            .padding(.vertical, AppSpacingV3.sm)
+            .background(AppColorsV3.surfaceWhite)
         }
-        .background(AppColors.backgroundPrimary)
     }
-    
-    // MARK: - Header
-    
-    private func chatHeader(_ round: Round) -> some View {
-        HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "flag.fill")
-                .foregroundColor(AppColors.primary)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(round.displayCourseName)
-                    .font(AppTypography.bodyMedium)
-                    .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
-                    .lineLimit(1)
-                
-                if let dateTime = round.displayDateTime {
-                    Text(dateTime)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+
+    private func photoPreviewBarV3(image: UIImage) -> some View {
+        HStack(spacing: AppSpacingV3.sm) {
+            // Photo thumbnail
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 60, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.radiusSmall))
+
+            Spacer()
+
+            // Remove button
+            Button {
+                viewModel.removePhoto()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(AppColorsV3.textSecondary)
+            }
+        }
+        .padding(AppSpacingV3.sm)
+        .background(AppColorsV3.borderLight)
+    }
+
+    private var photoPickerButtonV3: some View {
+        let canSend = viewModel.canSendMessages
+        return PhotosPicker(
+            selection: $viewModel.selectedPhoto,
+            matching: .images
+        ) {
+            Circle()
+                .fill(canSend ? AppColorsV3.borderLight : Color.clear)
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: "photo")
+                        .font(.system(size: 22))
+                        .foregroundColor(
+                            canSend
+                            ? AppColorsV3.forestGreen
+                            : AppColorsV3.textSecondary.opacity(0.4)
+                        )
+                )
+        }
+        .disabled(!canSend)
+    }
+
+    private var textFieldV3: some View {
+        TextField(
+            viewModel.canSendMessages ? "Type a message..." : "Chat access required",
+            text: $viewModel.composerText,
+            axis: .vertical
+        )
+        .textFieldStyle(.plain)
+        .font(.system(size: 15))
+        .foregroundColor(AppColorsV3.textPrimary)
+        .padding(.horizontal, AppSpacingV3.md)
+        .padding(.vertical, 10)
+        .background(Color(hex: "F3F4F6")) // Bubble gray from HTML
+        .cornerRadius(20)
+        .lineLimit(1...5)
+        .disabled(!viewModel.canSendMessages)
+        .opacity(viewModel.canSendMessages ? 1.0 : 0.6)
+    }
+
+    private var sendButtonV3: some View {
+        Button {
+            Task { await viewModel.sendMessage() }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(
+                        viewModel.isComposerEnabled
+                        ? AppColorsV3.forestGreen
+                        : AppColorsV3.textSecondary.opacity(0.3)
+                    )
+                    .frame(width: 40, height: 40)
+
+                if viewModel.isSending {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(0.8)
+                } else {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
                 }
             }
-            
-            Spacer()
-            
-            // Members count
-            HStack(spacing: 4) {
-                Image(systemName: "person.2.fill")
-                    .font(.caption)
-                Text("\(round.acceptedCount)/\(round.maxPlayers)")
-                    .font(AppTypography.caption)
-            }
-            .foregroundColor(AppColors.textSecondary)
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.backgroundPrimary)
+        .disabled(!viewModel.isComposerEnabled)
     }
-    
+
     // MARK: - Messages Area
     
     @ViewBuilder
     private var messagesArea: some View {
-        if viewModel.isLoading {
+        if viewModel.isLoading && viewModel.messages.isEmpty {
             loadingView
         } else if viewModel.messages.isEmpty {
             emptyStateView
@@ -156,41 +293,41 @@ struct RoundChatView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceWhite)
     }
-    
+
     private var emptyStateView: some View {
-        VStack(spacing: AppSpacing.md) {
+        VStack(spacing: AppSpacingV3.md) {
             Spacer()
-            
+
             Image(systemName: "bubble.left.and.bubble.right")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.primary.opacity(0.4))
-            
+                .foregroundColor(AppColorsV3.forestGreen.opacity(0.4))
+
             Text("No messages yet")
-                .font(AppTypography.headlineSmall)
-                .foregroundColor(AppColors.textPrimary)
-            
+                .font(AppTypographyV3.displayMediumSerif)
+                .foregroundColor(AppColorsV3.textPrimary)
+
             if viewModel.canSendMessages {
                 Text("Say hi to coordinate logistics!")
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textSecondary)
             } else {
                 Text("You'll get chat access once accepted.")
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textSecondary)
             }
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceWhite)
     }
     
     private var messagesList: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: AppSpacing.sm) {
+                LazyVStack(spacing: AppSpacingV3.xs) {
                     // Load more button
                     if viewModel.isLoadingMore {
                         ProgressView()
@@ -221,11 +358,17 @@ struct RoundChatView: View {
                         .id(message.clientNonce)
                     }
                 }
-                .padding(AppSpacing.md)
+                .padding(AppSpacingV3.contentPadding)
                 .id(viewModel.senderProfiles.count) // Force re-render when profiles load
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(AppColors.backgroundGrouped)
+            .background(AppColorsV3.surfaceWhite)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    // Dismiss keyboard when tapping messages area
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+            )
             .onChange(of: viewModel.messages.count) { _, _ in
                 // Scroll to bottom on new messages
                 if let lastMessage = viewModel.messages.last {
@@ -311,105 +454,23 @@ struct RoundChatView: View {
         return false
     }
 
-    // MARK: - Photo Components
-
-    private func photoPreviewBar(image: UIImage) -> some View {
-        HStack(spacing: AppSpacing.sm) {
-            // Photo thumbnail
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 60, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
-
-            Spacer()
-
-            // Remove button
-            Button {
-                viewModel.removePhoto()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
-                    .foregroundColor(AppColors.textSecondary)
-            }
-        }
-        .padding(AppSpacing.sm)
-        .background(AppColors.backgroundSecondary)
-    }
-
-    private var photoPickerButton: some View {
-        let canSend = viewModel.canSendMessages
-        return PhotosPicker(
-            selection: $viewModel.selectedPhoto,
-            matching: .images
-        ) {
-            Image(systemName: "photo")
-                .font(.system(size: 24))
-                .foregroundColor(
-                    canSend
-                    ? AppColors.primary
-                    : AppColors.textTertiary
-                )
-        }
-        .disabled(!canSend)
-    }
-
-    private var textField: some View {
-        TextField(
-            viewModel.canSendMessages ? "Type a message..." : "Chat access required",
-            text: $viewModel.composerText,
-            axis: .vertical
-        )
-        .textFieldStyle(.plain)
-        .font(AppTypography.bodyMedium)
-        .padding(.horizontal, AppSpacing.md)
-        .padding(.vertical, AppSpacing.sm)
-        .background(AppColors.backgroundSecondary)
-        .cornerRadius(AppSpacing.radiusMedium)
-        .lineLimit(1...5)
-        .disabled(!viewModel.canSendMessages)
-        .opacity(viewModel.canSendMessages ? 1.0 : 0.6)
-    }
-
-    private var sendButton: some View {
-        Button {
-            Task { await viewModel.sendMessage() }
-        } label: {
-            ZStack {
-                if viewModel.isSending {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 32))
-                }
-            }
-            .foregroundColor(
-                viewModel.isComposerEnabled
-                ? AppColors.primary
-                : AppColors.textTertiary
-            )
-        }
-        .disabled(!viewModel.isComposerEnabled)
-    }
-
     private var uploadingOverlay: some View {
         ZStack {
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
 
-            VStack(spacing: AppSpacing.md) {
+            VStack(spacing: AppSpacingV3.sm) {
                 ProgressView(value: viewModel.uploadProgress)
                     .progressViewStyle(.linear)
                     .frame(width: 200)
 
                 Text("Uploading photo...")
-                    .font(AppTypography.bodyMedium)
+                    .font(AppTypographyV3.bodyMedium)
                     .foregroundColor(.white)
             }
-            .padding(AppSpacing.lg)
-            .background(AppColors.surface)
-            .cornerRadius(AppSpacing.md)
+            .padding(AppSpacingV3.md)
+            .background(AppColorsV3.surfaceWhite)
+            .cornerRadius(AppSpacingV3.sm)
         }
     }
 }

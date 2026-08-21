@@ -1,4 +1,5 @@
 import Foundation
+import UserNotifications
 
 /// ViewModel for notifications list with real-time updates and pagination.
 @MainActor
@@ -83,10 +84,11 @@ final class NotificationsViewModel: ObservableObject {
             }
         }
 
-        // Listen to unread count (all notification types)
+        // Listen to unread count (all notification types) and sync iOS badge
         Task { @MainActor in
             for await count in notificationsRepository.observeUnreadCount() {
                 self.unreadCount = count
+                try? await UNUserNotificationCenter.current().setBadgeCount(count)
             }
         }
     }

@@ -48,7 +48,7 @@ struct SkeletonShape: View {
     init(
         width: CGFloat? = nil,
         height: CGFloat = 16,
-        cornerRadius: CGFloat = AppSpacing.radiusSmall
+        cornerRadius: CGFloat = AppSpacingV3.radiusSmall
     ) {
         self.width = width
         self.height = height
@@ -57,7 +57,7 @@ struct SkeletonShape: View {
     
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(AppColors.surfaceSecondary)
+            .fill(AppColorsV3.surfaceLight)
             .frame(width: width, height: height)
             .skeleton()
     }
@@ -69,19 +69,17 @@ struct SkeletonShape: View {
 struct SkeletonRow: View {
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            // Avatar placeholder
+        HStack(spacing: AppSpacingV3.sm) {
             SkeletonShape(width: 44, height: 44, cornerRadius: 22)
             
-            // Text placeholders
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
                 SkeletonShape(width: 140, height: 14)
                 SkeletonShape(width: 200, height: 12)
             }
             
             Spacer()
         }
-        .padding(AppSpacing.md)
+        .padding(AppSpacingV3.sm)
     }
 }
 
@@ -112,16 +110,16 @@ struct SkeletonCard: View {
                 profileCardSkeleton
             }
         }
-        .padding(AppSpacing.cardPadding)
-        .background(AppColors.surface)
-        .cornerRadius(AppSpacing.radiusLarge)
+        .padding(AppSpacingV3.cardSpacing)
+        .background(AppColorsV3.surfaceWhite)
+        .cornerRadius(AppSpacingV3.radiusLarge)
         .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
     }
     
     // MARK: - Standard Skeleton
     
     private var standardSkeleton: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
+        VStack(alignment: .leading, spacing: AppSpacingV3.sm) {
             SkeletonShape(height: 18)
             SkeletonShape(width: 200, height: 14)
             SkeletonShape(width: 150, height: 14)
@@ -131,27 +129,24 @@ struct SkeletonCard: View {
     // MARK: - Round Card Skeleton
     
     private var roundCardSkeleton: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            // Header with host avatar
-            HStack(spacing: AppSpacing.sm) {
+        VStack(alignment: .leading, spacing: AppSpacingV3.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 SkeletonShape(width: 36, height: 36, cornerRadius: 18)
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
                     SkeletonShape(width: 80, height: 12)
                     SkeletonShape(width: 60, height: 10)
                 }
             }
             
-            // Course and time
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
                 SkeletonShape(width: 180, height: 16)
                 SkeletonShape(width: 140, height: 14)
             }
             
-            // Bottom row
             HStack {
-                SkeletonShape(width: 60, height: 24, cornerRadius: AppSpacing.radiusFull)
+                SkeletonShape(width: 60, height: 24, cornerRadius: AppSpacingV3.radiusFull)
                 Spacer()
-                SkeletonShape(width: 80, height: 24, cornerRadius: AppSpacing.radiusFull)
+                SkeletonShape(width: 80, height: 24, cornerRadius: AppSpacingV3.radiusFull)
             }
         }
     }
@@ -159,18 +154,15 @@ struct SkeletonCard: View {
     // MARK: - Profile Card Skeleton
     
     private var profileCardSkeleton: some View {
-        VStack(spacing: AppSpacing.lg) {
-            // Avatar
+        VStack(spacing: AppSpacingV3.md) {
             SkeletonShape(width: 80, height: 80, cornerRadius: 40)
             
-            // Name and location
-            VStack(spacing: AppSpacing.sm) {
+            VStack(spacing: AppSpacingV3.xs) {
                 SkeletonShape(width: 120, height: 18)
                 SkeletonShape(width: 160, height: 14)
             }
             
-            // Stats row
-            HStack(spacing: AppSpacing.xl) {
+            HStack(spacing: AppSpacingV3.lg) {
                 statSkeleton
                 statSkeleton
                 statSkeleton
@@ -180,7 +172,7 @@ struct SkeletonCard: View {
     }
     
     private var statSkeleton: some View {
-        VStack(spacing: AppSpacing.xs) {
+        VStack(spacing: AppSpacingV3.xxs) {
             SkeletonShape(width: 40, height: 20)
             SkeletonShape(width: 60, height: 12)
         }
@@ -205,8 +197,8 @@ struct SkeletonList: View {
                     .padding(.leading, 72)
             }
         }
-        .background(AppColors.surface)
-        .cornerRadius(AppSpacing.radiusLarge)
+        .background(AppColorsV3.surfaceWhite)
+        .cornerRadius(AppSpacingV3.radiusLarge)
     }
 }
 
@@ -216,27 +208,27 @@ struct SkeletonList: View {
 struct SkeletonViews_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                Text("Skeleton Row").font(AppTypography.labelMedium)
+            VStack(spacing: AppSpacingV3.md) {
+                Text("Skeleton Row").font(AppTypographyV3.labelMedium)
                 SkeletonRow()
-                    .background(AppColors.surface)
-                    .cornerRadius(AppSpacing.radiusMedium)
+                    .background(AppColorsV3.surfaceWhite)
+                    .cornerRadius(AppSpacingV3.radiusMedium)
                 
-                Text("Skeleton Card - Standard").font(AppTypography.labelMedium)
+                Text("Skeleton Card - Standard").font(AppTypographyV3.labelMedium)
                 SkeletonCard(style: .standard)
                 
-                Text("Skeleton Card - Round").font(AppTypography.labelMedium)
+                Text("Skeleton Card - Round").font(AppTypographyV3.labelMedium)
                 SkeletonCard(style: .roundCard)
                 
-                Text("Skeleton Card - Profile").font(AppTypography.labelMedium)
+                Text("Skeleton Card - Profile").font(AppTypographyV3.labelMedium)
                 SkeletonCard(style: .profileCard)
                 
-                Text("Skeleton List").font(AppTypography.labelMedium)
+                Text("Skeleton List").font(AppTypographyV3.labelMedium)
                 SkeletonList(count: 3)
             }
             .padding()
         }
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceLight)
     }
 }
 #endif

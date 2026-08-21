@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Create Round</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FFFFFF;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #717171;
+        }
+        .premium-bottom-sheet {
+            background-color: var(--surface-white);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;box-shadow: none; 
+        }
+        .progress-bar-fill {
+            width: 25%;
+            background-color: var(--forest-green);
+        }.app-text-field {
+            border: none;
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 0;
+            background-color: transparent;
+            padding-left: 0;
+            transition: border-color 0.2s ease;
+        }
+        .app-text-field:focus {
+            box-shadow: none;
+            border-bottom: 1px solid var(--forest-green);
+            ring: 0;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex items-end justify-center overflow-hidden bg-black/50">
+<div class="premium-bottom-sheet w-full max-w-md h-[95vh] flex flex-col relative overflow-hidden">
+<div class="w-full flex justify-center pt-3 pb-1 bg-white">
+<div class="w-10 h-1 bg-gray-200 rounded-full"></div>
+</div>
+<div class="w-full h-1 bg-gray-100">
+<div class="progress-bar-fill h-full transition-all duration-500"></div>
+</div>
+<header class="flex items-center justify-between px-6 py-4 bg-white">
+<button class="text-[var(--text-primary)] font-medium text-[16px] hover:opacity-70 transition-opacity">Cancel</button>
+<span class="text-[11px] font-bold tracking-[0.15em] text-gray-400 uppercase">Step 1 of 4</span>
+<button class="text-gray-300 font-semibold text-[16px] cursor-not-allowed" disabled="">Next</button>
+</header>
+<div class="flex-1 flex flex-col overflow-hidden bg-white">
+<div class="px-6 pt-4 pb-2">
+<h1 class="text-[32px] leading-tight font-serif font-bold text-[var(--forest-green)] tracking-tight">
+                    Where are you playing?
+                </h1>
+</div>
+<div class="px-6 py-6">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-[var(--text-secondary)] text-[24px] absolute left-0">search</span>
+<input class="app-text-field w-full py-3 pl-10 pr-4 text-[18px] text-[var(--text-primary)] placeholder:text-gray-400 placeholder:font-light outline-none" placeholder="Search golf courses" type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar px-6 pb-20">
+<div class="space-y-0"> 
+<div class="py-4 flex items-center gap-4 cursor-pointer active:bg-gray-50 transition-colors border-b border-[var(--border-light)] last:border-0">
+<div class="w-10 h-10 rounded-full bg-[#F5F7F6] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">flag</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-bold text-[16px] text-[var(--text-primary)] truncate">Torrey Pines South</p>
+<p class="text-[14px] text-[var(--text-secondary)] truncate font-normal">San Diego, CA</p>
+</div>
+</div>
+<div class="py-4 flex items-center gap-4 cursor-pointer active:bg-gray-50 transition-colors border-b border-[var(--border-light)] last:border-0">
+<div class="w-10 h-10 rounded-full bg-[#F5F7F6] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">flag</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-bold text-[16px] text-[var(--text-primary)] truncate">Encinitas Ranch Golf Course</p>
+<p class="text-[14px] text-[var(--text-secondary)] truncate font-normal">Encinitas, CA</p>
+</div>
+</div>
+<div class="py-4 flex items-center gap-4 cursor-pointer active:bg-gray-50 transition-colors border-b border-[var(--border-light)] last:border-0">
+<div class="w-10 h-10 rounded-full bg-[#F5F7F6] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">flag</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-bold text-[16px] text-[var(--text-primary)] truncate">The Grand Golf Club</p>
+<p class="text-[14px] text-[var(--text-secondary)] truncate font-normal">Del Mar, CA</p>
+</div>
+</div>
+<div class="py-4 flex items-center gap-4 cursor-pointer active:bg-gray-50 transition-colors border-b border-[var(--border-light)] last:border-0">
+<div class="w-10 h-10 rounded-full bg-[#F5F7F6] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">flag</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-bold text-[16px] text-[var(--text-primary)] truncate">Aviara Golf Club</p>
+<p class="text-[14px] text-[var(--text-secondary)] truncate font-normal">Carlsbad, CA</p>
+</div>
+</div>
+<div class="py-4 flex items-center gap-4 cursor-pointer active:bg-gray-50 transition-colors border-b border-[var(--border-light)] last:border-0">
+<div class="w-10 h-10 rounded-full bg-[#F5F7F6] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[var(--forest-green)] text-[20px]">flag</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-bold text-[16px] text-[var(--text-primary)] truncate">La Costa - Champions Course</p>
+<p class="text-[14px] text-[var(--text-secondary)] truncate font-normal">Carlsbad, CA</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white px-8 pb-10 pt-4 border-t border-gray-50 w-full z-10">
+<div class="text-center mb-6">
+<button class="text-[15px] font-medium text-[var(--forest-green)] hover:text-[#0e4d3a] transition-colors relative group">
+                    Enter course manually
+                    <span class="absolute -bottom-1 left-0 w-full h-px bg-[var(--forest-green)] scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+</button>
+</div>
+<div class="w-[134px] h-[5px] bg-black/20 rounded-full mx-auto"></div>
+</div>
+</div>
+
+</body></html>

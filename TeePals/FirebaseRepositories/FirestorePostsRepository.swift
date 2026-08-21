@@ -475,7 +475,7 @@ final class FirestorePostsRepository: PostsRepository {
         }
 
         // Enrich with hasLiked for current user
-        if let uid = currentUid, !comments.isEmpty {
+        if currentUid != nil, !comments.isEmpty {
             // Batch check all likes in parallel
             await withTaskGroup(of: (Int, Bool).self) { group in
                 for (index, comment) in comments.enumerated() {

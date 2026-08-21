@@ -51,21 +51,18 @@ struct AgeRangeSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Value label - right aligned, prominent
             HStack {
                 Text("Age Range")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppTypographyV3.bodySemibold)
+                    .foregroundColor(AppColorsV3.textSecondary)
                 
                 Spacer()
                 
                 Text(rangeDisplayText)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
+                    .font(AppTypographyV3.bodySemibold)
+                    .foregroundColor(AppColorsV3.textPrimary)
             }
             
-            // Slider
             RangeSliderView(minValue: $minAgeDouble, maxValue: $maxAgeDouble, bounds: 18...65)
                 .onAppear {
                     minAgeDouble = Double(minAge)
@@ -78,15 +75,14 @@ struct AgeRangeSection: View {
                     maxAge = Int(newValue)
                 }
             
-            // Min/Max labels
             HStack {
                 Text("18")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(AppTypographyV3.bodySmall)
+                    .foregroundColor(AppColorsV3.textSecondary.opacity(0.6))
                 Spacer()
                 Text("65+")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(AppTypographyV3.bodySmall)
+                    .foregroundColor(AppColorsV3.textSecondary.opacity(0.6))
             }
         }
     }
@@ -110,25 +106,25 @@ struct RangeSliderView: View {
             ZStack(alignment: .leading) {
                 // Track
                 Rectangle()
-                    .fill(AppColors.backgroundSecondary)
+                    .fill(AppColorsV3.borderLight)
                     .frame(height: 4)
                 
                 // Selected range
                 Rectangle()
-                    .fill(AppColors.primary)
+                    .fill(AppColorsV3.forestGreen)
                     .frame(width: selectedWidth(geometry), height: 4)
                     .offset(x: minOffset(geometry))
                 
                 // Min thumb
                 Circle()
-                    .fill(AppColors.primary)
+                    .fill(AppColorsV3.forestGreen)
                     .frame(width: 24, height: 24)
                     .offset(x: minOffset(geometry) - 12)
                     .gesture(minDragGesture(geometry))
                 
                 // Max thumb
                 Circle()
-                    .fill(AppColors.primary)
+                    .fill(AppColorsV3.forestGreen)
                     .frame(width: 24, height: 24)
                     .offset(x: maxOffset(geometry) - 12)
                     .gesture(maxDragGesture(geometry))

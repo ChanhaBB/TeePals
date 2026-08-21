@@ -8,52 +8,47 @@ struct RoundsEmptyState: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                Spacer(minLength: AppSpacing.xxl)
+            VStack(spacing: AppSpacingV3.md) {
+                Spacer(minLength: AppSpacingV3.xl)
                 
-                // Icon
                 Image(systemName: "figure.golf")
                     .font(.system(size: 64))
-                    .foregroundStyle(AppColors.primary.opacity(0.4))
+                    .foregroundStyle(AppColorsV3.forestGreen.opacity(0.4))
                 
-                // Text content
-                VStack(spacing: AppSpacing.sm) {
+                VStack(spacing: AppSpacingV3.xs) {
                     Text("No rounds match your filters")
-                        .font(AppTypography.headlineLarge)
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.headlineLarge)
+                        .foregroundColor(AppColorsV3.textPrimary)
                     
                     Text("Try expanding distance or date range, or switch to Anywhere.")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
-                // Action buttons
-                VStack(spacing: AppSpacing.md) {
-                    // Edit filters (secondary)
+                VStack(spacing: AppSpacingV3.sm) {
                     Button {
                         onEditFilters()
                     } label: {
-                        HStack(spacing: AppSpacing.xs) {
+                        HStack(spacing: AppSpacingV3.xxs) {
                             Image(systemName: "slider.horizontal.3")
                             Text("Edit Filters")
                         }
-                        .font(AppTypography.labelMedium)
-                        .foregroundColor(AppColors.primary)
+                        .font(AppTypographyV3.labelMedium)
+                        .foregroundColor(AppColorsV3.forestGreen)
                     }
                     
-                    // Create round (primary)
-                    PrimaryButton("Create Round", icon: "plus", size: .medium) {
+                    PrimaryButtonV3("Create Round", icon: "plus", size: .medium) {
                         onCreateRound()
                     }
                     .frame(maxWidth: 200)
                 }
-                .padding(.top, AppSpacing.sm)
+                .padding(.top, AppSpacingV3.xs)
                 
                 Spacer()
             }
-            .padding(AppSpacing.xl)
+            .padding(AppSpacingV3.lg)
             .frame(maxWidth: .infinity)
         }
     }
@@ -67,26 +62,26 @@ struct ActivityEmptyState: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.xl) {
-                Spacer(minLength: AppSpacing.xxl)
+            VStack(spacing: AppSpacingV3.lg) {
+                Spacer(minLength: AppSpacingV3.xl)
 
                 Image(systemName: "calendar.badge.clock")
                     .font(.system(size: 56))
-                    .foregroundStyle(AppColors.primary.opacity(0.4))
+                    .foregroundStyle(AppColorsV3.forestGreen.opacity(0.4))
 
-                VStack(spacing: AppSpacing.sm) {
+                VStack(spacing: AppSpacingV3.xs) {
                     Text("No Activity Yet")
-                        .font(AppTypography.headlineLarge)
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.headlineLarge)
+                        .foregroundColor(AppColorsV3.textPrimary)
 
                     Text("Rounds you host or request will appear here.")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
-                VStack(spacing: AppSpacing.md) {
-                    PrimaryButton("Create Round", icon: "plus") {
+                VStack(spacing: AppSpacingV3.sm) {
+                    PrimaryButtonV3("Create Round", icon: "plus") {
                         onCreateRound()
                     }
                     .frame(maxWidth: 200)
@@ -94,13 +89,13 @@ struct ActivityEmptyState: View {
                     Button("Browse Nearby") {
                         onBrowseNearby()
                     }
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.primary)
+                    .font(AppTypographyV3.bodyMedium)
+                    .foregroundColor(AppColorsV3.forestGreen)
                 }
 
                 Spacer()
             }
-            .padding(AppSpacing.xl)
+            .padding(AppSpacingV3.lg)
             .frame(maxWidth: .infinity)
         }
     }
@@ -115,8 +110,7 @@ struct RoundsEmptyState_Previews: PreviewProvider {
             onEditFilters: {},
             onCreateRound: {}
         )
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceLight)
     }
 }
 #endif
-

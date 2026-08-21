@@ -65,7 +65,7 @@ struct CommentInputBar: View {
                         inputState = .resting
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textTertiary)
+                            .foregroundColor(AppColorsV3.textTertiary)
                             .font(.system(size: 22))
                     }
                     .padding(.bottom, 4)
@@ -84,11 +84,11 @@ struct CommentInputBar: View {
                     } label: {
                         if viewModel.isSubmittingComment {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primary))
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppColorsV3.forestGreen))
                         } else {
                             Image(systemName: "arrow.up.circle.fill")
                                 .font(.system(size: 28))
-                                .foregroundColor(viewModel.canSubmitComment ? AppColors.primary : AppColors.textTertiary)
+                                .foregroundColor(viewModel.canSubmitComment ? AppColorsV3.forestGreen : AppColorsV3.textTertiary)
                         }
                     }
                     .disabled(!viewModel.canSubmitComment)
@@ -97,12 +97,12 @@ struct CommentInputBar: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(AppColors.backgroundSecondary)
+            .background(AppColorsV3.surfaceLight)
             .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .padding(.horizontal, AppSpacing.contentPadding)
+        .padding(.horizontal, AppSpacingV3.md)
         .padding(.vertical, 8)
-        .background(AppColors.surface.ignoresSafeArea(edges: .bottom))
+        .background(AppColorsV3.surfaceWhite.ignoresSafeArea(edges: .bottom))
         .onTapGesture {
             if !isCommentFocused {
                 onActivate()

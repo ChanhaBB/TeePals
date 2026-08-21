@@ -3,6 +3,218 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const db = admin.firestore();
+const storage = admin.storage();
+
+// ============================================
+// deleteUserAccount: Callable function for account deletion
+// Cascades through all user data in Firestore, Storage, and Auth
+// ============================================
+
+export const deleteUserAccount = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be signed in to delete account.");
+  }
+
+  const uid = context.auth.uid;
+  console.log(`🗑️ Starting account deletion for user: ${uid}`);
+
+  try {
+    // 1. Bidirectional social graph cleanup
+    await cleanupSocialGraph(uid);
+
+    // 2. Delete user-owned document trees
+    await deleteSubcollection(`follows/${uid}/following`);
+    await deleteSubcollection(`follows/${uid}/followers`);
+    await deleteSubcollection(`blocks/${uid}/blocked`);
+    await deleteSubcollection(`notifications/${uid}/items`);
+    await deleteSubcollection(`pendingFeedback/${uid}/items`);
+
+    // 3. Round participation cleanup
+    await cleanupRoundParticipation(uid);
+
+    // 4. Posts and comments: anonymize author
+    await anonymizeUserContent(uid);
+
+    // 5. Delete top-level user documents
+    const topLevelDocs = [
+      db.collection("users").doc(uid),
+      db.collection("profiles_public").doc(uid),
+      db.collection("profiles_private").doc(uid),
+      db.collection("userStats").doc(uid),
+      db.collection("follows").doc(uid),
+      db.collection("blocks").doc(uid),
+      db.collection("notifications").doc(uid),
+      db.collection("pendingFeedback").doc(uid),
+    ];
+    const batch = db.batch();
+    topLevelDocs.forEach((ref) => batch.delete(ref));
+    await batch.commit();
+
+    // 6. Storage cleanup
+    await deleteStorageFolder(`profilePhotos/${uid}`);
+    await deleteStorageFolder(`postPhotos/${uid}`);
+
+    // 7. Delete Firebase Auth account
+    await admin.auth().deleteUser(uid);
+
+    console.log(`✅ Account deletion complete for user: ${uid}`);
+    return {success: true};
+  } catch (error) {
+    console.error(`❌ Account deletion failed for user ${uid}:`, error);
+    throw new functions.https.HttpsError("internal", "Account deletion failed. Please try again.");
+  }
+});
+
+// Helper: Delete all documents in a subcollection (batched)
+async function deleteSubcollection(path: string): Promise<void> {
+  const snapshot = await db.collection(path).limit(500).get();
+  if (snapshot.empty) return;
+
+  const batch = db.batch();
+  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+
+  if (snapshot.size === 500) {
+    await deleteSubcollection(path);
+  }
+}
+
+// Helper: Clean up bidirectional follow relationships
+async function cleanupSocialGraph(uid: string): Promise<void> {
+  // Remove uid from each person they follow's followers list
+  const followingSnap = await db.collection(`follows/${uid}/following`).get();
+  const followingBatch = db.batch();
+  followingSnap.docs.forEach((doc) => {
+    followingBatch.delete(
+      db.collection("follows").doc(doc.id).collection("followers").doc(uid)
+    );
+  });
+  if (!followingSnap.empty) await followingBatch.commit();
+
+  // Remove uid from each follower's following list
+  const followersSnap = await db.collection(`follows/${uid}/followers`).get();
+  const followersBatch = db.batch();
+  followersSnap.docs.forEach((doc) => {
+    followersBatch.delete(
+      db.collection("follows").doc(doc.id).collection("following").doc(uid)
+    );
+  });
+  if (!followersSnap.empty) await followersBatch.commit();
+}
+
+// Helper: Clean up round memberships, chat metadata, feedback
+async function cleanupRoundParticipation(uid: string): Promise<void> {
+  // Members (collection group query)
+  const membersSnap = await db.collectionGroup("members")
+    .where("uid", "==", uid).get();
+  if (!membersSnap.empty) {
+    const batch = db.batch();
+    membersSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // Chat metadata
+  const chatMetaSnap = await db.collectionGroup("chatMetadata")
+    .where("uid", "==", uid).get();
+  if (!chatMetaSnap.empty) {
+    const batch = db.batch();
+    chatMetaSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // Feedback
+  const feedbackSnap = await db.collectionGroup("feedback")
+    .where("reviewerUid", "==", uid).get();
+  if (!feedbackSnap.empty) {
+    const batch = db.batch();
+    feedbackSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // Endorsements (as reviewer)
+  const endorseSnap = await db.collectionGroup("endorsements")
+    .where("reviewerUid", "==", uid).get();
+  if (!endorseSnap.empty) {
+    const batch = db.batch();
+    endorseSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // Incidents (as reviewer)
+  const incidentSnap = await db.collectionGroup("incidents")
+    .where("reviewerUid", "==", uid).get();
+  if (!incidentSnap.empty) {
+    const batch = db.batch();
+    incidentSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+}
+
+// Helper: Anonymize user's posts, comments, upvotes, likes, messages
+async function anonymizeUserContent(uid: string): Promise<void> {
+  // Anonymize posts
+  const postsSnap = await db.collection("posts")
+    .where("authorUid", "==", uid).get();
+  if (!postsSnap.empty) {
+    const batch = db.batch();
+    postsSnap.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        authorUid: "deleted",
+        authorNickname: "Deleted User",
+        authorPhotoUrl: null,
+      });
+    });
+    await batch.commit();
+  }
+
+  // Anonymize comments
+  const commentsSnap = await db.collectionGroup("comments")
+    .where("authorUid", "==", uid).get();
+  if (!commentsSnap.empty) {
+    const batch = db.batch();
+    commentsSnap.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        authorUid: "deleted",
+        authorNickname: "Deleted User",
+        authorPhotoUrl: null,
+      });
+    });
+    await batch.commit();
+  }
+
+  // Note: upvote docs use doc ID = uid rather than a uid field,
+  // so collection group queries can't easily find them. They are harmless
+  // orphaned docs that reference a now-deleted user and will not surface in UI.
+
+  // Anonymize chat messages
+  const messagesSnap = await db.collectionGroup("messages")
+    .where("senderUid", "==", uid).get();
+  if (!messagesSnap.empty) {
+    const batch = db.batch();
+    messagesSnap.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        senderUid: "deleted",
+        senderNickname: "Deleted User",
+        senderPhotoUrl: null,
+      });
+    });
+    await batch.commit();
+  }
+}
+
+// Helper: Delete all files in a Storage folder
+async function deleteStorageFolder(prefix: string): Promise<void> {
+  try {
+    const bucket = storage.bucket();
+    const [files] = await bucket.getFiles({prefix});
+    if (files.length === 0) return;
+
+    await Promise.all(files.map((file) => file.delete()));
+    console.log(`🗑️ Deleted ${files.length} files from ${prefix}`);
+  } catch (error) {
+    console.warn(`⚠️ Storage cleanup failed for ${prefix}:`, error);
+  }
+}
 
 // ============================================
 // onUpvoteWrite: Maintain upvote counts
@@ -292,7 +504,36 @@ async function fetchProfile(uid: string): Promise<{nickname: string; photoUrl: s
   }
 }
 
-// Helper: Create notification
+// Helper: Send FCM push notification (fire-and-forget — never throws or blocks Firestore writes)
+async function sendPushNotification(
+  userId: string,
+  title: string,
+  body: string,
+  data: Record<string, string>
+): Promise<void> {
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+    const fcmToken = userDoc.data()?.fcmToken as string | undefined;
+    if (!fcmToken) return; // User hasn't granted permission yet or hasn't logged in on this device
+
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: {title, body},
+      data, // notificationType, targetType, targetId for tap routing on the client
+      apns: {
+        payload: {aps: {sound: "default", badge: 1}},
+      },
+    });
+
+    console.log(`✅ Push sent to ${userId}: ${data.notificationType}`);
+  } catch (err: any) {
+    // Invalid / expired token — log but never propagate so Firestore write still succeeds.
+    console.warn(`⚠️ Push failed for ${userId}: ${err.code || err.message}`);
+  }
+}
+
+// Helper: Create notification — returns the Firestore document ID so it can be
+// included in the FCM data payload for client-side mark-as-read on push tap.
 async function createNotification(
   userId: string,
   notifData: {
@@ -306,9 +547,9 @@ async function createNotification(
     body: string;
     metadata?: Record<string, any>;
   }
-): Promise<void> {
+): Promise<string> {
   try {
-    await db
+    const docRef = await db
       .collection("notifications")
       .doc(userId)
       .collection("items")
@@ -320,6 +561,7 @@ async function createNotification(
       });
 
     console.log(`✅ Created notification for ${userId}: ${notifData.type}`);
+    return docRef.id;
   } catch (error) {
     console.error(`❌ Error creating notification for ${userId}:`, error);
     throw error;
@@ -363,8 +605,9 @@ export const onRoundMemberWrite = functions.firestore
       // Trigger on: first request OR re-request after cancel/decline/removal
       if ((!before || before.status === "left" || before.status === "declined" || before.status === "removed") && after.status === "requested") {
         const requesterProfile = await fetchProfile(memberUid);
+        const notifBody = `${requesterProfile?.nickname || "Someone"} requested to join your round`;
 
-        await createNotification(hostUid, {
+        const joinReqNotifId = await createNotification(hostUid, {
           type: "roundJoinRequest",
           actorUid: memberUid,
           actorNickname: requesterProfile?.nickname || "Someone",
@@ -372,19 +615,23 @@ export const onRoundMemberWrite = functions.firestore
           targetId: roundId,
           targetType: "round",
           title: "Join Request",
-          body: `${requesterProfile?.nickname || "Someone"} requested to join your round`,
-          metadata: {
-            roundName: courseName,
-            roundDate: roundDate,
-          },
+          body: notifBody,
+          metadata: {roundName: courseName, roundDate: roundDate},
+        });
+        await sendPushNotification(hostUid, "Join Request", notifBody, {
+          notificationType: "roundJoinRequest",
+          targetType: "round",
+          targetId: roundId,
+          notifId: joinReqNotifId,
         });
       }
 
       // 2. Request accepted → notify member
       if (before?.status === "requested" && after.status === "accepted") {
         const hostProfile = await fetchProfile(hostUid);
+        const notifBody = `Your request to join the round was accepted`;
 
-        await createNotification(memberUid, {
+        const acceptNotifId = await createNotification(memberUid, {
           type: "roundJoinAccepted",
           actorUid: hostUid,
           actorNickname: hostProfile?.nickname || "Host",
@@ -392,19 +639,23 @@ export const onRoundMemberWrite = functions.firestore
           targetId: roundId,
           targetType: "round",
           title: "Request Accepted",
-          body: `Your request to join the round was accepted`,
-          metadata: {
-            roundName: courseName,
-            roundDate: roundDate,
-          },
+          body: notifBody,
+          metadata: {roundName: courseName, roundDate: roundDate},
+        });
+        await sendPushNotification(memberUid, "Request Accepted", notifBody, {
+          notificationType: "roundJoinAccepted",
+          targetType: "round",
+          targetId: roundId,
+          notifId: acceptNotifId,
         });
       }
 
       // 3. Request declined → notify member
       if (before?.status === "requested" && after.status === "declined") {
         const hostProfile = await fetchProfile(hostUid);
+        const notifBody = `Your request to join the round was declined`;
 
-        await createNotification(memberUid, {
+        const declineNotifId = await createNotification(memberUid, {
           type: "roundJoinDeclined",
           actorUid: hostUid,
           actorNickname: hostProfile?.nickname || "Host",
@@ -412,10 +663,14 @@ export const onRoundMemberWrite = functions.firestore
           targetId: roundId,
           targetType: "round",
           title: "Request Declined",
-          body: `Your request to join the round was declined`,
-          metadata: {
-            roundName: courseName,
-          },
+          body: notifBody,
+          metadata: {roundName: courseName},
+        });
+        await sendPushNotification(memberUid, "Request Declined", notifBody, {
+          notificationType: "roundJoinDeclined",
+          targetType: "round",
+          targetId: roundId,
+          notifId: declineNotifId,
         });
       }
 
@@ -424,8 +679,9 @@ export const onRoundMemberWrite = functions.firestore
       if ((!before || before.status === "declined" || before.status === "left" || before.status === "removed") && after.status === "invited") {
         const inviterUid = after.invitedBy as string;
         const inviterProfile = await fetchProfile(inviterUid);
+        const notifBody = `${inviterProfile?.nickname || "Someone"} invited you to a round`;
 
-        await createNotification(memberUid, {
+        const inviteNotifId = await createNotification(memberUid, {
           type: "roundInvitation",
           actorUid: inviterUid,
           actorNickname: inviterProfile?.nickname || "Someone",
@@ -433,11 +689,14 @@ export const onRoundMemberWrite = functions.firestore
           targetId: roundId,
           targetType: "round",
           title: "Round Invitation",
-          body: `${inviterProfile?.nickname || "Someone"} invited you to a round`,
-          metadata: {
-            roundName: courseName,
-            roundDate: roundDate,
-          },
+          body: notifBody,
+          metadata: {roundName: courseName, roundDate: roundDate},
+        });
+        await sendPushNotification(memberUid, "Round Invitation", notifBody, {
+          notificationType: "roundInvitation",
+          targetType: "round",
+          targetId: roundId,
+          notifId: inviteNotifId,
         });
       }
 
@@ -540,9 +799,12 @@ export const onChatMessage = functions.firestore
 
         const title = roundDate ? `${courseName} • ${roundDate}` : courseName;
 
+        let chatNotifId: string;
+
         if (!existingNotifsSnapshot.empty) {
           // Update existing notification with latest message
           const existingNotif = existingNotifsSnapshot.docs[0];
+          chatNotifId = existingNotif.id;
           await existingNotif.ref.update({
             actorUid: message.senderUid,
             actorNickname: message.senderNickname,
@@ -556,7 +818,7 @@ export const onChatMessage = functions.firestore
           console.log(`✅ Updated chat notification for ${memberUid} in round ${roundId}`);
         } else {
           // Create new notification (first message in this round)
-          await db
+          const chatDocRef = await db
             .collection("notifications")
             .doc(memberUid)
             .collection("items")
@@ -577,9 +839,18 @@ export const onChatMessage = functions.firestore
               createdAt: now,
               updatedAt: now,
             });
+          chatNotifId = chatDocRef.id;
 
           console.log(`✅ Created chat notification for ${memberUid} in round ${roundId}`);
         }
+
+        // Push for every new chat message (both update and create paths)
+        await sendPushNotification(memberUid, title, messagePreview, {
+          notificationType: "roundChatMessage",
+          targetType: "round",
+          targetId: roundId,
+          notifId: chatNotifId,
+        });
       });
 
       await Promise.all(promises);
@@ -630,7 +901,8 @@ export const onRoundUpdate = functions.firestore
             return;
           }
 
-          await createNotification(memberUid, {
+          const cancelBody = `${courseName} on ${roundDate} has been canceled`;
+          const cancelNotifId = await createNotification(memberUid, {
             type: "roundCancelled",
             actorUid: after.hostUid,
             actorNickname: hostProfile?.nickname || "Host",
@@ -638,11 +910,14 @@ export const onRoundUpdate = functions.firestore
             targetId: roundId,
             targetType: "round",
             title: "Round Canceled",
-            body: `${courseName} on ${roundDate} has been canceled`,
-            metadata: {
-              roundName: courseName,
-              roundDate: roundDate,
-            },
+            body: cancelBody,
+            metadata: {roundName: courseName, roundDate: roundDate},
+          });
+          await sendPushNotification(memberUid, "Round Canceled", cancelBody, {
+            notificationType: "roundCancelled",
+            targetType: "round",
+            targetId: roundId,
+            notifId: cancelNotifId,
           });
         });
 
@@ -685,7 +960,8 @@ export const onRoundUpdate = functions.firestore
             updateDescription = "Course changed";
           }
 
-          await createNotification(memberUid, {
+          const updateBody = `${updateDescription} for ${courseName} on ${roundDate}`;
+          const updateNotifId = await createNotification(memberUid, {
             type: "roundUpdated",
             actorUid: after.hostUid,
             actorNickname: hostProfile?.nickname || "Host",
@@ -693,11 +969,14 @@ export const onRoundUpdate = functions.firestore
             targetId: roundId,
             targetType: "round",
             title: "Round Updated",
-            body: `${updateDescription} for ${courseName} on ${roundDate}`,
-            metadata: {
-              roundName: courseName,
-              roundDate: roundDate,
-            },
+            body: updateBody,
+            metadata: {roundName: courseName, roundDate: roundDate},
+          });
+          await sendPushNotification(memberUid, "Round Updated", updateBody, {
+            notificationType: "roundUpdated",
+            targetType: "round",
+            targetId: roundId,
+            notifId: updateNotifId,
           });
         });
 
@@ -746,15 +1025,20 @@ export const onRoundComplete = functions.firestore
         const memberData = memberDoc.data();
         const memberUid = memberData.uid as string;
 
-        await createNotification(memberUid, {
+        const feedbackBody = `You played at ${courseName}. Share your experience!`;
+        const fbNotifId = await createNotification(memberUid, {
           type: "feedbackReminder",
           targetId: roundId,
           targetType: "round",
           title: "Rate your playing partners",
-          body: `You played at ${courseName}. Share your experience!`,
-          metadata: {
-            courseName: courseName,
-          },
+          body: feedbackBody,
+          metadata: {courseName: courseName},
+        });
+        await sendPushNotification(memberUid, "Rate your playing partners", feedbackBody, {
+          notificationType: "feedbackReminder",
+          targetType: "round",
+          targetId: roundId,
+          notifId: fbNotifId,
         });
       });
 
@@ -778,8 +1062,9 @@ export const onFollowCreate = functions.firestore
 
     try {
       const followerProfile = await fetchProfile(followerId);
+      const followBody = `${followerProfile?.nickname || "Someone"} started following you`;
 
-      await createNotification(userId, {
+      const followNotifId = await createNotification(userId, {
         type: "userFollowed",
         actorUid: followerId,
         actorNickname: followerProfile?.nickname || "Someone",
@@ -787,7 +1072,13 @@ export const onFollowCreate = functions.firestore
         targetId: followerId,
         targetType: "profile",
         title: "New Follower",
-        body: `${followerProfile?.nickname || "Someone"} started following you`,
+        body: followBody,
+      });
+      await sendPushNotification(userId, "New Follower", followBody, {
+        notificationType: "userFollowed",
+        targetType: "profile",
+        targetId: followerId,
+        notifId: followNotifId,
       });
 
       console.log(`✅ Notified ${userId} about new follower ${followerId}`);
@@ -847,13 +1138,20 @@ export const onUpvoteCreate = functions.firestore
         if (!actorUids.includes(upvoterUid)) {
           actorUids.push(upvoterUid);
           const actorCount = actorUids.length;
+          const aggregatedBody = `${actorCount} people upvoted your post`;
 
           await existingNotif.ref.update({
             actorUids: actorUids,
             actorCount: actorCount,
-            body: `${actorCount} people upvoted your post`,
+            body: aggregatedBody,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             isRead: false, // Mark as unread when aggregated
+          });
+          await sendPushNotification(authorUid, "New Upvotes", aggregatedBody, {
+            notificationType: "postUpvoted",
+            targetType: "post",
+            targetId: postId,
+            notifId: existingNotif.id,
           });
 
           console.log(`✅ Aggregated upvote for post ${postId} (${actorCount} total)`);
@@ -862,7 +1160,8 @@ export const onUpvoteCreate = functions.firestore
         }
       } else {
         // Create new notification
-        await createNotification(authorUid, {
+        const upvoteBody = `${upvoterProfile?.nickname || "Someone"} upvoted your post`;
+        const upvoteNotifId = await createNotification(authorUid, {
           type: "postUpvoted",
           actorUid: upvoterUid,
           actorNickname: upvoterProfile?.nickname || "Someone",
@@ -870,7 +1169,13 @@ export const onUpvoteCreate = functions.firestore
           targetId: postId,
           targetType: "post",
           title: "New Upvote",
-          body: `${upvoterProfile?.nickname || "Someone"} upvoted your post`,
+          body: upvoteBody,
+        });
+        await sendPushNotification(authorUid, "New Upvote", upvoteBody, {
+          notificationType: "postUpvoted",
+          targetType: "post",
+          targetId: postId,
+          notifId: upvoteNotifId,
         });
 
         console.log(`✅ Created upvote notification for post ${postId}`);
@@ -914,7 +1219,8 @@ export const onCommentCreate = functions.firestore
           return;
         }
 
-        await createNotification(postAuthorUid, {
+        const commentBody = `${commenterProfile?.nickname || "Someone"} commented on your post`;
+        const commentNotifId = await createNotification(postAuthorUid, {
           type: "postCommented",
           actorUid: commenterUid,
           actorNickname: commenterProfile?.nickname || "Someone",
@@ -922,10 +1228,14 @@ export const onCommentCreate = functions.firestore
           targetId: postId,
           targetType: "post",
           title: "New Comment",
-          body: `${commenterProfile?.nickname || "Someone"} commented on your post`,
-          metadata: {
-            commentId: commentId,
-          },
+          body: commentBody,
+          metadata: {commentId: commentId},
+        });
+        await sendPushNotification(postAuthorUid, "New Comment", commentBody, {
+          notificationType: "postCommented",
+          targetType: "post",
+          targetId: postId,
+          notifId: commentNotifId,
         });
 
         console.log(`✅ Notified post author about comment on post ${postId}`);
@@ -951,7 +1261,8 @@ export const onCommentCreate = functions.firestore
           return;
         }
 
-        await createNotification(parentCommentAuthorUid, {
+        const replyBody = `${commenterProfile?.nickname || "Someone"} replied to your comment`;
+        const replyNotifId = await createNotification(parentCommentAuthorUid, {
           type: "commentReplied",
           actorUid: commenterUid,
           actorNickname: commenterProfile?.nickname || "Someone",
@@ -959,11 +1270,14 @@ export const onCommentCreate = functions.firestore
           targetId: postId,
           targetType: "post",
           title: "New Reply",
-          body: `${commenterProfile?.nickname || "Someone"} replied to your comment`,
-          metadata: {
-            commentId: commentId,
-            parentCommentId: parentCommentId,
-          },
+          body: replyBody,
+          metadata: {commentId: commentId, parentCommentId: parentCommentId},
+        });
+        await sendPushNotification(parentCommentAuthorUid, "New Reply", replyBody, {
+          notificationType: "commentReplied",
+          targetType: "post",
+          targetId: postId,
+          notifId: replyNotifId,
         });
 
         console.log(`✅ Notified comment author about reply on post ${postId}`);

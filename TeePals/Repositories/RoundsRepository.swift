@@ -73,8 +73,14 @@ struct RoundFilters {
     var cityKey: String?
     var status: RoundStatus?
     var visibility: RoundVisibility?
+
+    // When true, no visibility filter is applied server-side.
+    // Used for profile-history queries where visibility is enforced client-side
+    // using pre-loaded social graph and membership sets (O(1) per round).
+    var skipVisibilityFilter: Bool
+
     var dateRange: DateRangeOption
-    
+
     // Client-side filters
     var radiusMiles: Int
     var centerLocation: GeoLocation?
@@ -91,6 +97,7 @@ struct RoundFilters {
         cityKey: String? = nil,
         status: RoundStatus? = .open,
         visibility: RoundVisibility? = nil,
+        skipVisibilityFilter: Bool = false,
         dateRange: DateRangeOption = .next30,
         radiusMiles: Int = RoundFilters.defaultRadiusMiles,
         centerLocation: GeoLocation? = nil,
@@ -102,6 +109,7 @@ struct RoundFilters {
         self.cityKey = cityKey
         self.status = status
         self.visibility = visibility
+        self.skipVisibilityFilter = skipVisibilityFilter
         self.dateRange = dateRange
         self.radiusMiles = radiusMiles
         self.centerLocation = centerLocation
@@ -133,7 +141,7 @@ struct RoundFilters {
 
 // MARK: - Date Range Options
 
-enum DateRangeOption: Equatable {
+enum DateRangeOption: Equatable, Hashable {
     case today
     case thisWeekend
     case next7

@@ -57,13 +57,13 @@ struct UserPostsListView: View {
     // MARK: - Loading State
 
     private var loadingState: some View {
-        VStack(spacing: AppSpacing.md) {
+        VStack(spacing: AppSpacingV3.sm) {
             ForEach(0..<3, id: \.self) { _ in
                 SkeletonCard(style: .standard)
             }
         }
         .frame(maxWidth: .infinity, alignment: .top)
-        .padding(AppSpacing.contentPadding)
+        .padding(AppSpacingV3.md)
     }
     
     // MARK: - Empty State
@@ -72,37 +72,30 @@ struct UserPostsListView: View {
         VStack {
             Spacer()
 
-            VStack(spacing: AppSpacing.md) {
+            VStack(spacing: AppSpacingV3.sm) {
                 Image(systemName: "text.bubble")
                     .font(.largeTitle)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(AppColorsV3.textTertiary)
 
                 Text("No posts yet")
-                    .font(AppTypography.headlineMedium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.headlineMedium)
+                    .foregroundColor(AppColorsV3.textPrimary)
 
                 Text("Share your first update with golfers nearby.")
-                    .font(AppTypography.bodyMedium)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.bodyMedium)
+                    .foregroundColor(AppColorsV3.textSecondary)
                     .multilineTextAlignment(.center)
 
                 if let onCreate = onCreatePost {
-                    Button {
+                    PrimaryButtonV3("Create Post", size: .medium) {
                         onCreate()
-                    } label: {
-                        Text("Create Post")
-                            .font(AppTypography.buttonMedium)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: 200)
-                            .frame(height: AppSpacing.buttonHeightLarge)
-                            .background(AppColors.primary)
-                            .cornerRadius(AppRadii.button)
                     }
-                    .padding(.top, AppSpacing.sm)
+                    .frame(maxWidth: 200)
+                    .padding(.top, AppSpacingV3.xs)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, AppSpacing.contentPadding)
+            .padding(.horizontal, AppSpacingV3.md)
 
             Spacer()
         }
@@ -111,7 +104,7 @@ struct UserPostsListView: View {
     // MARK: - Posts List
 
     private var postsList: some View {
-        LazyVStack(spacing: AppSpacing.md, pinnedViews: []) {
+        LazyVStack(spacing: AppSpacingV3.sm, pinnedViews: []) {
             ForEach(viewModel.posts) { post in
                 CompactPostRow(post: post) {
                     selectedPost = post
@@ -129,7 +122,7 @@ struct UserPostsListView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .top)
-        .padding(AppSpacing.contentPadding)
+        .padding(AppSpacingV3.md)
     }
 }
 
@@ -141,39 +134,38 @@ struct CompactPostRow: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(alignment: .top, spacing: AppSpacing.sm) {
-                // First photo thumbnail if available
+            HStack(alignment: .top, spacing: AppSpacingV3.xs) {
                 if let firstPhoto = post.photoUrls.first, let url = URL(string: firstPhoto) {
                     TPImage(url: url)
                         .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.xs))
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.xxs))
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(post.text)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textPrimary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
-                    HStack(spacing: AppSpacing.sm) {
+                    HStack(spacing: AppSpacingV3.xs) {
                         Text(post.timeAgoString)
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .font(AppTypographyV3.caption)
+                            .foregroundColor(AppColorsV3.textTertiary)
                         
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.up")
                             Text("\(post.upvoteCount)")
                         }
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textTertiary)
                         
                         HStack(spacing: 4) {
                             Image(systemName: "bubble.left")
                             Text("\(post.commentCount)")
                         }
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textTertiary)
                     }
                 }
                 
@@ -181,13 +173,12 @@ struct CompactPostRow: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(AppColorsV3.textTertiary)
             }
-            .padding(AppSpacing.sm)
-            .background(AppColors.surface)
-            .cornerRadius(AppSpacing.sm)
+            .padding(AppSpacingV3.xs)
+            .background(AppColorsV3.surfaceWhite)
+            .cornerRadius(AppSpacingV3.xs)
         }
         .buttonStyle(.plain)
     }
 }
-

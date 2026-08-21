@@ -179,7 +179,7 @@ struct TestDataHelper {
 
         let db = Firestore.firestore()
 
-        var updateData: [String: Any] = [
+        let updateData: [String: Any] = [
             "hasOnTimeBadge": onTime,
             "hasRespectfulBadge": respectful,
             "hasWellMatchedBadge": wellMatched,

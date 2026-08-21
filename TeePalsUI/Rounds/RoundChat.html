@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sunday Morning - Group Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --forest-green: #0B3D2E;
+            --emerald-accent: #155E49;
+            --bg-neutral: #FDFDFD;
+            --surface-white: #FFFFFF;
+            --text-primary: #121413;
+            --text-secondary: #6B7280;
+            --border-light: #F1F3F2;
+            --bubble-gray: #F3F4F6;
+        }
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-neutral);
+            color: var(--text-primary);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col bg-white">
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-[var(--border-light)] px-6 pt-6 pb-4 rounded-t-[32px] mt-4 shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
+<div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
+<div class="flex justify-between items-start">
+<div>
+<h1 class="font-serif text-[22px] font-bold text-[var(--forest-green)] leading-tight">Torrey Pines South</h1>
+<p class="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wider mt-1">Group Chat • 4 Players</p>
+</div>
+<button class="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center hover:bg-neutral-100 transition-colors">
+<span class="material-symbols-outlined text-[var(--text-primary)] text-[20px]">close</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-white pb-24">
+<div class="flex justify-center">
+<span class="text-[10px] font-medium text-gray-400 uppercase tracking-widest bg-white px-2">Today, 8:45 AM</span>
+</div>
+<div class="flex flex-col items-start gap-1">
+<div class="flex items-center gap-2 mb-1 ml-1">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-gray-200 border border-white shadow-sm">
+<img alt="Michael" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh5cKyrLZIw6xI-uFtGRwubhnmpm5kY1xeeerbuicBuz7mL-6Z7wRrD-2gJAPIHShIKeShPftpmDtofneReL3l-mG-__csb_XUnfMoVEvWOhg1GZrFOow-ko_qPMMsTyJrd-v44ZDVSpfrIEhYppbThRuikCmb-ijgf1M24GqmIJ7oRgdTA2VvoPN_Jh_o-DFHQH9kUIropl_-0jRlvh8amHWG9bagWiQU8fTG-dxAIagJ4t1KgbOIvXppw4IOjlu6tQdHdKBz"/>
+</div>
+<span class="text-[11px] font-semibold text-[var(--text-secondary)]">Michael C.</span>
+</div>
+<div class="bg-[var(--bubble-gray)] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+<p class="text-[14px] leading-relaxed text-[var(--text-primary)]">Excited for the round this weekend! The weather looks perfect.</p>
+</div>
+</div>
+<div class="flex flex-col items-start gap-1">
+<div class="flex items-center gap-2 mb-1 ml-1">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-gray-200 border border-white shadow-sm">
+<img alt="Sarah" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtA6MIHb7oFNL3N-J_OpZcq1TkHKptPVUEQl3uzq-dOJmzgW6fF9fzRRnemJ331CLc3_IN4HblXkykwNcHDKrdqNbPotIHJaDkMd2cDMpkHd11m0NppcRfyp7Sxca1QqpMS7gmWc8teFAsDCk0Tgqv9aptMv2ycMGiJVvVrMHktHPWb8Bv8wVQMkTjWWj1vLAREvE4QHn6ihrb95orpcKaeXHo-Ii6fpiEV9oluVQyE-bIvra8Na9k57p2faan4coSbUjapmCU"/>
+</div>
+<span class="text-[11px] font-semibold text-[var(--text-secondary)]">Sarah J.</span>
+</div>
+<div class="bg-[var(--bubble-gray)] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+<p class="text-[14px] leading-relaxed text-[var(--text-primary)]">I'm bringing the snacks. Any requests?</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="bg-[var(--forest-green)] rounded-2xl rounded-br-sm px-4 py-3 max-w-[85%] shadow-sm">
+<p class="text-[14px] leading-relaxed text-white">I'll handle the drinks. Tee time is at 9:00 AM sharp, right?</p>
+</div>
+<span class="text-[10px] text-gray-300 mr-1">9:12 AM</span>
+</div>
+<div class="flex flex-col items-start gap-1">
+<div class="flex items-center gap-2 mb-1 ml-1">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-gray-200 border border-white shadow-sm">
+<img alt="Michael" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBL0d_rSCNy46nJx2hsALXtHCCEiLeozH979WIN0uq0N_D9PPB2KSkr_0dchz0uIkIQfbeXf9NsiQ_NhKmgPUXFfUinaRQhDIdlqYqc4rY3PFlqyuvfi5frp9kH9uHSx8njMbvwcc20r99layM_A0HnDD4dQuURhN95wuEIleELJxJNhR0KY04WH8Zy7x6HDiPEH609sa8bp58_l3HOOxK5WueAT0PAwu0JIwTS75CoXLneCGHVJ1LzjbRIUOKDugOmiKkXz50"/>
+</div>
+<span class="text-[11px] font-semibold text-[var(--text-secondary)]">Michael C.</span>
+</div>
+<div class="bg-[var(--bubble-gray)] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+<p class="text-[14px] leading-relaxed text-[var(--text-primary)]">Yep, 9:00 AM. Let's meet at the clubhouse around 8:30 to warm up.</p>
+</div>
+</div>
+<div class="flex flex-col items-start gap-1">
+<div class="flex items-center gap-2 mb-1 ml-1">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-gray-200 border border-white shadow-sm">
+<img alt="David" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMumbtpXTNOSisBXawNiHvXBUFoIerv51lFxdtvL8A5b-lAzSkgUY-e97mPP-L2tlKpR7xK3VNGySRSMjtOD4FsD2pAuw8q8xcTx5o-nvinSmtUv4uwiPUCipTXmIh13jkZ1iGunwiN0yL1uw3GXk_wldbwyIUV9MxTV22dOo_DHVM3U3GjNBVwup4cHNifkHBQItT_hyYBIErRS8rw0SO84-kU5ZhmH1xjUFNTQth9tKqzrsoJ85jP2-5rPnTheZrj3FsNoPL"/>
+</div>
+<span class="text-[11px] font-semibold text-[var(--text-secondary)]">David L.</span>
+</div>
+<div class="bg-[var(--bubble-gray)] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+<p class="text-[14px] leading-relaxed text-[var(--text-primary)]">Got it. See you all there!</p>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--border-light)] px-4 py-4 pb-8 z-50">
+<div class="flex items-end gap-3 max-w-md mx-auto">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-neutral-50 transition-colors shrink-0">
+<span class="material-symbols-outlined text-[24px]">add_circle</span>
+</button>
+<div class="flex-1 bg-[var(--bubble-gray)] rounded-2xl flex items-center px-4 py-2.5 min-h-[44px]">
+<textarea class="w-full bg-transparent border-none p-0 text-[15px] placeholder-gray-400 text-[var(--text-primary)] focus:ring-0 resize-none max-h-24 overflow-y-auto" placeholder="Type a message..." rows="1"></textarea>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--forest-green)] text-white shadow-lg shadow-[var(--forest-green)]/20 shrink-0 hover:bg-[var(--emerald-accent)] transition-colors">
+<span class="material-symbols-outlined text-[20px] ml-0.5">arrow_upward</span>
+</button>
+</div>
+</div>
+
+</body></html>

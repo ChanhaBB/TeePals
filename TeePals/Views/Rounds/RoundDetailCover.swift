@@ -13,15 +13,6 @@ struct RoundDetailCover: View {
         NavigationStack {
             RoundDetailView(viewModel: container.makeRoundDetailViewModel(roundId: roundId))
                 .environmentObject(container)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button { dismiss() } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppColorsV3.textPrimary)
-                        }
-                    }
-                }
         }
     }
 }

@@ -28,7 +28,7 @@ struct NicknameStepView: View {
             
             // Input Field
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacingV3.xs) {
                     TextField("Enter name", text: $viewModel.nickname)
                         .font(.title3)
                         .padding()

@@ -20,34 +20,34 @@ struct InlineErrorBanner: View {
     }
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacingV3.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.error)
+                .foregroundColor(AppColorsV3.error)
             
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
                 Text(message)
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let actionTitle = actionTitle, let action = action {
                     Button(action: action) {
                         Text(actionTitle)
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.error)
+                            .font(AppTypographyV3.labelMedium)
+                            .foregroundColor(AppColorsV3.error)
                     }
                 }
             }
             
             Spacer(minLength: 0)
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.error.opacity(0.1))
-        .cornerRadius(AppSpacing.radiusMedium)
+        .padding(AppSpacingV3.sm)
+        .background(AppColorsV3.error.opacity(0.1))
+        .cornerRadius(AppSpacingV3.radiusMedium)
         .overlay(
-            RoundedRectangle(cornerRadius: AppSpacing.radiusMedium)
-                .stroke(AppColors.error.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                .stroke(AppColorsV3.error.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -72,34 +72,34 @@ struct InlineWarningBanner: View {
     }
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacingV3.sm) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.warning)
+                .foregroundColor(AppColorsV3.warning)
             
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
                 Text(message)
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let actionTitle = actionTitle, let action = action {
                     Button(action: action) {
                         Text(actionTitle)
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.warning)
+                            .font(AppTypographyV3.labelMedium)
+                            .foregroundColor(AppColorsV3.warning)
                     }
                 }
             }
             
             Spacer(minLength: 0)
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.warning.opacity(0.1))
-        .cornerRadius(AppSpacing.radiusMedium)
+        .padding(AppSpacingV3.sm)
+        .background(AppColorsV3.warning.opacity(0.1))
+        .cornerRadius(AppSpacingV3.radiusMedium)
         .overlay(
-            RoundedRectangle(cornerRadius: AppSpacing.radiusMedium)
-                .stroke(AppColors.warning.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                .stroke(AppColorsV3.warning.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -124,34 +124,34 @@ struct InlineInfoBanner: View {
     }
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacingV3.sm) {
             Image(systemName: "info.circle.fill")
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.info)
+                .foregroundColor(AppColorsV3.info)
             
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
                 Text(message)
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let actionTitle = actionTitle, let action = action {
                     Button(action: action) {
                         Text(actionTitle)
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.info)
+                            .font(AppTypographyV3.labelMedium)
+                            .foregroundColor(AppColorsV3.info)
                     }
                 }
             }
             
             Spacer(minLength: 0)
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.info.opacity(0.1))
-        .cornerRadius(AppSpacing.radiusMedium)
+        .padding(AppSpacingV3.sm)
+        .background(AppColorsV3.info.opacity(0.1))
+        .cornerRadius(AppSpacingV3.radiusMedium)
         .overlay(
-            RoundedRectangle(cornerRadius: AppSpacing.radiusMedium)
-                .stroke(AppColors.info.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                .stroke(AppColorsV3.info.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -176,34 +176,34 @@ struct InlineSuccessBanner: View {
     }
     
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: AppSpacingV3.sm) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.success)
+                .foregroundColor(AppColorsV3.success)
             
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xxs) {
                 Text(message)
-                    .font(AppTypography.bodySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .font(AppTypographyV3.bodyRegular)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let actionTitle = actionTitle, let action = action {
                     Button(action: action) {
                         Text(actionTitle)
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.success)
+                            .font(AppTypographyV3.labelMedium)
+                            .foregroundColor(AppColorsV3.success)
                     }
                 }
             }
             
             Spacer(minLength: 0)
         }
-        .padding(AppSpacing.md)
-        .background(AppColors.success.opacity(0.1))
-        .cornerRadius(AppSpacing.radiusMedium)
+        .padding(AppSpacingV3.sm)
+        .background(AppColorsV3.success.opacity(0.1))
+        .cornerRadius(AppSpacingV3.radiusMedium)
         .overlay(
-            RoundedRectangle(cornerRadius: AppSpacing.radiusMedium)
-                .stroke(AppColors.success.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                .stroke(AppColorsV3.success.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -228,8 +228,8 @@ struct DismissableBanner<Content: View>: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(AppColors.textTertiary)
-                        .padding(AppSpacing.xs)
+                        .foregroundColor(AppColorsV3.textTertiary)
+                        .padding(AppSpacingV3.xxs)
                 }
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
@@ -243,7 +243,7 @@ struct DismissableBanner<Content: View>: View {
 struct AppBanners_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
+            VStack(spacing: AppSpacingV3.md) {
                 InlineErrorBanner(
                     "Something went wrong. Please try again.",
                     actionTitle: "Retry",
@@ -271,4 +271,3 @@ struct AppBanners_Previews: PreviewProvider {
     }
 }
 #endif
-

@@ -97,21 +97,17 @@ struct OnboardingCarouselView: View {
 
                     // Footer links
                     HStack(spacing: AppSpacingV3.md) {
-                        Button("Privacy Policy") {
-                            // TODO: Open privacy policy URL
-                        }
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(.white.opacity(0.5))
+                        Link("Privacy Policy", destination: URL(string: "https://teepals-cf67c.web.app/privacy.html")!)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.white.opacity(0.5))
 
                         Rectangle()
                             .fill(Color.white.opacity(0.2))
                             .frame(width: 1, height: 12)
 
-                        Button("Terms of Service") {
-                            // TODO: Open terms of service URL
-                        }
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(.white.opacity(0.5))
+                        Link("Terms of Service", destination: URL(string: "https://teepals-cf67c.web.app/terms.html")!)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.white.opacity(0.5))
                     }
                 }
                 .padding(.bottom, 32)

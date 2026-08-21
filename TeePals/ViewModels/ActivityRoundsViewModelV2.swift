@@ -69,16 +69,6 @@ final class ActivityRoundsViewModelV2: ObservableObject {
             }
     }
 
-    /// Past rounds, most recent first.
-    var pastRounds: [ActivityRoundItem] {
-        allRounds
-            .filter { !$0.isFuture && !$0.needsAction }
-            .sorted { lhs, rhs in
-                guard let l = lhs.round.startTime, let r = rhs.round.startTime else { return false }
-                return l > r
-            }
-    }
-
     var inviteCount: Int { inviteRounds.count }
     var pendingCount: Int { pendingRounds.count }
 
@@ -87,7 +77,6 @@ final class ActivityRoundsViewModelV2: ObservableObject {
         case .schedule: return scheduleRounds.isEmpty
         case .invites: return inviteRounds.isEmpty
         case .pending: return pendingRounds.isEmpty
-        case .past: return pastRounds.isEmpty
         }
     }
 
@@ -126,6 +115,13 @@ final class ActivityRoundsViewModelV2: ObservableObject {
         guard !isLoading else { return }
         hasLoadedOnce = false
         await loadActivity(dateRange: dateRange)
+    }
+
+    /// Synchronously invalidate cached state so the view shows loading
+    /// on the next render. Call before switching to Activity via deep link
+    /// or Home navigation.
+    func prepareForNavigation() {
+        hasLoadedOnce = false
     }
 
     // MARK: - Private Loading

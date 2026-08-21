@@ -105,7 +105,7 @@ struct RoundsFilterSheet: View {
 
     private var searchAreaSection: some View {
         VStack(alignment: .leading, spacing: AppSpacingV3.md) {
-            filterSectionHeader("Search Area")
+            SectionLabelV3(title: "Search Area")
             locationRow
             FilterDistanceChips(selectedDistance: $selectedDistance)
             helperText
@@ -167,7 +167,7 @@ struct RoundsFilterSheet: View {
     @ViewBuilder
     private var helperText: some View {
         if isAnywhereMode {
-            helperPill {
+            HelperPillV3 {
                 HStack(spacing: 4) {
                     Image(systemName: "globe")
                         .font(.system(size: 11))
@@ -175,30 +175,16 @@ struct RoundsFilterSheet: View {
                 }
             }
         } else if let radius = selectedDistance.intValue {
-            helperPill {
-                Text("Searching within ")
+            HelperPillV3 {
+                (Text("Searching within ")
                     .foregroundColor(AppColorsV3.textSecondary)
                 + Text("\(radius) miles")
                     .foregroundColor(AppColorsV3.forestGreen)
                     .font(.system(size: 11, weight: .bold))
                 + Text(" of \(displayCityLabel)")
-                    .foregroundColor(AppColorsV3.textSecondary)
+                    .foregroundColor(AppColorsV3.textSecondary))
             }
         }
-    }
-
-    private func helperPill<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(AppColorsV3.textSecondary)
-            .padding(AppSpacingV3.xs)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.gray.opacity(0.04))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray.opacity(0.08), lineWidth: 1)
-            )
     }
 
     // MARK: - Actions
@@ -244,14 +230,4 @@ struct RoundsFilterSheet: View {
         selectedHostedBy = .everyone
         showCustomDatePicker = false
     }
-}
-
-// MARK: - Shared Section Header
-
-func filterSectionHeader(_ title: String) -> some View {
-    Text(title)
-        .font(.system(size: 10, weight: .bold))
-        .tracking(0.15 * 10)
-        .textCase(.uppercase)
-        .foregroundColor(AppColorsV3.textSecondary)
 }

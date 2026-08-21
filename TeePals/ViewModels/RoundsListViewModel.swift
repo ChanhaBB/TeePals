@@ -32,6 +32,9 @@ final class RoundsListViewModel: ObservableObject {
     // User's profile for default filters
     @Published var userProfile: PublicProfile?
 
+    // Friends list (mutual follows) for filtering friends-only rounds
+    @Published var friendUids: [String] = []
+
     // Debug info (dev only)
     var lastSearchDebug: RoundsSearchDebugInfo?
 
@@ -130,12 +133,48 @@ final class RoundsListViewModel: ObservableObject {
         nextPageCursor = nil
 
         do {
+            // Fetch friends list for filtering friends-only rounds
+            if friendUids.isEmpty {
+                friendUids = try await socialRepository.getFriends()
+            }
+
             let fetchedRounds: [Round]
 
             // Branch based on hostedBy filter
             if filters.hostedBy == .following {
                 // Use following service (fetches rounds from followed users)
-                fetchedRounds = try await followingRoundsService.fetchFollowingHostedRounds(dateRange: filters.dateRange)
+                let allFollowingRounds = try await followingRoundsService.fetchFollowingHostedRounds(dateRange: filters.dateRange)
+
+                // Compute distance and apply distance filter if location is available
+                if let centerLat = filters.centerLat,
+                   let centerLng = filters.centerLng,
+                   let radiusMiles = filters.radiusMiles {
+                    fetchedRounds = allFollowingRounds.compactMap { round -> Round? in
+                        guard let roundLat = round.geo?.lat,
+                              let roundLng = round.geo?.lng else {
+                            return nil // Exclude rounds without location
+                        }
+                        let distance = DistanceUtil.haversineMiles(
+                            lat1: centerLat,
+                            lng1: centerLng,
+                            lat2: roundLat,
+                            lng2: roundLng
+                        )
+
+                        // Only include rounds within radius
+                        guard distance <= radiusMiles else {
+                            return nil
+                        }
+
+                        // Return round with computed distance
+                        var roundWithDistance = round
+                        roundWithDistance.distanceMiles = distance
+                        return roundWithDistance
+                    }
+                } else {
+                    // No location set, show all following rounds (no distance computed)
+                    fetchedRounds = allFollowingRounds
+                }
             } else {
                 // Use regular geo/discovery search (everyone)
                 let searchFilter: RoundsSearchFilter
@@ -158,8 +197,10 @@ final class RoundsListViewModel: ObservableObject {
                         startTimeMin: filters.dateRange.startDate,
                         startTimeMax: filters.dateRange.endDate,
                         status: .open,
-                        visibility: .public,
-                        excludeFullRounds: true
+                        visibility: nil,  // nil = show public + friends (filter in service)
+                        excludeFullRounds: true,
+                        hostUid: nil,
+                        friendUids: friendUids  // Pass friends list
                     )
 
                 case .discovery:
@@ -171,8 +212,10 @@ final class RoundsListViewModel: ObservableObject {
                         startTimeMin: filters.dateRange.startDate,
                         startTimeMax: filters.dateRange.endDate,
                         status: .open,
-                        visibility: .public,
+                        visibility: nil,  // nil = show public + friends (filter in service)
                         excludeFullRounds: true,
+                        hostUid: nil,
+                        friendUids: friendUids,  // Pass friends list
                         isDiscoveryMode: true
                     )
                 }
@@ -226,7 +269,7 @@ final class RoundsListViewModel: ObservableObject {
                     isLoadingMore = false
                     return
                 }
-                
+
                 searchFilter = RoundsSearchFilter(
                     centerLat: centerLat,
                     centerLng: centerLng,
@@ -234,10 +277,12 @@ final class RoundsListViewModel: ObservableObject {
                     startTimeMin: filters.dateRange.startDate,
                     startTimeMax: filters.dateRange.endDate,
                     status: .open,
-                    visibility: .public,
-                    excludeFullRounds: true
+                    visibility: nil,  // nil = show public + friends
+                    excludeFullRounds: true,
+                    hostUid: nil,
+                    friendUids: friendUids
                 )
-                
+
             case .discovery:
                 searchFilter = RoundsSearchFilter(
                     centerLat: 0,
@@ -246,8 +291,10 @@ final class RoundsListViewModel: ObservableObject {
                     startTimeMin: filters.dateRange.startDate,
                     startTimeMax: filters.dateRange.endDate,
                     status: .open,
-                    visibility: .public,
+                    visibility: nil,  // nil = show public + friends
                     excludeFullRounds: true,
+                    hostUid: nil,
+                    friendUids: friendUids,
                     isDiscoveryMode: true
                 )
             }
@@ -409,7 +456,7 @@ final class RoundsListViewModel: ObservableObject {
 // MARK: - Hosted By Option
 
 /// Filter for who can host rounds shown in results
-enum HostedByOption: Equatable, Hashable {
+enum HostedByOption: CaseIterable, Equatable, Hashable {
     case everyone   // Show all rounds
     case following  // Show only rounds from users you follow
 

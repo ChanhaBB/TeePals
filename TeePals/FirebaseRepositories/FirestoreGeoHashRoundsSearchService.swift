@@ -166,15 +166,9 @@ final class FirestoreGeoHashRoundsSearchService: RoundsSearchService {
         if let status = filter.status {
             query = query.whereField("status", isEqualTo: status.rawValue)
         }
-        
-        // Filter by visibility
-        if let visibility = filter.visibility {
-            query = query.whereField("visibility", isEqualTo: visibility.rawValue)
-        } else {
-            // Default to public
-            query = query.whereField("visibility", isEqualTo: RoundVisibility.public.rawValue)
-        }
-        
+
+        // Note: Visibility filter applied client-side to support friends-only rounds
+
         // Order by startTime (soonest first)
         query = query.order(by: "startTime", descending: false)
         
@@ -192,14 +186,13 @@ final class FirestoreGeoHashRoundsSearchService: RoundsSearchService {
         var candidates: [Round] = []
         for doc in snapshot.documents {
             if let round = try? decodeRound(from: doc.data(), id: doc.documentID) {
-                // Apply excludeFullRounds filter client-side
-                if filter.excludeFullRounds && round.isFull {
-                    continue
-                }
                 candidates.append(round)
             }
         }
-        
+
+        // Apply visibility and other filters client-side
+        applyAdditionalFilters(rounds: &candidates, filter: filter)
+
         // Sort deterministically
         sortResults(&candidates)
         
@@ -378,20 +371,33 @@ final class FirestoreGeoHashRoundsSearchService: RoundsSearchService {
         if let status = filter.status {
             rounds = rounds.filter { $0.status == status }
         }
-        
+
         // Visibility filter
         if let visibility = filter.visibility {
+            // Specific visibility requested
             rounds = rounds.filter { $0.visibility == visibility }
         } else {
-            // Default to public
-            rounds = rounds.filter { $0.visibility == .public }
+            // Default: Show public + friends-only (if host is friend)
+            let friendUidsSet = Set(filter.friendUids ?? [])
+            rounds = rounds.filter { round in
+                switch round.visibility {
+                case .public:
+                    return true
+                case .friends:
+                    // Only show friends-only rounds if host is in friends list
+                    return friendUidsSet.contains(round.hostUid)
+                case .private:
+                    // Never show private rounds in discovery
+                    return false
+                }
+            }
         }
-        
+
         // Exclude full rounds
         if filter.excludeFullRounds {
             rounds = rounds.filter { !$0.isFull }
         }
-        
+
         // Host filter
         if let hostUid = filter.hostUid {
             rounds = rounds.filter { $0.hostUid == hostUid }

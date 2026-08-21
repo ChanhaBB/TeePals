@@ -6,14 +6,36 @@ import Foundation
 protocol ActivityRoundsService {
     
     /// Fetch rounds the current user is hosting.
-    /// - Parameter dateRange: Optional date filter
+    /// - Parameters:
+    ///   - dateRange: Optional date filter
+    ///   - includeCompleted: When true, also returns rounds with status `completed` (for past rounds).
     /// - Returns: Array of rounds ordered by startTime
-    func fetchHostingRounds(dateRange: DateRangeOption?) async throws -> [Round]
+    func fetchHostingRounds(dateRange: DateRangeOption?, includeCompleted: Bool) async throws -> [Round]
     
     /// Fetch rounds the current user has requested to join.
     /// - Parameter dateRange: Optional date filter
     /// - Returns: Array of RoundRequest items (round + status)
     func fetchRequestedRounds(dateRange: DateRangeOption?) async throws -> [RoundRequest]
+
+    /// Fetch accepted rounds for any user by their UID.
+    /// Used for profile history: shows all rounds they participated in (hosted or joined).
+    /// - Parameters:
+    ///   - uid: The user whose round history to fetch
+    ///   - dateRange: Optional date filter
+    /// - Returns: Accepted round requests ordered by startTime
+    func fetchParticipatedRounds(for uid: String, dateRange: DateRangeOption?) async throws -> [RoundRequest]
+
+    /// Fetch the set of round IDs where the current viewer is an accepted member.
+    /// Lightweight — reads only membership documents (no round document fetches).
+    /// Used to build the viewer's membership set for O(1) per-round visibility checks.
+    /// - Returns: Set of round IDs
+    func fetchViewerMemberRoundIds() async throws -> Set<String>
+}
+
+extension ActivityRoundsService {
+    func fetchHostingRounds(dateRange: DateRangeOption?) async throws -> [Round] {
+        try await fetchHostingRounds(dateRange: dateRange, includeCompleted: false)
+    }
 }
 
 // MARK: - Request Model

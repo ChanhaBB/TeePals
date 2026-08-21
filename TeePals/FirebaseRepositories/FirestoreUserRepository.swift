@@ -45,4 +45,11 @@ final class FirestoreUserRepository: UserRepository {
             "lastActiveAt": FieldValue.serverTimestamp()
         ])
     }
+
+    // MARK: - FCM Token
+
+    func updateFCMToken(_ token: String, uid: String) async throws {
+        let docRef = db.collection(FirestoreCollection.users).document(uid)
+        try await docRef.setData(["fcmToken": token], merge: true)
+    }
 }

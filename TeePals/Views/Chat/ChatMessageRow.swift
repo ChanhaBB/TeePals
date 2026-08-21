@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Individual chat message row with sender info and state indicators.
+/// V3 Individual chat message row with sender info and state indicators.
 struct ChatMessageRow: View {
 
     let message: ChatMessage
@@ -25,25 +25,25 @@ struct ChatMessageRow: View {
     private var systemMessageView: some View {
         HStack {
             Spacer()
-            
+
             Text(message.text)
-                .font(AppTypography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .font(.system(size: 12))
+                .foregroundColor(AppColorsV3.textSecondary)
                 .italic()
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.xs)
-                .background(AppColors.backgroundSecondary.opacity(0.5))
-                .cornerRadius(AppSpacing.radiusSmall)
-            
+                .padding(.horizontal, AppSpacingV3.md)
+                .padding(.vertical, AppSpacingV3.xs)
+                .background(Color(hex: "F3F4F6").opacity(0.5))
+                .cornerRadius(AppSpacingV3.radiusSmall)
+
             Spacer()
         }
-        .padding(.vertical, AppSpacing.xs)
+        .padding(.vertical, AppSpacingV3.xs)
     }
     
     // MARK: - User Message
     
     private var userMessageView: some View {
-        HStack(alignment: .bottom, spacing: AppSpacing.sm) {
+        HStack(alignment: .bottom, spacing: AppSpacingV3.xs) {
             if isOwnMessage {
                 Spacer(minLength: 60)
                 ownMessageBubble
@@ -57,16 +57,8 @@ struct ChatMessageRow: View {
     // MARK: - Own Message (Right Side)
 
     private var ownMessageBubble: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
+        HStack(alignment: .top, spacing: AppSpacingV3.sm) {
             VStack(alignment: .trailing, spacing: 4) {
-                // Sender name (only on first message in group)
-                if showSenderInfo {
-                    Text(message.senderNickname ?? "You")
-                        .font(AppTypography.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(AppColors.textSecondary)
-                }
-
                 // Photo (if present)
                 if let photoUrl = message.photoUrl {
                     photoView(url: photoUrl)
@@ -75,12 +67,19 @@ struct ChatMessageRow: View {
                 // Message bubble (only if text present)
                 if !message.text.isEmpty {
                     Text(message.text)
-                        .font(AppTypography.bodyMedium)
+                        .font(.system(size: 14))
                         .foregroundColor(.white)
-                        .padding(.horizontal, AppSpacing.md)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background(AppColors.primary)
-                        .cornerRadius(AppSpacing.radiusMedium)
+                        .padding(.horizontal, AppSpacingV3.md)
+                        .padding(.vertical, 12)
+                        .background(AppColorsV3.forestGreen)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 16,
+                                bottomLeadingRadius: 16,
+                                bottomTrailingRadius: 4, // Sharp bottom-right
+                                topTrailingRadius: 16
+                            )
+                        )
                 }
 
                 // Status row (only show if timestamp visible or not sent yet)
@@ -88,11 +87,12 @@ struct ChatMessageRow: View {
                     HStack(spacing: 4) {
                         if showTimestamp {
                             Text(message.displayTime)
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textTertiary)
+                                .font(.system(size: 10))
+                                .foregroundColor(Color.gray.opacity(0.5))
                         }
                         statusIndicator
                     }
+                    .padding(.trailing, 4)
                 }
             }
 
@@ -101,7 +101,7 @@ struct ChatMessageRow: View {
                 avatarView
             } else {
                 // Invisible spacer to maintain alignment
-                Color.clear.frame(width: 32, height: 32)
+                Color.clear.frame(width: 26, height: 26)
             }
         }
     }
@@ -109,7 +109,7 @@ struct ChatMessageRow: View {
     // MARK: - Other Message (Left Side)
     
     private var otherMessageBubble: some View {
-        HStack(alignment: .top, spacing: AppSpacing.sm) {
+        HStack(alignment: .top, spacing: AppSpacingV3.sm) {
             // Avatar (visible or spacer for alignment) - tappable
             if showSenderInfo {
                 Button {
@@ -120,21 +120,23 @@ struct ChatMessageRow: View {
                 .buttonStyle(.plain)
             } else {
                 // Invisible spacer to maintain alignment
-                Color.clear.frame(width: 32, height: 32)
+                Color.clear.frame(width: 26, height: 26)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 // Sender name (only on first message in group) - tappable
                 if showSenderInfo {
-                    Button {
-                        onAuthorTap(message.senderUid)
-                    } label: {
-                        Text(message.senderNickname ?? "Unknown")
-                            .font(AppTypography.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(AppColors.textSecondary)
+                    HStack(spacing: 8) {
+                        Button {
+                            onAuthorTap(message.senderUid)
+                        } label: {
+                            Text(message.senderNickname ?? "Unknown")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(AppColorsV3.textSecondary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    .padding(.leading, 4)
                 }
 
                 // Photo (if present)
@@ -145,42 +147,49 @@ struct ChatMessageRow: View {
                 // Message bubble (only if text present)
                 if !message.text.isEmpty {
                     Text(message.text)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textPrimary)
-                        .padding(.horizontal, AppSpacing.md)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background(AppColors.backgroundPrimary)
-                        .cornerRadius(AppSpacing.radiusMedium)
+                        .font(.system(size: 14))
+                        .foregroundColor(AppColorsV3.textPrimary)
+                        .padding(.horizontal, AppSpacingV3.md)
+                        .padding(.vertical, 12)
+                        .background(Color(hex: "F3F4F6")) // Bubble gray from HTML
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 4, // Sharp top-left
+                                bottomLeadingRadius: 16,
+                                bottomTrailingRadius: 16,
+                                topTrailingRadius: 16
+                            )
+                        )
                 }
 
                 // Time (only if timestamp should be shown)
                 if showTimestamp {
                     Text(message.displayTime)
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(.system(size: 10))
+                        .foregroundColor(Color.gray.opacity(0.5))
+                        .padding(.leading, 4)
                 }
             }
         }
     }
     
     // MARK: - Avatar View
-    
+
     private var avatarView: some View {
         TPAvatar(
             url: senderPhotoUrl.flatMap { URL(string: $0) },
-            size: 32
+            size: 26
         )
     }
-    
+
     private var initialsAvatar: some View {
         Circle()
-            .fill(AppColors.backgroundSecondary)
-            .frame(width: 32, height: 32)
+            .fill(Color(hex: "F3F4F6"))
+            .frame(width: 26, height: 26)
             .overlay(
                 Text(String(message.senderNickname?.prefix(1) ?? "?"))
-                    .font(AppTypography.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(AppColorsV3.textSecondary)
             )
     }
     
@@ -195,7 +204,7 @@ struct ChatMessageRow: View {
         case .sent:
             Image(systemName: "checkmark")
                 .font(.system(size: 10))
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(Color.gray.opacity(0.5))
         case .failed:
             Button {
                 onRetry()
@@ -204,9 +213,9 @@ struct ChatMessageRow: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: 12))
                     Text("Tap to retry")
-                        .font(AppTypography.caption)
+                        .font(.system(size: 11))
                 }
-                .foregroundColor(AppColors.error)
+                .foregroundColor(AppColorsV3.error)
             }
         }
     }
@@ -219,7 +228,7 @@ struct ChatMessageRow: View {
         } label: {
             TPImage(url: URL(string: url))
                 .frame(width: 200, height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+                .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.radiusSmall))
         }
         .buttonStyle(.plain)
     }
@@ -230,7 +239,7 @@ struct ChatMessageRow: View {
 #if DEBUG
 struct ChatMessageRow_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: AppSpacing.sm) {
+        VStack(spacing: AppSpacingV3.xs) {
             // First message from Sarah (shows avatar)
             ChatMessageRow(
                 message: ChatMessage(
@@ -286,7 +295,7 @@ struct ChatMessageRow_Previews: PreviewProvider {
             )
         }
         .padding()
-        .background(AppColors.backgroundGrouped)
+        .background(AppColorsV3.surfaceLight)
     }
 }
 #endif

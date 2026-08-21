@@ -13,6 +13,11 @@ struct PostDetailView: View {
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
     @State private var commentInputState: CommentInputState = .resting
+    @State private var showReportPostAlert = false
+    @State private var showReportPostConfirmation = false
+    @State private var showReportCommentAlert = false
+    @State private var showReportCommentConfirmation = false
+    @State private var reportTargetComment: Comment?
 
     // STEP 4: Removed redundant @State isCommentFocused
     // Computed binding derives focus from inputState (single source of truth)
@@ -62,22 +67,22 @@ struct PostDetailView: View {
                     Spacer()
                 } else if let post = viewModel.post {
                     ZStack {
-                        AppColors.backgroundGrouped.ignoresSafeArea()
+                        AppColorsV3.surfaceLight.ignoresSafeArea()
 
                         // Entire page scrollable (post + comments)
                         ScrollView {
-                            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                            VStack(alignment: .leading, spacing: AppSpacingV3.sm) {
                                 // Post content card
                                 VStack(alignment: .leading, spacing: 0) {
                                     postContent(post)
                                 }
-                                .background(AppColors.surface)
+                                .background(AppColorsV3.surfaceWhite)
 
                                 // Comments section card
                                 VStack(alignment: .leading, spacing: 0) {
                                     commentsSection
                                 }
-                                .background(AppColors.surface)
+                                .background(AppColorsV3.surfaceWhite)
                             }
                         }
                         .scrollDismissesKeyboard(.interactively)
@@ -89,7 +94,7 @@ struct PostDetailView: View {
                     Spacer()
                     VStack {
                         Text(error)
-                            .foregroundColor(AppColors.error)
+                            .foregroundColor(AppColorsV3.error)
                         Button("Retry") {
                             Task { await viewModel.loadPost() }
                         }
@@ -130,6 +135,62 @@ struct PostDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+        .alert("Report Post", isPresented: $showReportPostAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Report", role: .destructive) {
+                guard let authorUid = viewModel.post?.authorUid else { return }
+                Task {
+                    do {
+                        let report = Report(
+                            reporterUid: container.currentUid ?? "",
+                            reportedUid: authorUid,
+                            reason: "Inappropriate post",
+                            context: "post:\(viewModel.postId)"
+                        )
+                        try await container.reportRepository.submitReport(report: report)
+                        showReportPostConfirmation = true
+                    } catch {
+                        print("Failed to report post: \(error)")
+                    }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to report this post? Our team will review the report.")
+        }
+        .alert("Thank You", isPresented: $showReportPostConfirmation) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your report has been submitted. We'll review it shortly.")
+        }
+        .alert("Report Comment", isPresented: $showReportCommentAlert) {
+            Button("Cancel", role: .cancel) { reportTargetComment = nil }
+            Button("Report", role: .destructive) {
+                guard let comment = reportTargetComment else { return }
+                Task {
+                    do {
+                        let report = Report(
+                            reporterUid: container.currentUid ?? "",
+                            reportedUid: comment.authorUid,
+                            reason: "Inappropriate comment",
+                            context: "comment:\(comment.id ?? "unknown") on post:\(viewModel.postId)"
+                        )
+                        try await container.reportRepository.submitReport(report: report)
+                        reportTargetComment = nil
+                        showReportCommentConfirmation = true
+                    } catch {
+                        print("Failed to report comment: \(error)")
+                        reportTargetComment = nil
+                    }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to report this comment? Our team will review the report.")
+        }
+        .alert("Thank You", isPresented: $showReportCommentConfirmation) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your report has been submitted. We'll review it shortly.")
+        }
         // STEP 3: Use commentInputState (source of truth) instead of isCommentFocused
         .interactiveDismissDisabled(commentInputState != .resting)
         .onAppear {
@@ -141,23 +202,12 @@ struct PostDetailView: View {
             viewModel.commentDraft = ""
             viewModel.newCommentText = ""
         }
-        .sheet(item: Binding(
+        .fullScreenCover(item: Binding(
             get: { selectedAuthorUid.map { IdentifiableString(value: $0) } },
             set: { selectedAuthorUid = $0?.value }
         )) { wrapper in
-            if wrapper.value == viewModel.uid {
-                // Show own profile
-                NavigationStack {
-                    ProfileView(viewModel: container.makeProfileViewModel())
-                }
-            } else {
-                // Show other user's profile
-                NavigationStack {
-                    OtherUserProfileView(
-                        viewModel: container.makeOtherUserProfileViewModel(uid: wrapper.value)
-                    )
-                }
-            }
+            ProfileViewV3(viewModel: container.makeProfileViewModel(uid: wrapper.value), isPresented: true)
+                .environmentObject(container)
         }
         .fullScreenCover(item: $roundDetail) { item in
             RoundDetailCover(roundId: item.roundId)
@@ -194,7 +244,7 @@ struct PostDetailView: View {
     // MARK: - Custom Navigation Bar
 
     private var customNavigationBar: some View {
-        HStack(spacing: AppSpacing.sm) {
+        HStack(spacing: AppSpacingV3.xs) {
             // Back button with TeePals text
             Button {
                 dismiss()
@@ -205,9 +255,9 @@ struct PostDetailView: View {
                         .fontWeight(.semibold)
 
                     Text("TeePals")
-                        .font(AppTypography.labelLarge)
+                        .font(AppTypographyV3.bodySemibold)
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(AppColorsV3.textPrimary)
             }
 
             Spacer()
@@ -234,21 +284,23 @@ struct PostDetailView: View {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
 
-                Button(role: .destructive) {
-                    // TODO: Report post
-                } label: {
-                    Label("Report", systemImage: "exclamationmark.triangle")
+                if !viewModel.isAuthor {
+                    Button(role: .destructive) {
+                        showReportPostAlert = true
+                    } label: {
+                        Label("Report", systemImage: "exclamationmark.triangle")
+                    }
                 }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.title3)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(AppColorsV3.textPrimary)
                     .frame(width: 44, height: 44)
             }
         }
-        .padding(.horizontal, AppSpacing.contentPadding)
-        .padding(.vertical, AppSpacing.sm)
-        .background(AppColors.surface)
+        .padding(.horizontal, AppSpacingV3.md)
+        .padding(.vertical, AppSpacingV3.xs)
+        .background(AppColorsV3.surfaceWhite)
     }
     
     // MARK: - Post Content
@@ -259,17 +311,17 @@ struct PostDetailView: View {
             Button {
                 selectedAuthorUid = post.authorUid
             } label: {
-                HStack(spacing: AppSpacing.sm) {
+                HStack(spacing: AppSpacingV3.xs) {
                     avatarView(post)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(post.authorNickname ?? "Unknown")
-                            .font(AppTypography.labelLarge)
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(AppTypographyV3.bodySemibold)
+                            .foregroundColor(AppColorsV3.textPrimary)
 
                         Text(post.fullDateString)
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .font(AppTypographyV3.caption)
+                            .foregroundColor(AppColorsV3.textTertiary)
                     }
 
                     Spacer()
@@ -277,20 +329,20 @@ struct PostDetailView: View {
                     if post.visibility == .friends {
                         Image(systemName: "person.2.fill")
                             .font(.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .foregroundColor(AppColorsV3.textTertiary)
                     }
                 }
             }
             .buttonStyle(.plain)
 
             // Content section with spacing
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
                 // Title
                 if let title = post.title, !title.isEmpty {
                     Text(title)
-                        .font(AppTypography.headlineLarge)
+                        .font(AppTypographyV3.headlineLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(AppColorsV3.textPrimary)
                 }
 
                 // Edit mode or display mode
@@ -298,42 +350,42 @@ struct PostDetailView: View {
                     editTextView
                 } else {
                     Text(post.text)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textPrimary)
                 }
 
                 if post.isEdited && !viewModel.isEditing {
                     Text("Edited")
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textTertiary)
                 }
 
                 // Photos
                 if post.hasPhotos {
                     photoSection(post.photoUrls)
-                        .padding(.top, AppSpacing.md)
+                        .padding(.top, AppSpacingV3.md)
                 }
 
                 // Linked round
                 if let round = viewModel.linkedRound {
                     linkedRoundCard(round)
-                        .padding(.top, AppSpacing.sm)
+                        .padding(.top, AppSpacingV3.xs)
                 }
             }
-            .padding(.top, AppSpacing.lg)
+            .padding(.top, AppSpacingV3.md)
 
             // Separator before interactions
             Rectangle()
-                .fill(AppColors.textTertiary.opacity(0.2))
+                .fill(AppColorsV3.textTertiary.opacity(0.2))
                 .frame(height: 1)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.top, AppSpacing.md)
-                .padding(.bottom, AppSpacing.xs)
+                .padding(.horizontal, AppSpacingV3.xs)
+                .padding(.top, AppSpacingV3.md)
+                .padding(.bottom, AppSpacingV3.xxs)
 
             // Interactions
             interactionsBar(post)
         }
-        .padding(AppSpacing.contentPadding)
+        .padding(AppSpacingV3.md)
     }
     
     private func avatarView(_ post: Post) -> some View {
@@ -345,34 +397,34 @@ struct PostDetailView: View {
     
     private func initialsView(_ nickname: String?) -> some View {
         Circle()
-            .fill(AppColors.primary.opacity(0.15))
+            .fill(AppColorsV3.forestGreen.opacity(0.15))
             .overlay(
                 Text(String(nickname?.prefix(1) ?? "?"))
-                    .font(AppTypography.labelLarge)
-                    .foregroundColor(AppColors.primary)
+                    .font(AppTypographyV3.bodySemibold)
+                    .foregroundColor(AppColorsV3.forestGreen)
             )
     }
     
     private var editTextView: some View {
-        VStack(alignment: .trailing, spacing: AppSpacing.sm) {
+        VStack(alignment: .trailing, spacing: AppSpacingV3.xs) {
             TextEditor(text: $viewModel.editText)
-                .font(AppTypography.bodyMedium)
+                .font(AppTypographyV3.bodyMedium)
                 .frame(minHeight: 100)
                 .scrollContentBackground(.hidden)
-                .background(AppColors.backgroundSecondary)
-                .cornerRadius(AppSpacing.sm)
+                .background(AppColorsV3.surfaceLight)
+                .cornerRadius(AppSpacingV3.xs)
             
             HStack {
                 Button("Cancel") {
                     viewModel.cancelEditing()
                 }
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(AppColorsV3.textSecondary)
                 
                 Button("Save") {
                     Task { await viewModel.saveEdit() }
                 }
-                .font(AppTypography.labelLarge)
-                .foregroundColor(AppColors.primary)
+                .font(AppTypographyV3.bodySemibold)
+                .foregroundColor(AppColorsV3.forestGreen)
                 .disabled(viewModel.isSaving)
             }
         }
@@ -380,11 +432,11 @@ struct PostDetailView: View {
     
     private func photoSection(_ urls: [String]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacingV3.xs) {
                 ForEach(Array(urls.enumerated()), id: \.element) { index, url in
                     TPImage(url: URL(string: url))
                         .frame(width: 200, height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: AppSpacing.sm))
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.xs))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         selectedPhotoIndex = index
@@ -405,13 +457,13 @@ struct PostDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Linked Round")
-                        .font(AppTypography.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.caption)
+                        .foregroundColor(AppColorsV3.textTertiary)
 
                     if round.status != .open {
                         Text("(\(round.status.displayText))")
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .font(AppTypographyV3.caption)
+                            .foregroundColor(AppColorsV3.textTertiary)
                     }
 
                     Spacer()
@@ -419,31 +471,31 @@ struct PostDetailView: View {
                     if round.status == .open {
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .foregroundColor(AppColorsV3.textTertiary)
                     }
                 }
 
                 HStack {
                     Image(systemName: "flag.fill")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(AppColorsV3.forestGreen)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(round.displayCourseName)
-                            .font(AppTypography.labelLarge)
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(AppTypographyV3.bodySemibold)
+                            .foregroundColor(AppColorsV3.textPrimary)
 
                         if let dateTime = round.displayDateTime {
                             Text(dateTime)
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .font(AppTypographyV3.caption)
+                                .foregroundColor(AppColorsV3.textSecondary)
                         }
                     }
 
                     Spacer()
                 }
-                .padding(AppSpacing.sm)
-                .background(AppColors.surface)
-                .cornerRadius(AppSpacing.sm)
+                .padding(AppSpacingV3.xs)
+                .background(AppColorsV3.surfaceWhite)
+                .cornerRadius(AppSpacingV3.xs)
             }
         }
         .buttonStyle(.plain)
@@ -451,7 +503,7 @@ struct PostDetailView: View {
     }
     
     private func interactionsBar(_ post: Post) -> some View {
-        HStack(spacing: AppSpacing.xl) {
+        HStack(spacing: AppSpacingV3.lg) {
             // Like button with text
             Button {
                 Task {
@@ -465,16 +517,16 @@ struct PostDetailView: View {
                 HStack(spacing: 6) {
                     Image(systemName: post.hasUpvoted == true ? "heart.fill" : "heart")
                         .font(.title3)
-                        .foregroundColor(post.hasUpvoted == true ? AppColors.error : AppColors.textSecondary)
+                        .foregroundColor(post.hasUpvoted == true ? AppColorsV3.error : AppColorsV3.textSecondary)
 
                     Text("Like")
-                        .font(AppTypography.labelMedium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .font(AppTypographyV3.labelMedium)
+                        .foregroundColor(AppColorsV3.textSecondary)
 
                     if post.upvoteCount > 0 {
                         Text("\(post.upvoteCount)")
-                            .font(AppTypography.labelMedium)
-                            .foregroundColor(AppColors.textSecondary)
+                            .font(AppTypographyV3.labelMedium)
+                            .foregroundColor(AppColorsV3.textSecondary)
                     }
                 }
             }
@@ -484,16 +536,16 @@ struct PostDetailView: View {
             HStack(spacing: 6) {
                 Image(systemName: "bubble.left")
                     .font(.title3)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(AppColorsV3.textSecondary)
 
                 Text("\(post.commentCount)")
-                    .font(AppTypography.labelMedium)
-                    .foregroundColor(AppColors.textSecondary)
+                    .font(AppTypographyV3.labelMedium)
+                    .foregroundColor(AppColorsV3.textSecondary)
             }
 
             Spacer()
         }
-        .padding(.vertical, AppSpacing.md)
+        .padding(.vertical, AppSpacingV3.md)
     }
 
     // MARK: - Reply Banner
@@ -501,8 +553,8 @@ struct PostDetailView: View {
     private func replyBanner(_ comment: Comment) -> some View {
         HStack(spacing: 8) {
             Text("Replying to @\(comment.authorNickname ?? "user")")
-                .font(AppTypography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .font(AppTypographyV3.caption)
+                .foregroundColor(AppColorsV3.textSecondary)
 
             Spacer()
 
@@ -510,13 +562,13 @@ struct PostDetailView: View {
                 viewModel.setReplyTarget(nil)
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(AppColorsV3.textTertiary)
                     .font(.system(size: 18))
             }
         }
-        .padding(.horizontal, AppSpacing.contentPadding)
-        .padding(.vertical, AppSpacing.sm)
-        .background(AppColors.backgroundSecondary)
+        .padding(.horizontal, AppSpacingV3.md)
+        .padding(.vertical, AppSpacingV3.xs)
+        .background(AppColorsV3.surfaceLight)
     }
 
     // MARK: - Comments Section
@@ -528,14 +580,14 @@ struct PostDetailView: View {
                 if viewModel.isLoadingComments {
                     ProgressView()
                         .frame(maxWidth: .infinity)
-                        .padding(AppSpacing.contentPadding)
+                        .padding(AppSpacingV3.md)
                 } else if viewModel.commentTree.isEmpty {
                     Text("No comments yet. Be the first!")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.textTertiary)
+                        .font(AppTypographyV3.bodyMedium)
+                        .foregroundColor(AppColorsV3.textTertiary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, AppSpacing.lg)
-                        .padding(.horizontal, AppSpacing.contentPadding)
+                        .padding(.vertical, AppSpacingV3.md)
+                        .padding(.horizontal, AppSpacingV3.md)
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(viewModel.commentTree) { comment in
@@ -553,18 +605,22 @@ struct PostDetailView: View {
                                 },
                                 onAuthorTap: { uid in
                                     selectedAuthorUid = uid
+                                },
+                                onReport: { commentToReport in
+                                    reportTargetComment = commentToReport
+                                    showReportCommentAlert = true
                                 }
                             )
 
                             // Thin separator line between comments
                             if comment.id != viewModel.commentTree.last?.id {
                                 Rectangle()
-                                    .fill(AppColors.textTertiary.opacity(0.2))
+                                    .fill(AppColorsV3.textTertiary.opacity(0.2))
                                     .frame(height: 1)
                             }
                         }
                     }
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacingV3.xs)
                 }
             }
         }
@@ -589,4 +645,3 @@ private struct IdentifiableString: Identifiable {
 
 // MARK: - Note: UIKit TextView components moved to AdvancedTextEditor.swift
 // See: TeePals/UIComponents/AdvancedTextEditor.swift
-

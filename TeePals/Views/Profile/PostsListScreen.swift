@@ -22,7 +22,7 @@ struct PostsListScreen: View {
                     showingCreatePost = true
                 } label: {
                     Image(systemName: "plus")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(AppColorsV3.forestGreen)
                 }
             }
         }

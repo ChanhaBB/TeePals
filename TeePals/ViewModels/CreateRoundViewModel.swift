@@ -1,17 +1,17 @@
 import Foundation
 
-/// Steps in the simplified Create Round wizard flow.
+/// Steps in the Create Round wizard flow.
 enum CreateRoundStep: Int, CaseIterable {
-    case course = 0      // Golf course search/selection
-    case dateTime = 1    // Preferred date & time
-    case details = 2     // Settings & optional description
-    case review = 3      // Final review before posting
+    case course = 0
+    case dateTime = 1
+    case settings = 2
+    case review = 3
     
     var title: String {
         switch self {
         case .course: return "Course"
         case .dateTime: return "Date & Time"
-        case .details: return "Details"
+        case .settings: return "Settings"
         case .review: return "Review"
         }
     }
@@ -23,14 +23,19 @@ enum CreateRoundStep: Int, CaseIterable {
 /// ViewModel for the simplified Create Round wizard.
 @MainActor
 final class CreateRoundViewModel: ObservableObject {
-    
+
     // MARK: - Dependencies
-    
+
     private let roundsRepository: RoundsRepository
     private let currentUid: () -> String?
-    
+
+    // MARK: - Edit Mode
+
+    let isEditMode: Bool
+    private let existingRound: Round?
+
     // MARK: - Navigation State
-    
+
     @Published var currentStep: CreateRoundStep = .course
     @Published var isLoading = false
     @Published var isSaving = false
@@ -46,36 +51,44 @@ final class CreateRoundViewModel: ObservableObject {
     @Published var preferredDate: Date
     @Published var preferredTime: Date
     
-    // MARK: - Step 3: Details
+    // MARK: - Step 3: Round Settings
     
     @Published var visibility: RoundVisibility = .public
-    @Published var priceAmount: String = ""  // Dollar amount (empty = Price TBD)
-    @Published var minAge: Int = 18
-    @Published var maxAge: Int = 65
-    @Published var skillLevels: Set<SkillLevel> = Set(SkillLevel.allCases) // All selected by default
-    @Published var hostMessage = ""  // Renamed from description
+    @Published var groupSize: Int = 4
+    @Published var greenFee: String = ""
     
-    // Max players is always 4
-    let maxPlayers = 4
+    // MARK: - Step 3 (continued): Host Message
+    
+    @Published var hostMessage = ""
+    
+    static let groupSizeRange = 2...8
+    static let defaultHostMessage = "Join me for a round!"
     
     // Join policy is determined by visibility
     var joinPolicy: JoinPolicy {
         visibility.defaultJoinPolicy
     }
     
+    // MARK: - Course Photo (loaded for review)
+    
+    @Published var coursePhotoURL: URL?
+    
     // MARK: - Created Round
     
     @Published var createdRound: Round?
     
     // MARK: - Init
-    
+
+    /// Initialize for creating a new round
     init(
         roundsRepository: RoundsRepository,
         currentUid: @escaping () -> String?
     ) {
         self.roundsRepository = roundsRepository
         self.currentUid = currentUid
-        
+        self.isEditMode = false
+        self.existingRound = nil
+
         // Default to tomorrow at 8am
         let calendar = Calendar.current
         var components = calendar.dateComponents([.year, .month, .day], from: Date())
@@ -83,15 +96,55 @@ final class CreateRoundViewModel: ObservableObject {
         components.hour = 8
         components.minute = 0
         let tomorrow8am = calendar.date(from: components) ?? Date()
-        
+
         self.preferredDate = tomorrow8am
         self.preferredTime = tomorrow8am
+    }
+
+    /// Initialize for editing an existing round
+    init(
+        round: Round,
+        roundsRepository: RoundsRepository,
+        currentUid: @escaping () -> String?
+    ) {
+        self.roundsRepository = roundsRepository
+        self.currentUid = currentUid
+        self.isEditMode = true
+        self.existingRound = round
+
+        // Initialize with existing round data
+        self.selectedCourse = round.chosenCourse ?? round.courseCandidates.first
+
+        // Use existing date/time or fall back to tomorrow at 8am
+        let existingDateTime = round.chosenTeeTime ?? round.startTime
+        if let existingDateTime = existingDateTime {
+            self.preferredDate = existingDateTime
+            self.preferredTime = existingDateTime
+        } else {
+            // Fallback to tomorrow at 8am
+            let calendar = Calendar.current
+            var components = calendar.dateComponents([.year, .month, .day], from: Date())
+            components.day! += 1
+            components.hour = 8
+            components.minute = 0
+            let tomorrow8am = calendar.date(from: components) ?? Date()
+            self.preferredDate = tomorrow8am
+            self.preferredTime = tomorrow8am
+        }
+
+        self.visibility = round.visibility
+        self.groupSize = round.maxPlayers
+        self.greenFee = round.price?.amount.map { String($0) } ?? ""
+        self.hostMessage = round.description ?? ""
+
+        // Start at review step in edit mode
+        self.currentStep = .review
     }
     
     // MARK: - Computed Properties
     
     var progress: Double {
-        Double(currentStep.rawValue) / Double(CreateRoundStep.totalSteps - 1)
+        Double(currentStep.rawValue + 1) / Double(CreateRoundStep.totalSteps)
     }
     
     var canGoBack: Bool {
@@ -136,15 +189,11 @@ final class CreateRoundViewModel: ObservableObject {
         combinedDateTime > Date() // Must be in the future
     }
     
-    var isDetailsValid: Bool {
-        true // All optional
-    }
-    
     var isCurrentStepValid: Bool {
         switch currentStep {
         case .course: return isCourseValid
         case .dateTime: return isDateTimeValid
-        case .details: return isDetailsValid
+        case .settings: return true
         case .review: return true
         }
     }
@@ -165,14 +214,28 @@ final class CreateRoundViewModel: ObservableObject {
         }
     }
     
+    func goToStep(_ step: CreateRoundStep) {
+        currentStep = step
+    }
+    
     // MARK: - Course Selection
     
     func selectCourse(_ course: CourseCandidate) {
         selectedCourse = course
+        // Clear cached photo URL so it reloads when returning to review step
+        coursePhotoURL = nil
     }
-    
+
     func clearCourse() {
         selectedCourse = nil
+        coursePhotoURL = nil
+    }
+    
+    // MARK: - Course Photo
+    
+    func loadCoursePhoto(using service: CoursePhotoService?) async {
+        guard let service, let course = selectedCourse, coursePhotoURL == nil else { return }
+        coursePhotoURL = await service.fetchPhotoURL(for: course)
     }
     
     // MARK: - Build Round
@@ -181,22 +244,8 @@ final class CreateRoundViewModel: ObservableObject {
         guard let uid = currentUid(),
               let course = selectedCourse else { return nil }
         
-        // Build requirements if any are restricted
-        var requirements: RoundRequirements?
-        let hasAgeRestriction = minAge > 18 || maxAge < 65
-        let hasSkillRestriction = skillLevels.count < SkillLevel.allCases.count
-        
-        if hasAgeRestriction || hasSkillRestriction {
-            requirements = RoundRequirements(
-                minAge: minAge > 18 ? minAge : nil,
-                maxAge: maxAge < 65 ? maxAge : nil,
-                skillLevelsAllowed: hasSkillRestriction ? Array(skillLevels) : nil
-            )
-        }
-        
-        // Build price (simple: just the amount, or nil if not specified)
-        let priceAmountInt = Int(priceAmount)
-        let price: RoundPrice? = priceAmountInt != nil ? RoundPrice(type: .estimate, amount: priceAmountInt) : nil
+        let feeAmount = Int(greenFee)
+        let price: RoundPrice? = feeAmount != nil ? RoundPrice(type: .estimate, amount: feeAmount) : nil
         
         // Generate denormalized fields for efficient queries
         let cityKey = Round.generateCityKey(from: course.cityLabel)
@@ -225,28 +274,86 @@ final class CreateRoundViewModel: ObservableObject {
             chosenCourse: course,
             teeTimeCandidates: [combinedDateTime],
             chosenTeeTime: combinedDateTime,
-            requirements: requirements,
+            requirements: nil,
             price: price,
             priceTier: nil,
-            description: hostMessage.isEmpty ? nil : hostMessage,
-            maxPlayers: maxPlayers
+            description: hostMessage.isEmpty ? Self.defaultHostMessage : hostMessage,
+            maxPlayers: groupSize
         )
     }
     
-    // MARK: - Create Round
-    
+    // MARK: - Create/Update Round
+
     func createRound() async -> Bool {
+        if isEditMode {
+            return await updateRound()
+        } else {
+            return await createNewRound()
+        }
+    }
+
+    private func createNewRound() async -> Bool {
         guard let round = buildRound() else {
             errorMessage = "Unable to create round. Please try again."
             return false
         }
-        
+
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
-        
+
         do {
             createdRound = try await roundsRepository.createRound(round)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    private func updateRound() async -> Bool {
+        guard var updatedRound = existingRound,
+              let course = selectedCourse else {
+            errorMessage = "Unable to update round. Please try again."
+            return false
+        }
+
+        isSaving = true
+        errorMessage = nil
+        defer { isSaving = false }
+
+        do {
+            // Update round properties
+            let feeAmount = Int(greenFee)
+            let price: RoundPrice? = feeAmount != nil ? RoundPrice(type: .estimate, amount: feeAmount) : nil
+
+            // Generate denormalized fields for efficient queries
+            let cityKey = Round.generateCityKey(from: course.cityLabel)
+            let startTime = combinedDateTime
+            let courseLat = course.location.latitude
+            let courseLng = course.location.longitude
+
+            // Compute geo data with geohash for search
+            let geo = RoundGeo(location: course.location)
+
+            updatedRound.title = autoTitle
+            updatedRound.visibility = visibility
+            updatedRound.joinPolicy = visibility.defaultJoinPolicy
+            updatedRound.cityKey = cityKey
+            updatedRound.startTime = startTime
+            updatedRound.geo = geo
+            updatedRound.courseLat = courseLat
+            updatedRound.courseLng = courseLng
+            updatedRound.courseCandidates = [course]
+            updatedRound.chosenCourse = course
+            updatedRound.teeTimeCandidates = [combinedDateTime]
+            updatedRound.chosenTeeTime = combinedDateTime
+            updatedRound.price = price
+            updatedRound.description = hostMessage.isEmpty ? Self.defaultHostMessage : hostMessage
+            updatedRound.maxPlayers = groupSize
+
+            try await roundsRepository.updateRound(updatedRound)
+            createdRound = updatedRound
             return true
         } catch {
             errorMessage = error.localizedDescription

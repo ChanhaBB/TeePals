@@ -3,59 +3,69 @@ import SwiftUI
 struct MainTabView: View {
     @EnvironmentObject var container: AppContainer
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
+    @ObservedObject private var tabBarState: TabBarState
     @State private var selectedTab = 0
 
+    init(tabBarState: TabBarState) {
+        _tabBarState = ObservedObject(wrappedValue: tabBarState)
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeViewV3(
-                viewModel: container.makeHomeViewModel(),
-                activityViewModel: container.sharedActivityViewModel,
-                selectedTab: $selectedTab
-            )
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-                .tag(0)
+        ZStack(alignment: .bottom) {
+            // All tabs are created once and kept alive. Opacity + hit-testing
+            // controls which is "active". This avoids NavigationStack creation
+            // during tab switches (which triggers NavigationRequestObserver warnings).
+            ZStack {
+                HomeViewV3(
+                    viewModel: container.sharedHomeViewModel,
+                    activityViewModel: container.sharedActivityViewModel,
+                    selectedTab: $selectedTab
+                )
                 .environmentObject(container)
+                .opacity(selectedTab == 0 ? 1 : 0)
+                .allowsHitTesting(selectedTab == 0)
 
-            RoundsView(
-                nearbyViewModel: container.makeRoundsListViewModel(),
-                activityViewModel: container.sharedActivityViewModel
-            )
-                .tabItem {
-                    Label("Rounds", systemImage: "figure.golf")
-                }
-                .tag(1)
+                RoundsView(
+                    nearbyViewModel: container.sharedRoundsListViewModel,
+                    activityViewModel: container.sharedActivityViewModel
+                )
+                .opacity(selectedTab == 1 ? 1 : 0)
+                .allowsHitTesting(selectedTab == 1)
 
-            FeedView(viewModel: container.makeFeedViewModel())
-                .tabItem {
-                    Label("Feed", systemImage: "newspaper.fill")
-                }
-                .tag(2)
-                .environmentObject(container)
+                FeedPlaceholderView()
+                    .opacity(selectedTab == 2 ? 1 : 0)
+                    .allowsHitTesting(selectedTab == 2)
 
-            NotificationsView(viewModel: container.makeNotificationsViewModel())
-                .tabItem {
-                    Label("Notifications", systemImage: "bell.fill")
-                }
-                .badge(container.notificationsViewModel?.unreadCount ?? 0)
-                .tag(3)
+                NotificationsView(viewModel: container.sharedNotificationsViewModel)
+                    .environmentObject(deepLinkCoordinator)
+                    .opacity(selectedTab == 3 ? 1 : 0)
+                    .allowsHitTesting(selectedTab == 3)
 
-            ProfileView(viewModel: container.makeProfileViewModel())
-                .tabItem {
-                    Label("Profile", systemImage: "person.fill")
-                }
-                .tag(4)
+                ProfileViewV3(viewModel: container.makeProfileViewModel())
+                    .opacity(selectedTab == 4 ? 1 : 0)
+                    .allowsHitTesting(selectedTab == 4)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if !tabBarState.isHidden {
+                customTabBar
+            }
         }
-        .tint(AppColors.primary)
-        .onAppear {
-            // Set global badge color to maroon using UIKit
-            UITabBarItem.appearance().badgeColor = UIColor(AppColors.iconAccent)
-        }
-        .onChange(of: deepLinkCoordinator.pendingDeepLink) { _, newValue in
-            // React to new deep links while app is running
+        .ignoresSafeArea(.keyboard)
+        .onChange(of: deepLinkCoordinator.pendingDeepLink, initial: true) { _, newValue in
             if newValue != nil {
                 handlePendingDeepLink()
+            }
+        }
+        .onChange(of: deepLinkCoordinator.activityTabTarget, initial: true) { _, target in
+            if target != nil {
+                selectedTab = 1
+            }
+        }
+        .onChange(of: deepLinkCoordinator.pendingTabSwitch, initial: true) { _, newTab in
+            if let tab = newTab {
+                selectedTab = tab
+                deepLinkCoordinator.pendingTabSwitch = nil
             }
         }
         .tier2Gated(
@@ -63,24 +73,139 @@ struct MainTabView: View {
             selectedTab: $selectedTab
         )
         .task {
+            // Transfer cold-launch push payload into the coordinator ASAP so
+            // the onChange(initial: true) handlers can pick it up.
+            if let payload = AppDelegate.coldLaunchPushPayload {
+                AppDelegate.coldLaunchPushPayload = nil
+                deepLinkCoordinator.handlePushNotificationTap(userInfo: payload)
+            }
+
             // Initialize gate coordinator status on app launch
             await container.profileGateCoordinator.refreshStatus()
 
             // Preload user profile and notifications on app launch
-            // Wrap in Task to defer published updates outside the view cycle
             Task { @MainActor in
                 _ = container.makeNotificationsViewModel()
                 let profileVM = container.makeProfileViewModel()
                 await profileVM.loadProfile()
             }
 
-            // Handle pending deep link (if user just authenticated)
-            handlePendingDeepLink()
+            // Handle pending deep link (if user just authenticated via onboarding).
+            Task { @MainActor in
+                handlePendingDeepLink()
+            }
         }
-        .onAppear {
-            // Also check on appear (if app was already open)
-            handlePendingDeepLink()
+    }
+
+    // MARK: - Custom Tab Bar
+
+    private var customTabBar: some View {
+        VStack(spacing: 0) {
+            // Top border
+            Rectangle()
+                .fill(AppColorsV3.borderLight)
+                .frame(height: 0.5)
+
+            HStack(spacing: 0) {
+                Spacer()
+
+                tabButton(
+                    index: 0,
+                    label: "Home",
+                    icon: "house",
+                    iconFilled: "house.fill"
+                )
+
+                Spacer()
+
+                tabButton(
+                    index: 1,
+                    label: "Rounds",
+                    icon: "figure.golf",
+                    iconFilled: "figure.golf"
+                )
+
+                Spacer()
+
+                tabButton(
+                    index: 2,
+                    label: "Feed",
+                    icon: "newspaper",
+                    iconFilled: "newspaper.fill"
+                )
+
+                Spacer()
+
+                tabButton(
+                    index: 3,
+                    label: "Alerts",
+                    icon: "bell",
+                    iconFilled: "bell.fill",
+                    showBadge: hasUnreadNotifications
+                )
+
+                Spacer()
+
+                tabButton(
+                    index: 4,
+                    label: "Profile",
+                    icon: "person",
+                    iconFilled: "person.fill"
+                )
+
+                Spacer()
+            }
+            .padding(.top, 12)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 8)
         }
+        .background(
+            AppColorsV3.surfaceWhite.opacity(0.95)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea(edges: .bottom)
+        )
+    }
+
+    private func tabButton(
+        index: Int,
+        label: String,
+        icon: String,
+        iconFilled: String,
+        showBadge: Bool = false
+    ) -> some View {
+        let isActive = selectedTab == index
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = index
+            }
+        } label: {
+            VStack(spacing: 4) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: isActive ? iconFilled : icon)
+                        .font(.system(size: 24))
+                        .frame(height: 24)
+
+                    if showBadge {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 6, y: -2)
+                    }
+                }
+
+                Text(label)
+                    .font(.system(size: 9, weight: .semibold))
+                    .tracking(0.025)
+            }
+            .frame(width: 56)
+            .foregroundColor(isActive ? AppColorsV3.forestGreen : AppColorsV3.textSecondary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var hasUnreadNotifications: Bool {
+        (container.notificationsViewModel?.unreadCount ?? 0) > 0
     }
 
     // MARK: - Deep Link Handling
@@ -101,7 +226,7 @@ struct MainTabView: View {
 
 #Preview {
     let container = AppContainer()
-    return MainTabView()
+    return MainTabView(tabBarState: container.tabBarState)
         .environmentObject(container.authService)
         .environmentObject(container)
         .environmentObject(DeepLinkCoordinator())

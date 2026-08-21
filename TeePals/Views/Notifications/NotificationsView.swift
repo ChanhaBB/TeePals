@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Notifications tab view - shows activity notifications with real-time updates.
+/// V3 Notifications tab view - shows activity notifications with real-time updates.
 /// Supports loading, empty, error states per UI_RULES.md.
 struct NotificationsView: View {
 
     @EnvironmentObject var container: AppContainer
+    @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @ObservedObject var viewModel: NotificationsViewModel
 
     @State private var roundDetail: RoundDetailIdentifier?
@@ -15,8 +16,7 @@ struct NotificationsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background that extends under nav bar
-                AppColors.backgroundGrouped
+                AppColorsV3.surfaceLight
                     .ignoresSafeArea()
 
                 Group {
@@ -31,8 +31,6 @@ struct NotificationsView: View {
                     }
                 }
             }
-            .navigationTitle("Notifications")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if !viewModel.isEmpty && viewModel.unreadCount > 0 {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -46,7 +44,8 @@ struct NotificationsView: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
-                                .foregroundColor(AppColors.primary)
+                                .font(.system(size: 20, weight: .regular))
+                                .foregroundColor(AppColorsV3.textPrimary)
                         }
                     }
                 }
@@ -59,56 +58,55 @@ struct NotificationsView: View {
                 PostDetailView(
                     viewModel: container.makePostDetailViewModel(postId: postId),
                     onDeleted: { _ in
-                        // Post deleted - no action needed in notifications view
                         selectedPostId = nil
                     },
-                    onUpdated: { _ in
-                        // Post updated - no action needed
-                    }
+                    onUpdated: { _ in }
                 )
             }
-            .sheet(item: $selectedProfileUid) { uid in
-                OtherUserProfileView(viewModel: container.makeOtherUserProfileViewModel(uid: uid))
+            .fullScreenCover(item: $selectedProfileUid) { uid in
+                ProfileViewV3(viewModel: container.makeProfileViewModel(uid: uid), isPresented: true)
+                    .environmentObject(container)
             }
             .sheet(item: $selectedFeedbackRoundId) { roundId in
                 PostRoundFeedbackView(
                     viewModel: container.makePostRoundFeedbackViewModel(roundId: roundId)
                 )
+                .id(roundId)
             }
         }
     }
     
     // MARK: - Loading State
-    
+
     private var loadingState: some View {
         ScrollView {
             SkeletonList(count: 6)
-                .padding(AppSpacing.contentPadding)
+                .padding(AppSpacingV3.contentPadding)
         }
     }
-    
+
     // MARK: - Empty State
-    
+
     private var emptyState: some View {
         ScrollView {
             EmptyStateView.noNotifications
-                .padding(.top, AppSpacing.xxl)
+                .padding(.top, AppSpacingV3.xxl)
         }
     }
-    
+
     // MARK: - Error State
-    
+
     private func errorState(_ message: String) -> some View {
         ScrollView {
             VStack {
-                Spacer(minLength: AppSpacing.xxl)
+                Spacer(minLength: AppSpacingV3.xxl)
 
                 InlineErrorBanner(message, actionTitle: "Retry") {
                     Task {
                         await viewModel.refresh()
                     }
                 }
-                .padding(.horizontal, AppSpacing.contentPadding)
+                .padding(.horizontal, AppSpacingV3.contentPadding)
 
                 Spacer()
             }
@@ -119,7 +117,9 @@ struct NotificationsView: View {
 
     private var notificationsContent: some View {
         ScrollView {
-            LazyVStack(spacing: AppSpacing.lg, pinnedViews: [.sectionHeaders]) {
+            // No horizontal padding on LazyVStack — headers must span full width when pinned.
+            // Horizontal padding is applied per-item instead.
+            LazyVStack(spacing: AppSpacingV3.lg, pinnedViews: [.sectionHeaders]) {
                 ForEach(viewModel.groupedNotifications, id: \.0) { section, notifications in
                     Section {
                         LazyVStack(spacing: 0) {
@@ -144,39 +144,50 @@ struct NotificationsView: View {
                                         } label: {
                                             Label("Mark Read", systemImage: "checkmark.circle")
                                         }
-                                        .tint(.blue)
+                                        .tint(AppColorsV3.forestGreen)
                                     }
                                 }
 
                                 if notification.id != notifications.last?.id {
                                     Divider()
+                                        .background(AppColorsV3.borderLight)
                                         .padding(.leading, 72)
                                 }
                             }
                         }
-                        .background(AppColors.surface)
-                        .cornerRadius(AppSpacing.radiusLarge)
+                        .background(AppColorsV3.surfaceWhite)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                                .stroke(AppColorsV3.borderLight, lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .padding(.horizontal, AppSpacingV3.contentPadding)
                     } header: {
+                        // Full-width background so content doesn't bleed through on either side when pinned.
                         HStack {
                             Text(section)
-                                .font(AppTypography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(AppColorsV3.textSecondary)
                                 .textCase(.uppercase)
+                                .tracking(0.15 * 11)
                             Spacer()
                         }
-                        .padding(.horizontal, AppSpacing.contentPadding)
-                        .padding(.top, AppSpacing.sm)
-                        .padding(.bottom, AppSpacing.xs)
-                        .background(AppColors.backgroundGrouped)
+                        .padding(.horizontal, AppSpacingV3.contentPadding)
+                        .padding(.top, AppSpacingV3.md)
+                        .padding(.bottom, AppSpacingV3.xs)
+                        .frame(maxWidth: .infinity)
+                        .background(AppColorsV3.surfaceLight)
                     }
                 }
 
                 // Load more button (only show if we have 20+ notifications)
                 if viewModel.allNotifications.count >= 20 && viewModel.hasMoreNotifications {
                     loadMoreButton
+                        .padding(.horizontal, AppSpacingV3.contentPadding)
                 }
             }
-            .padding(AppSpacing.contentPadding)
+            .padding(.vertical, AppSpacingV3.contentPadding)
         }
         .refreshable {
             await viewModel.refresh()
@@ -187,7 +198,8 @@ struct NotificationsView: View {
         Group {
             if viewModel.isLoadingMore {
                 ProgressView()
-                    .padding(.vertical, AppSpacing.md)
+                    .tint(AppColorsV3.forestGreen)
+                    .padding(.vertical, AppSpacingV3.md)
             } else {
                 Button {
                     Task {
@@ -195,12 +207,17 @@ struct NotificationsView: View {
                     }
                 } label: {
                     Text("Load More")
-                        .font(AppTypography.bodyMedium)
-                        .foregroundColor(AppColors.primary)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(AppColorsV3.forestGreen)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppSpacing.md)
-                        .background(AppColors.surface)
-                        .cornerRadius(AppSpacing.radiusMedium)
+                        .padding(.vertical, AppSpacingV3.md)
+                        .background(AppColorsV3.surfaceWhite)
+                        .clipShape(RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppSpacingV3.radiusMedium)
+                                .stroke(AppColorsV3.borderLight, lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 }
             }
         }
@@ -208,53 +225,62 @@ struct NotificationsView: View {
 
     // MARK: - Navigation Handling
 
+    /// Called when the user taps a notification row in the list.
     private func handleNotificationTap(_ notification: Notification) {
-        // Mark as read (ViewModel handles both notification and chat unread counts)
+        print("Notification tapped — type: \(notification.type.rawValue), targetType: \(notification.targetType?.rawValue ?? "nil"), targetId: \(notification.targetId ?? "nil")")
+
         Task {
             await viewModel.markAsRead(notification)
         }
 
-        // Handle feedback reminders specially - open feedback view
-        if notification.type == .feedbackReminder {
-            if let roundId = notification.targetId {
-                selectedFeedbackRoundId = roundId
-            }
+        routeNotification(
+            type: notification.type.rawValue,
+            targetId: notification.targetId ?? "",
+            targetType: notification.targetType?.rawValue,
+            metadata: notification.metadata
+        )
+    }
+
+    /// Routes to the correct screen based on notification type and target.
+    /// Push taps simply switch to this tab — the user taps the row to trigger this.
+    private func routeNotification(
+        type: String,
+        targetId: String,
+        targetType: String?,
+        metadata: [String: String]?
+    ) {
+        guard !targetId.isEmpty else {
+            print("Notification has no targetId — cannot navigate.")
             return
         }
 
-        // Navigate based on notification type
-        guard let targetId = notification.targetId else { return }
+        switch type {
+        case NotificationType.roundInvitation.rawValue:
+            deepLinkCoordinator.navigateToActivityTab(.invites)
 
-        switch notification.targetType {
-        case .round:
-            navigateToRound(targetId)
-        case .post:
-            navigateToPost(targetId)
-        case .comment:
-            if let postId = notification.metadata?["postId"] {
-                navigateToPost(postId)
+        case NotificationType.feedbackReminder.rawValue:
+            selectedFeedbackRoundId = targetId
+
+        default:
+            switch targetType {
+            case TargetType.round.rawValue:
+                roundDetail = RoundDetailIdentifier(roundId: targetId)
+            case TargetType.post.rawValue:
+                selectedPostId = targetId
+            case TargetType.comment.rawValue:
+                if let postId = metadata?["postId"] {
+                    selectedPostId = postId
+                }
+            case TargetType.profile.rawValue:
+                selectedProfileUid = targetId
+            default:
+                print("Unknown notification target — type: \(type), targetType: \(targetType ?? "nil")")
             }
-        case .profile:
-            navigateToProfile(targetId)
-        case .none:
-            break
         }
-    }
-
-    private func navigateToRound(_ roundId: String) {
-        roundDetail = RoundDetailIdentifier(roundId: roundId)
-    }
-
-    private func navigateToPost(_ postId: String) {
-        selectedPostId = postId
-    }
-
-    private func navigateToProfile(_ uid: String) {
-        selectedProfileUid = uid
     }
 }
 
-// MARK: - Notification Row View
+// MARK: - Notification Row View (V3)
 
 struct NotificationRowView: View {
     let notification: Notification
@@ -266,48 +292,51 @@ struct NotificationRowView: View {
                 // Left accent bar for unread
                 if !notification.isRead {
                     Rectangle()
-                        .fill(AppColors.iconAccent)
+                        .fill(AppColorsV3.forestGreen)
                         .frame(width: 4)
                 }
 
-                HStack(alignment: .top, spacing: AppSpacing.md) {
-                    // Bell icon - red when unread, grey when read
+                HStack(alignment: .top, spacing: AppSpacingV3.md) {
+                    // Bell icon - forest green when unread, grey when read
                     ZStack {
                         Circle()
-                            .fill(notification.isRead ? AppColors.surfaceSecondary : AppColors.iconAccent.opacity(0.1))
+                            .fill(notification.isRead ? Color(hex: "F3F4F6") : AppColorsV3.forestGreen.opacity(0.1))
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "bell.fill")
                             .font(.system(size: 18, weight: notification.isRead ? .regular : .semibold))
-                            .foregroundColor(notification.isRead ? AppColors.textSecondary : AppColors.iconAccent)
+                            .foregroundColor(notification.isRead ? AppColorsV3.textSecondary : AppColorsV3.forestGreen)
                     }
 
                     // Content - takes up remaining space
-                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    VStack(alignment: .leading, spacing: AppSpacingV3.xs) {
                         // Category label - more prominent when unread
                         Text(categoryLabel)
-                            .font(notification.isRead ? AppTypography.caption : AppTypography.captionEmphasis)
-                            .foregroundColor(notification.isRead ? AppColors.textTertiary : AppColors.iconAccent)
-                            .fontWeight(notification.isRead ? .regular : .semibold)
+                            .font(.system(size: 11, weight: notification.isRead ? .medium : .bold))
+                            .foregroundColor(notification.isRead ? AppColorsV3.textTertiary : AppColorsV3.forestGreen)
+                            .textCase(.uppercase)
+                            .tracking(0.15 * 11)
 
                         // Body
                         Text(notification.body)
-                            .font(AppTypography.bodyMedium)
-                            .foregroundColor(notification.isRead ? AppColors.textSecondary : AppColors.textPrimary)
-                            .fontWeight(notification.isRead ? .regular : .medium)
+                            .font(.system(size: 15, weight: notification.isRead ? .regular : .medium))
+                            .foregroundColor(notification.isRead ? AppColorsV3.textSecondary : AppColorsV3.textPrimary)
                             .lineLimit(3)
 
                         // Time ago
                         Text(notification.timeAgoString)
-                            .font(AppTypography.caption)
-                            .foregroundColor(AppColors.textTertiary)
+                            .font(.system(size: 12))
+                            .foregroundColor(AppColorsV3.textTertiary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.md)
+                .padding(.horizontal, AppSpacingV3.md)
+                .padding(.vertical, AppSpacingV3.md)
             }
-            .background(notification.isRead ? AppColors.surface : Color.white)
+            .background(notification.isRead
+                ? AppColorsV3.surfaceWhite
+                : AppColorsV3.forestGreen.opacity(0.04)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -344,6 +373,7 @@ struct NotificationsView_Previews: PreviewProvider {
         let container = AppContainer()
         NotificationsView(viewModel: container.makeNotificationsViewModel())
             .environmentObject(container)
+            .environmentObject(DeepLinkCoordinator())
     }
 }
 #endif

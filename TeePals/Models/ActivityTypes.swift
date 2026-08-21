@@ -2,12 +2,11 @@ import Foundation
 
 // MARK: - Activity Tab (Chip Selection)
 
-/// The four chips in the Activity tab.
+/// The three chips in the Activity tab.
 enum ActivityTab: String, CaseIterable, Identifiable {
     case schedule
     case invites
     case pending
-    case past
 
     var id: String { rawValue }
 
@@ -16,7 +15,6 @@ enum ActivityTab: String, CaseIterable, Identifiable {
         case .schedule: return "Schedule"
         case .invites: return "Invites"
         case .pending: return "Pending"
-        case .past: return "Past"
         }
     }
 }

@@ -10,17 +10,19 @@ struct RoundsView: View {
     @StateObject private var nearbyViewModel: RoundsListViewModel
     @StateObject private var activityViewModel: ActivityRoundsViewModelV2
 
-    @State private var selectedSegment: RoundsSegment = .nearby
+    @State private var selectedSegment: RoundsSegment
     @State private var showingCreateRound = false
     @State private var showingFilters = false
     @State private var roundDetail: RoundDetailIdentifier?
 
     init(
         nearbyViewModel: RoundsListViewModel,
-        activityViewModel: ActivityRoundsViewModelV2
+        activityViewModel: ActivityRoundsViewModelV2,
+        initialSegment: RoundsSegment = .nearby
     ) {
         _nearbyViewModel = StateObject(wrappedValue: nearbyViewModel)
         _activityViewModel = StateObject(wrappedValue: activityViewModel)
+        _selectedSegment = State(initialValue: initialSegment)
     }
     
     var body: some View {
@@ -48,12 +50,19 @@ struct RoundsView: View {
                 .environmentObject(container)
         }
         .task {
-            handlePendingActivityTarget()
-
             await loadSegment(selectedSegment)
-
-            Task {
-                await preloadOtherSegments()
+            Task { await preloadOtherSegments() }
+        }
+        // Synchronous handler — fires in the same render pass as MainTabView's tab switch,
+        // so selectedSegment is already updated before the view becomes visible (no flash).
+        .onChange(of: deepLinkCoordinator.activityTabTarget) { _, newTarget in
+            if newTarget != nil {
+                handlePendingActivityTarget()
+            }
+        }
+        .onChange(of: deepLinkCoordinator.roundsSegmentTarget) { _, newTarget in
+            if let segment = deepLinkCoordinator.consumeRoundsSegmentTarget() {
+                selectedSegment = segment
             }
         }
         .onChange(of: selectedSegment) { _, newSegment in
@@ -63,9 +72,6 @@ struct RoundsView: View {
             if let roundId = roundId {
                 handleDeepLinkNavigation(roundId: roundId)
             }
-        }
-        .onChange(of: deepLinkCoordinator.activityTabTarget) { _, _ in
-            handlePendingActivityTarget()
         }
         .animation(.none, value: selectedSegment)
     }
@@ -156,7 +162,7 @@ struct RoundsView: View {
                 .shadow(color: AppColorsV3.forestGreen.opacity(0.3), radius: 8, x: 0, y: 4)
         }
         .padding(.trailing, AppSpacingV3.contentPadding)
-        .padding(.bottom, AppSpacingV3.lg)
+        .padding(.bottom, 80)
     }
     
     // MARK: - Actions
@@ -203,8 +209,10 @@ struct RoundsView: View {
 
     private func handlePendingActivityTarget() {
         if let tab = deepLinkCoordinator.consumeActivityTabTarget() {
+            activityViewModel.prepareForNavigation()
             selectedSegment = .activity
             activityViewModel.selectedTab = tab
+            Task { await activityViewModel.refresh() }
         }
     }
 

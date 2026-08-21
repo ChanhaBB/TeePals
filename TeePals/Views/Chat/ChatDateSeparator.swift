@@ -1,35 +1,36 @@
 import SwiftUI
 
-/// Date separator shown between messages on different days.
+/// V3 Date separator shown between messages on different days.
 struct ChatDateSeparator: View {
     let date: Date
-    
+
     var body: some View {
         HStack {
-            line
+            Spacer()
             Text(displayText)
-                .font(AppTypography.caption)
-                .fontWeight(.medium)
-                .foregroundColor(AppColors.textSecondary)
-            line
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(Color.gray.opacity(0.6))
+                .textCase(.uppercase)
+                .tracking(1)
+                .padding(.horizontal, 8)
+                .background(AppColorsV3.surfaceWhite)
+            Spacer()
         }
-        .padding(.vertical, AppSpacing.sm)
+        .padding(.vertical, AppSpacingV3.md)
     }
-    
-    private var line: some View {
-        Rectangle()
-            .fill(AppColors.textTertiary.opacity(0.3))
-            .frame(height: 1)
-    }
-    
+
     private var displayText: String {
         if Calendar.current.isDateInToday(date) {
-            return "Today"
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return "Today, \(formatter.string(from: date))"
         } else if Calendar.current.isDateInYesterday(date) {
-            return "Yesterday"
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return "Yesterday, \(formatter.string(from: date))"
         } else {
             let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE, MMM d"
+            formatter.dateFormat = "MMM d, h:mm a"
             return formatter.string(from: date)
         }
     }

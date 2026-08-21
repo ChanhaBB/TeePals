@@ -263,95 +263,61 @@ final class FirestoreSocialRepository: SocialRepository {
     }
     
     func fetchFollowersWithProfiles(uid: String) async throws -> [FollowUser] {
-        let followersSnapshot = try await db
-            .collection(FirestoreCollection.follows)
-            .document(uid)
-            .collection(FirestoreCollection.followers)
-            .getDocuments()
-        
+        // Parallel: fetch follower UIDs and following UIDs (for mutual detection)
+        async let followersSnapshotTask = db
+            .collection(FirestoreCollection.follows).document(uid)
+            .collection(FirestoreCollection.followers).getDocuments()
+        async let followingSnapshotTask = db
+            .collection(FirestoreCollection.follows).document(uid)
+            .collection(FirestoreCollection.following).getDocuments()
+
+        let (followersSnapshot, followingSnapshot) = try await (followersSnapshotTask, followingSnapshotTask)
         let followerUids = followersSnapshot.documents.map { $0.documentID }
-        
-        // Get following list to determine mutual follows
-        let followingSnapshot = try await db
-            .collection(FirestoreCollection.follows)
-            .document(uid)
-            .collection(FirestoreCollection.following)
-            .getDocuments()
-        
         let followingSet = Set(followingSnapshot.documents.map { $0.documentID })
-        
-        // Fetch profiles
-        var users: [FollowUser] = []
-        for followerUid in followerUids {
-            let profileDoc = try? await db
-                .collection(FirestoreCollection.profilesPublic)
-                .document(followerUid)
-                .getDocument()
-            
-            let nickname = profileDoc?.data()?["nickname"] as? String ?? "Unknown"
-            let photoUrl = (profileDoc?.data()?["photoUrls"] as? [String])?.first
-            let isMutual = followingSet.contains(followerUid)
-            
-            users.append(FollowUser(
-                uid: followerUid,
-                nickname: nickname,
-                photoUrl: photoUrl,
-                isMutualFollow: isMutual
-            ))
-        }
-        
-        // Sort: friends first, then alphabetically
-        return users.sorted { lhs, rhs in
-            if lhs.isMutualFollow != rhs.isMutualFollow {
-                return lhs.isMutualFollow
-            }
-            return lhs.nickname.lowercased() < rhs.nickname.lowercased()
-        }
+
+        return try await fetchProfiles(for: followerUids, mutualSet: followingSet)
     }
-    
+
     func fetchFollowingWithProfiles(uid: String) async throws -> [FollowUser] {
-        let followingSnapshot = try await db
-            .collection(FirestoreCollection.follows)
-            .document(uid)
-            .collection(FirestoreCollection.following)
-            .getDocuments()
-        
+        // Parallel: fetch following UIDs and follower UIDs (for mutual detection)
+        async let followingSnapshotTask = db
+            .collection(FirestoreCollection.follows).document(uid)
+            .collection(FirestoreCollection.following).getDocuments()
+        async let followersSnapshotTask = db
+            .collection(FirestoreCollection.follows).document(uid)
+            .collection(FirestoreCollection.followers).getDocuments()
+
+        let (followingSnapshot, followersSnapshot) = try await (followingSnapshotTask, followersSnapshotTask)
         let followingUids = followingSnapshot.documents.map { $0.documentID }
-        
-        // Get followers list to determine mutual follows
-        let followersSnapshot = try await db
-            .collection(FirestoreCollection.follows)
-            .document(uid)
-            .collection(FirestoreCollection.followers)
-            .getDocuments()
-        
-        let followersSet = Set(followersSnapshot.documents.map { $0.documentID })
-        
-        // Fetch profiles
-        var users: [FollowUser] = []
-        for followingUid in followingUids {
-            let profileDoc = try? await db
-                .collection(FirestoreCollection.profilesPublic)
-                .document(followingUid)
-                .getDocument()
-            
-            let nickname = profileDoc?.data()?["nickname"] as? String ?? "Unknown"
-            let photoUrl = (profileDoc?.data()?["photoUrls"] as? [String])?.first
-            let isMutual = followersSet.contains(followingUid)
-            
-            users.append(FollowUser(
-                uid: followingUid,
-                nickname: nickname,
-                photoUrl: photoUrl,
-                isMutualFollow: isMutual
-            ))
-        }
-        
-        // Sort: friends first, then alphabetically
-        return users.sorted { lhs, rhs in
-            if lhs.isMutualFollow != rhs.isMutualFollow {
-                return lhs.isMutualFollow
+        let followersSet  = Set(followersSnapshot.documents.map { $0.documentID })
+
+        return try await fetchProfiles(for: followingUids, mutualSet: followersSet)
+    }
+
+    /// Fetches public profiles for a list of UIDs concurrently and builds FollowUser entries.
+    private func fetchProfiles(for uids: [String], mutualSet: Set<String>) async throws -> [FollowUser] {
+        guard !uids.isEmpty else { return [] }
+
+        let users: [FollowUser] = await withTaskGroup(of: FollowUser.self) { group in
+            for uid in uids {
+                group.addTask {
+                    let doc = try? await self.db
+                        .collection(FirestoreCollection.profilesPublic)
+                        .document(uid)
+                        .getDocument()
+                    let nickname = doc?.data()?["nickname"] as? String ?? "Unknown"
+                    let photoUrl = (doc?.data()?["photoUrls"] as? [String])?.first
+                    return FollowUser(uid: uid, nickname: nickname, photoUrl: photoUrl,
+                                     isMutualFollow: mutualSet.contains(uid))
+                }
             }
+            var results: [FollowUser] = []
+            for await user in group { results.append(user) }
+            return results
+        }
+
+        return users.sorted { lhs, rhs in
+            if lhs.isMutualFollow != rhs.isMutualFollow { return lhs.isMutualFollow }
             return lhs.nickname.lowercased() < rhs.nickname.lowercased()
         }
     }

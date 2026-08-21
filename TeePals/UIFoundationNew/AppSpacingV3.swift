@@ -6,6 +6,9 @@ enum AppSpacingV3 {
 
     // MARK: - Base Spacing Units
 
+    /// Extra extra small - 4pt
+    static let xxs: CGFloat = 4
+
     /// Extra small - 8pt
     static let xs: CGFloat = 8
 
@@ -17,6 +20,12 @@ enum AppSpacingV3 {
 
     /// Large - 24pt
     static let lg: CGFloat = 24
+
+    /// Extra large - 32pt
+    static let xl: CGFloat = 32
+
+    /// Extra extra large - 48pt
+    static let xxl: CGFloat = 48
 
     // MARK: - Semantic Spacing
 
@@ -34,6 +43,20 @@ enum AppSpacingV3 {
 
     /// Tiny gap - 8pt (gap-2 in HTML)
     static let gapTiny: CGFloat = 8
+
+    /// Icon-to-text spacing - 8pt
+    static let iconSpacing: CGFloat = 8
+
+    // MARK: - Button Heights
+
+    /// Large button height - 52pt
+    static let buttonHeightLarge: CGFloat = 52
+
+    /// Medium button height - 44pt
+    static let buttonHeightMedium: CGFloat = 44
+
+    /// Small button height - 36pt
+    static let buttonHeightSmall: CGFloat = 36
 
     // MARK: - Corner Radius
 

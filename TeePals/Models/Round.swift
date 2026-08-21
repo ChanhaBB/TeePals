@@ -118,9 +118,12 @@ struct Round: Codable, Identifiable, Hashable {
     }
 
     /// Whether this round is in the past.
+    /// Uses calendar-day comparison so a round stays visible in "My Schedule"
+    /// for the entire day it's scheduled, not just until the exact tee time.
     var isPast: Bool {
         guard let teeTime = displayTeeTime else { return false }
-        return teeTime < Date()
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: teeTime) < calendar.startOfDay(for: Date())
     }
     
     /// Display course name (chosen or first candidate)
@@ -345,27 +348,39 @@ struct RoundPrice: Codable {
 enum RoundVisibility: String, Codable, CaseIterable {
     case `public`
     case friends
-    
+    case `private`
+
     var displayText: String {
         switch self {
         case .public: return "Public"
-        case .friends: return "Friends Only"
+        case .friends: return "Friends"
+        case .private: return "Private"
         }
     }
-    
+
+    var description: String {
+        switch self {
+        case .public: return "Anyone can discover and join"
+        case .friends: return "Only your friends can see this round"
+        case .private: return "Invite-only, no one else can see it"
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .public: return "globe"
         case .friends: return "person.2.fill"
+        case .private: return "lock.fill"
         }
     }
-    
+
     /// Join policy is determined by visibility
-    /// Public = Request to Join, Friends = Instant Join
+    /// Public = Request to Join, Friends = Instant Join, Private = Invite Only
     var defaultJoinPolicy: JoinPolicy {
         switch self {
         case .public: return .request
         case .friends: return .instant
+        case .private: return .instant // Doesn't matter, only invited users see it
         }
     }
 }
